@@ -65,7 +65,7 @@ func NewLegacyCosmosAnteHandlerEip712(options HandlerOptions) sdk.AnteHandler {
 		authante.NewValidateSigCountDecorator(options.AccountKeeper),
 		authante.NewSigGasConsumeDecorator(options.AccountKeeper, options.SigGasConsumer),
 		// Note: signature verification uses EIP instead of the cosmos signature validator
-		NewLegacyEip712SigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
+		NewLegacyEip712SigVerificationDecorator(options.AccountKeeper, options.SignModeHandler, options.EvmKeeper),
 		authante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
 		NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
@@ -81,16 +81,19 @@ func NewLegacyCosmosAnteHandlerEip712(options HandlerOptions) sdk.AnteHandler {
 type LegacyEip712SigVerificationDecorator struct {
 	ak              evmtypes.AccountKeeper
 	signModeHandler authsigning.SignModeHandler
+	evmKeeper       EVMKeeper
 }
 
 // Deprecated: NewLegacyEip712SigVerificationDecorator creates a new LegacyEip712SigVerificationDecorator
 func NewLegacyEip712SigVerificationDecorator(
 	ak evmtypes.AccountKeeper,
 	signModeHandler authsigning.SignModeHandler,
+	ek EVMKeeper,
 ) LegacyEip712SigVerificationDecorator {
 	return LegacyEip712SigVerificationDecorator{
 		ak:              ak,
 		signModeHandler: signModeHandler,
+		evmKeeper:       ek,
 	}
 }
 
@@ -181,7 +184,9 @@ func (svd LegacyEip712SigVerificationDecorator) AnteHandle(ctx sdk.Context,
 		return next(ctx, tx, simulate)
 	}
 
-	if err := VerifySignature(pubKey, signerData, sig.Data, svd.signModeHandler, authSignTx); err != nil {
+	evmParams := svd.evmKeeper.GetParams(ctx)
+
+	if err := VerifySignature(pubKey, signerData, sig.Data, svd.signModeHandler, authSignTx, evmParams); err != nil {
 		errMsg := fmt.Errorf("signature verification failed; please verify account number (%d) and chain-id (%s): %w", accNum, chainID, err)
 		return ctx, errorsmod.Wrap(errortypes.ErrUnauthorized, errMsg.Error())
 	}
@@ -197,6 +202,7 @@ func VerifySignature(
 	sigData signing.SignatureData,
 	_ authsigning.SignModeHandler,
 	tx authsigning.Tx,
+	params evmtypes.Params,
 ) error {
 	switch data := sigData.(type) {
 	case *signing.SingleSignatureData:
@@ -217,7 +223,7 @@ func VerifySignature(
 			return errorsmod.Wrap(errortypes.ErrNoSignatures, "tx doesn't contain any msgs to verify signature")
 		}
 
-		txBytes := legacytx.StdSignBytes(
+		txBytes := eip712.ConstructUntypedEIP712Data(
 			signerData.ChainID,
 			signerData.AccountNumber,
 			signerData.Sequence,
@@ -226,7 +232,8 @@ func VerifySignature(
 				Amount: tx.GetFee(),
 				Gas:    tx.GetGas(),
 			},
-			msgs, tx.GetMemo(), tx.GetTip(),
+			msgs, tx.GetMemo(),
+			tx.GetTip(),
 		)
 
 		signerChainID, err := ethermint.ParseChainID(signerData.ChainID)
@@ -264,7 +271,7 @@ func VerifySignature(
 			FeePayer: feePayer,
 		}
 
-		typedData, err := eip712.WrapTxToTypedData(ethermintCodec, extOpt.TypedDataChainID, msgs[0], txBytes, feeDelegation)
+		typedData, err := eip712.WrapTxToTypedData(extOpt.TypedDataChainID, msgs, txBytes, feeDelegation, params)
 		if err != nil {
 			return errorsmod.Wrap(err, "failed to create EIP-712 typed data from tx")
 		}

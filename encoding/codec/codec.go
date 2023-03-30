@@ -29,6 +29,7 @@ import (
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	sdk.RegisterLegacyAminoCodec(cdc)
 	cryptocodec.RegisterCrypto(cdc)
+	ethermint.RegisterLegacyAminoCodec(cdc)
 	codec.RegisterEvidences(cdc)
 }
 

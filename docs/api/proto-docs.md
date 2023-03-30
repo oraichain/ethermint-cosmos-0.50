@@ -11,6 +11,9 @@
 - [ethermint/evm/v1/evm.proto](#ethermint/evm/v1/evm.proto)
     - [AccessTuple](#ethermint.evm.v1.AccessTuple)
     - [ChainConfig](#ethermint.evm.v1.ChainConfig)
+    - [EIP712AllowedMsg](#ethermint.evm.v1.EIP712AllowedMsg)
+    - [EIP712MsgAttrType](#ethermint.evm.v1.EIP712MsgAttrType)
+    - [EIP712NestedMsgType](#ethermint.evm.v1.EIP712NestedMsgType)
     - [Log](#ethermint.evm.v1.Log)
     - [Params](#ethermint.evm.v1.Params)
     - [State](#ethermint.evm.v1.State)
@@ -190,6 +193,56 @@ instead of *big.Int.
 | `arrow_glacier_block` | [string](#string) |  | Eip-4345 (bomb delay) switch block (nil = no fork, 0 = already activated) |
 | `gray_glacier_block` | [string](#string) |  | EIP-5133 (bomb delay) switch block (nil = no fork, 0 = already activated) |
 | `merge_netsplit_block` | [string](#string) |  | Virtual fork after The Merge to use as a network splitter |
+
+
+
+
+
+
+<a name="ethermint.evm.v1.EIP712AllowedMsg"></a>
+
+### EIP712AllowedMsg
+EIP712AllowedMsg stores an allowed legacy msg and its eip712 type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `msg_type_url` | [string](#string) |  | msg's proto type name. ie "/cosmos.bank.v1beta1.MsgSend" |
+| `msg_value_type_name` | [string](#string) |  | name of the eip712 value type. ie "MsgValueSend" |
+| `value_types` | [EIP712MsgAttrType](#ethermint.evm.v1.EIP712MsgAttrType) | repeated | types of the msg value |
+| `nested_types` | [EIP712NestedMsgType](#ethermint.evm.v1.EIP712NestedMsgType) | repeated | nested types of the msg value |
+
+
+
+
+
+
+<a name="ethermint.evm.v1.EIP712MsgAttrType"></a>
+
+### EIP712MsgAttrType
+EIP712MsgAttrType is the eip712 type of a single message attribute.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `name` | [string](#string) |  |  |
+| `type` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="ethermint.evm.v1.EIP712NestedMsgType"></a>
+
+### EIP712NestedMsgType
+EIP712MsgType is the eip712 type of a single message.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `name` | [string](#string) |  | name of the nested type. ie "Fee", "Coin" |
+| `attrs` | [EIP712MsgAttrType](#ethermint.evm.v1.EIP712MsgAttrType) | repeated | attrs of the nested type |
 
 
 

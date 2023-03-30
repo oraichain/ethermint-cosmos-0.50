@@ -120,7 +120,6 @@ func (suite *AnteTestSuite) SetupTest() {
 	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	// We're using TestMsg amino encoding in some tests, so register it here.
 	encodingConfig.Amino.RegisterConcrete(&testdata.TestMsg{}, "testdata.TestMsg", nil)
-	eip712.SetEncodingConfig(encodingConfig)
 
 	suite.clientCtx = client.Context{}.WithTxConfig(encodingConfig.TxConfig)
 
@@ -283,6 +282,15 @@ func (suite *AnteTestSuite) CreateTestEIP712TxBuilderMsgDelegate(from sdk.AccAdd
 	valAddr := sdk.ValAddress(valEthAddr.Bytes())
 	msgSend := stakingtypes.NewMsgDelegate(from, valAddr, sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(20)))
 	return suite.CreateTestEIP712SingleMessageTxBuilder(from, priv, chainId, gas, gasAmount, msgSend)
+}
+
+func (suite *AnteTestSuite) CreateTestEIP712TxBuilderMultipleMsgs(from sdk.AccAddress, priv cryptotypes.PrivKey, chainId string, gas uint64, gasAmount sdk.Coins) client.TxBuilder {
+	valEthAddr := tests.GenerateAddress()
+	valAddr := sdk.ValAddress(valEthAddr.Bytes())
+	recipient := sdk.AccAddress(common.Address{}.Bytes())
+	msgSend := banktypes.NewMsgSend(from, recipient, sdk.NewCoins(sdk.NewCoin(evmtypes.DefaultEVMDenom, sdk.NewInt(1))))
+	msgDelegate := stakingtypes.NewMsgDelegate(from, valAddr, sdk.NewCoin(evmtypes.DefaultEVMDenom, sdk.NewInt(20)))
+	return suite.CreateTestEIP712CosmosTxBuilder(from, priv, chainId, gas, gasAmount, []sdk.Msg{msgSend, msgDelegate, msgDelegate, msgSend})
 }
 
 func (suite *AnteTestSuite) CreateTestEIP712MsgCreateValidator(from sdk.AccAddress, priv cryptotypes.PrivKey, chainId string, gas uint64, gasAmount sdk.Coins) client.TxBuilder {
@@ -486,19 +494,18 @@ func (suite *AnteTestSuite) CreateTestEIP712CosmosTxBuilder(
 	ethChainId := pc.Uint64()
 
 	// GenerateTypedData TypedData
-	var ethermintCodec codec.ProtoCodecMarshaler
 	registry := codectypes.NewInterfaceRegistry()
 	types.RegisterInterfaces(registry)
-	ethermintCodec = codec.NewProtoCodec(registry)
 	cryptocodec.RegisterInterfaces(registry)
 
 	fee := legacytx.NewStdFee(gas, gasAmount)
 	accNumber := suite.app.AccountKeeper.GetAccount(suite.ctx, from).GetAccountNumber()
 
-	data := legacytx.StdSignBytes(chainId, accNumber, nonce, 0, fee, msgs, "", nil)
-	typedData, err := eip712.WrapTxToTypedData(ethermintCodec, ethChainId, msgs[0], data, &eip712.FeeDelegationOptions{
+	data := eip712.ConstructUntypedEIP712Data(chainId, accNumber, nonce, 0, fee, msgs, "", nil)
+	evmParams := suite.app.EvmKeeper.GetParams(suite.ctx)
+	typedData, err := eip712.WrapTxToTypedData(ethChainId, msgs, data, &eip712.FeeDelegationOptions{
 		FeePayer: from,
-	})
+	}, evmParams)
 	suite.Require().NoError(err)
 
 	sigHash, _, err := apitypes.TypedDataAndHash(typedData)
@@ -560,19 +567,7 @@ func (suite *AnteTestSuite) GenerateMultipleKeys(n int) ([]cryptotypes.PrivKey, 
 
 // generateSingleSignature signs the given sign doc bytes using the given signType (EIP-712 or Standard)
 func (suite *AnteTestSuite) generateSingleSignature(signMode signing.SignMode, privKey cryptotypes.PrivKey, signDocBytes []byte, signType string) (signature signing.SignatureV2) {
-	var (
-		msg []byte
-		err error
-	)
-
-	msg = signDocBytes
-
-	if signType == "EIP-712" {
-		msg, err = eip712.GetEIP712BytesForMsg(signDocBytes)
-		suite.Require().NoError(err)
-	}
-
-	sigBytes, _ := privKey.Sign(msg)
+	sigBytes, _ := privKey.Sign(signDocBytes)
 	sigData := &signing.SingleSignatureData{
 		SignMode:  signMode,
 		Signature: sigBytes,

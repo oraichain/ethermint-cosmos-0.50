@@ -45,7 +45,15 @@ var (
 var AvailableExtraEIPs = []int64{1344, 1884, 2200, 2929, 3198, 3529}
 
 // NewParams creates a new Params instance
-func NewParams(evmDenom string, allowUnprotectedTxs, enableCreate, enableCall bool, config ChainConfig, extraEIPs []int64) Params {
+func NewParams(
+	evmDenom string,
+	allowUnprotectedTxs,
+	enableCreate,
+	enableCall bool,
+	config ChainConfig,
+	extraEIPs []int64,
+	eip712AllowedMsgs []EIP712AllowedMsg,
+) Params {
 	return Params{
 		EvmDenom:            evmDenom,
 		AllowUnprotectedTxs: allowUnprotectedTxs,
@@ -53,6 +61,7 @@ func NewParams(evmDenom string, allowUnprotectedTxs, enableCreate, enableCall bo
 		EnableCall:          enableCall,
 		ExtraEIPs:           extraEIPs,
 		ChainConfig:         config,
+		EIP712AllowedMsgs:   eip712AllowedMsgs,
 	}
 }
 
@@ -66,6 +75,7 @@ func DefaultParams() Params {
 		ChainConfig:         DefaultChainConfig(),
 		ExtraEIPs:           nil,
 		AllowUnprotectedTxs: DefaultAllowUnprotectedTxs,
+		EIP712AllowedMsgs:   nil,
 	}
 }
 
@@ -91,7 +101,21 @@ func (p Params) Validate() error {
 		return err
 	}
 
-	return validateChainConfig(p.ChainConfig)
+	if err := validateChainConfig(p.ChainConfig); err != nil {
+		return err
+	}
+
+	return validateEIP712AllowedMsgs(p.EIP712AllowedMsgs)
+}
+
+// EIP712AllowedMsgFromMsgType returns the EIP712AllowedMsg for a given message type url.
+func (p Params) EIP712AllowedMsgFromMsgType(msgTypeUrl string) *EIP712AllowedMsg {
+	for _, allowedMsg := range p.EIP712AllowedMsgs {
+		if allowedMsg.MsgTypeUrl == msgTypeUrl {
+			return &allowedMsg
+		}
+	}
+	return nil
 }
 
 // EIPs returns the ExtraEIPS as a int slice
@@ -142,6 +166,24 @@ func validateChainConfig(i interface{}) error {
 	}
 
 	return cfg.Validate()
+}
+
+func validateEIP712AllowedMsgs(i interface{}) error {
+	allowedMsgs, ok := i.([]EIP712AllowedMsg)
+	if !ok {
+		return fmt.Errorf("invalid EIP712AllowedMsg slice type: %T", i)
+	}
+
+	// ensure no duplicate msg type urls
+	msgTypes := make(map[string]bool)
+	for _, allowedMsg := range allowedMsgs {
+		if _, ok := msgTypes[allowedMsg.MsgTypeUrl]; ok {
+			return fmt.Errorf("duplicate eip712 allowed legacy msg type: %s", allowedMsg.MsgTypeUrl)
+		}
+		msgTypes[allowedMsg.MsgTypeUrl] = true
+	}
+
+	return nil
 }
 
 // IsLondon returns if london hardfork is enabled.
