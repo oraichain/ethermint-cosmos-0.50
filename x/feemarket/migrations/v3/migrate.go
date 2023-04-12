@@ -7,21 +7,17 @@ import (
 	"github.com/evmos/ethermint/x/feemarket/types"
 )
 
-// MigrateStore migrates the x/evm module state from the consensus version 3 to
-// version 4. Specifically, it takes the parameters that are currently stored
-// and managed by the Cosmos SDK params module and stores them directly into the x/evm module state.
+// MigrateStore migrates the x/evm module state from the consensus version 2 to version 3
 func MigrateStore(
 	ctx sdk.Context,
 	storeKey storetypes.StoreKey,
-	legacySubspace types.Subspace,
 	cdc codec.BinaryCodec,
 ) error {
 	var (
 		store  = ctx.KVStore(storeKey)
-		params types.Params
+		params = types.DefaultParams()
 	)
-
-	legacySubspace.GetParamSetIfExists(ctx, &params)
+	params.NoBaseFee = true
 
 	if err := params.Validate(); err != nil {
 		return err
