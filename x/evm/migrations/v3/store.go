@@ -17,6 +17,11 @@ func MigrateStore(
 	cdc codec.BinaryCodec,
 ) error {
 	var legacyParams v2types.V2Params
+	if !paramstore.HasKeyTable() {
+		ps := paramstore.WithKeyTable(v2types.ParamKeyTable())
+		paramstore = ps
+	}
+
 	paramstore.GetParamSetIfExists(ctx, &legacyParams)
 
 	// -------------------------------------------------------------------------
