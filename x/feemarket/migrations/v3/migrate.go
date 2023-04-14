@@ -7,7 +7,7 @@ import (
 	"github.com/evmos/ethermint/x/feemarket/types"
 )
 
-// MigrateStore migrates the x/evm module state from the consensus version 2 to version 3
+// MigrateStore migrates the x/feemarket module state from the consensus version 2 to version 3
 func MigrateStore(
 	ctx sdk.Context,
 	storeKey storetypes.StoreKey,
