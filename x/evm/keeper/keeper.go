@@ -41,6 +41,8 @@ import (
 type Keeper struct {
 	// Protobuf codec
 	cdc codec.BinaryCodec
+	// Amino Codec used for legacy parameters
+	legacyAmino *codec.LegacyAmino
 	// Store key required for the EVM Prefix KVStore. It is required by:
 	// - storing account's Storage State
 	// - storing account's Code
@@ -83,6 +85,7 @@ type Keeper struct {
 // NewKeeper generates new evm module keeper
 func NewKeeper(
 	cdc codec.BinaryCodec,
+	legacyAmino *codec.LegacyAmino,
 	storeKey, transientKey storetypes.StoreKey,
 	authority sdk.AccAddress,
 	ak types.AccountKeeper,
@@ -107,6 +110,7 @@ func NewKeeper(
 	// NOTE: we pass in the parameter space to the CommitStateDB in order to use custom denominations for the EVM operations
 	return &Keeper{
 		cdc:               cdc,
+		legacyAmino:       legacyAmino,
 		authority:         authority,
 		accountKeeper:     ak,
 		bankKeeper:        bankKeeper,

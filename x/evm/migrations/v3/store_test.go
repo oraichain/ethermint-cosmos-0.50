@@ -38,9 +38,10 @@ func TestMigrate(t *testing.T) {
 
 	err := v3.MigrateStore(
 		ctx,
-		paramstore,
-		storeKey,
 		cdc,
+		encCfg.Amino,
+		storeKey,
+		tKey,
 	)
 	require.NoError(t, err)
 
@@ -143,9 +144,10 @@ func TestMigrate_Mainnet(t *testing.T) {
 
 	err := v3.MigrateStore(
 		ctx,
-		paramstore,
-		storeKey,
 		cdc,
+		encCfg.Amino,
+		storeKey,
+		tKey,
 	)
 	require.NoError(t, err)
 

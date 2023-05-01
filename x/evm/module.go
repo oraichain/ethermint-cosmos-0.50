@@ -119,12 +119,11 @@ type AppModule struct {
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(k *keeper.Keeper, ak types.AccountKeeper, ss types.Subspace) AppModule {
+func NewAppModule(k *keeper.Keeper, ak types.AccountKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
 		ak:             ak,
-		legacySubspace: ss,
 	}
 }
 
@@ -144,7 +143,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 
-	m := keeper.NewMigrator(*am.keeper, am.legacySubspace)
+	m := keeper.NewMigrator(*am.keeper)
 
 	// This migration is a Kava specific migration that also includes the
 	// upstream migrations from 3 to 5.

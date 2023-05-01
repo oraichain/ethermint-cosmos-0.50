@@ -4,6 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	v2types "github.com/evmos/ethermint/x/evm/migrations/v2/types"
 	"github.com/evmos/ethermint/x/evm/types"
 )
@@ -12,16 +13,23 @@ import (
 // versions v2 to v5. Kava consensus version diverges from upstream at v2.
 func MigrateStore(
 	ctx sdk.Context,
-	paramstore types.Subspace,
-	storeKey storetypes.StoreKey,
 	cdc codec.BinaryCodec,
+	legacyAmino *codec.LegacyAmino,
+	storeKey storetypes.StoreKey,
+	transientKey storetypes.StoreKey,
 ) error {
-	var legacyParams v2types.V2Params
-	if !paramstore.HasKeyTable() {
-		ps := paramstore.WithKeyTable(v2types.ParamKeyTable())
-		paramstore = ps
-	}
+	// create independent paramstore with key table that is
+	// not tied to global state
+	paramstore := paramtypes.NewSubspace(
+		cdc,
+		legacyAmino,
+		storeKey,
+		transientKey,
+		types.ModuleName,
+	).WithKeyTable(v2types.ParamKeyTable())
 
+	// load existing legacy parameters
+	var legacyParams v2types.V2Params
 	paramstore.GetParamSetIfExists(ctx, &legacyParams)
 
 	// -------------------------------------------------------------------------
