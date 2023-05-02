@@ -39,6 +39,7 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 		m.keeper.cdc,
 		m.keeper.legacyAmino,
 		m.keeper.storeKey,
-		m.keeper.transientKey,
+		m.keeper.paramStoreKey,
+		m.keeper.paramStoreTKey,
 	)
 }

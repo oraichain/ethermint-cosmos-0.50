@@ -418,7 +418,8 @@ func NewEthermintApp(
 	// Set authority to x/gov module account to only expect the module account to update params
 	evmSs := app.GetSubspace(evmtypes.ModuleName)
 	app.EvmKeeper = evmkeeper.NewKeeper(
-		appCodec, cdc, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
+		appCodec, cdc, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
 		nil, geth.NewEVM, tracer, evmSs,
 	)

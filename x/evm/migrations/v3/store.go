@@ -16,15 +16,16 @@ func MigrateStore(
 	cdc codec.BinaryCodec,
 	legacyAmino *codec.LegacyAmino,
 	storeKey storetypes.StoreKey,
-	transientKey storetypes.StoreKey,
+	paramStoreKey storetypes.StoreKey,
+	paramStoreTKey storetypes.StoreKey,
 ) error {
 	// create independent paramstore with key table that is
 	// not tied to global state
 	paramstore := paramtypes.NewSubspace(
 		cdc,
 		legacyAmino,
-		storeKey,
-		transientKey,
+		paramStoreKey,
+		paramStoreTKey,
 		types.ModuleName,
 	).WithKeyTable(v2types.ParamKeyTable())
 

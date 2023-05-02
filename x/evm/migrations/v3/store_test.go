@@ -20,8 +20,8 @@ func TestMigrate(t *testing.T) {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
 
-	storeKey := sdk.NewKVStoreKey(types.ModuleName)
-	tKey := sdk.NewTransientStoreKey(types.TransientKey)
+	storeKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
+	tKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
 	ctx := testutil.DefaultContext(storeKey, tKey)
 	kvStore := ctx.KVStore(storeKey)
 
@@ -73,8 +73,8 @@ func TestMigrate_Mainnet(t *testing.T) {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
 
-	storeKey := sdk.NewKVStoreKey(types.ModuleName)
-	tKey := sdk.NewTransientStoreKey(types.TransientKey)
+	storeKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
+	tKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
 	ctx := testutil.DefaultContext(storeKey, tKey)
 	kvStore := ctx.KVStore(storeKey)
 

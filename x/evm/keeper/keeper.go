@@ -53,6 +53,10 @@ type Keeper struct {
 	// key to access the transient store, which is reset on every block during Commit
 	transientKey storetypes.StoreKey
 
+	// keys used by migrator and interaction with legacy parameter store
+	paramStoreKey  storetypes.StoreKey
+	paramStoreTKey storetypes.StoreKey
+
 	// the address capable of executing a MsgUpdateParams message. Typically, this should be the x/gov module account.
 	authority sdk.AccAddress
 	// access to account state
@@ -87,6 +91,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	legacyAmino *codec.LegacyAmino,
 	storeKey, transientKey storetypes.StoreKey,
+	paramStoreKey, paramStoreTKey storetypes.StoreKey,
 	authority sdk.AccAddress,
 	ak types.AccountKeeper,
 	bankKeeper types.BankKeeper,
@@ -118,6 +123,8 @@ func NewKeeper(
 		feeMarketKeeper:   fmk,
 		storeKey:          storeKey,
 		transientKey:      transientKey,
+		paramStoreKey:     paramStoreKey,
+		paramStoreTKey:    paramStoreTKey,
 		customPrecompiles: customPrecompiles,
 		evmConstructor:    evmConstructor,
 		tracer:            tracer,
