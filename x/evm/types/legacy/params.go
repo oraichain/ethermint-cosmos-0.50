@@ -2,20 +2,18 @@ package types
 
 import (
 	"fmt"
-	"math/big"
-
-	"github.com/ethereum/go-ethereum/params"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/evmos/ethermint/types"
+	ethtypes "github.com/evmos/ethermint/types"
+	"github.com/evmos/ethermint/x/evm/types"
 )
 
-var _ paramtypes.ParamSet = &V2Params{}
+var _ paramtypes.ParamSet = &LegacyParams{}
 
 const (
-	DefaultEVMDenom = types.AttoPhoton
+	DefaultEVMDenom = ethtypes.AttoPhoton
 )
 
 // Parameter keys
@@ -37,36 +35,36 @@ var (
 
 // ParamKeyTable returns the parameter key table.
 func ParamKeyTable() paramtypes.KeyTable {
-	return paramtypes.NewKeyTable().RegisterParamSet(&V2Params{})
+	return paramtypes.NewKeyTable().RegisterParamSet(&LegacyParams{})
 }
 
 // NewParams creates a new Params instance
-func NewParams(evmDenom string, enableCreate, enableCall bool, config V2ChainConfig, extraEIPs ...int64) V2Params {
-	return V2Params{
+func NewParams(evmDenom string, enableCreate, enableCall bool, config LegacyChainConfig, extraEIPs ...int64) LegacyParams {
+	return LegacyParams{
 		EvmDenom:          evmDenom,
 		EnableCreate:      enableCreate,
 		EnableCall:        enableCall,
 		ExtraEIPs:         extraEIPs,
 		ChainConfig:       config,
-		EIP712AllowedMsgs: []V2EIP712AllowedMsg{},
+		EIP712AllowedMsgs: []types.EIP712AllowedMsg{},
 	}
 }
 
 // DefaultParams returns default evm parameters
 // ExtraEIPs is empty to prevent overriding the latest hard fork instruction set
-func DefaultParams() V2Params {
-	return V2Params{
+func DefaultParams() LegacyParams {
+	return LegacyParams{
 		EvmDenom:          DefaultEVMDenom,
 		EnableCreate:      true,
 		EnableCall:        true,
 		ChainConfig:       DefaultChainConfig(),
 		ExtraEIPs:         nil,
-		EIP712AllowedMsgs: []V2EIP712AllowedMsg{},
+		EIP712AllowedMsgs: []types.EIP712AllowedMsg{},
 	}
 }
 
 // ParamSetPairs returns the parameter set pairs.
-func (p *V2Params) ParamSetPairs() paramtypes.ParamSetPairs {
+func (p *LegacyParams) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamStoreKeyEVMDenom, &p.EvmDenom, validateEVMDenom),
 		paramtypes.NewParamSetPair(ParamStoreKeyEnableCreate, &p.EnableCreate, validateBool),
@@ -78,7 +76,7 @@ func (p *V2Params) ParamSetPairs() paramtypes.ParamSetPairs {
 }
 
 // Validate performs basic validation on evm parameters.
-func (p V2Params) Validate() error {
+func (p LegacyParams) Validate() error {
 	if err := sdk.ValidateDenom(p.EvmDenom); err != nil {
 		return err
 	}
@@ -95,7 +93,7 @@ func (p V2Params) Validate() error {
 }
 
 // EIP712AllowedMsgFromMsgType returns the EIP712AllowedMsg for a given message type url.
-func (p V2Params) EIP712AllowedMsgFromMsgType(msgTypeUrl string) *V2EIP712AllowedMsg {
+func (p LegacyParams) EIP712AllowedMsgFromMsgType(msgTypeUrl string) *types.EIP712AllowedMsg {
 	for _, allowedMsg := range p.EIP712AllowedMsgs {
 		if allowedMsg.MsgTypeUrl == msgTypeUrl {
 			return &allowedMsg
@@ -105,7 +103,7 @@ func (p V2Params) EIP712AllowedMsgFromMsgType(msgTypeUrl string) *V2EIP712Allowe
 }
 
 // EIPs returns the ExtraEips as a int slice
-func (p V2Params) EIPs() []int {
+func (p LegacyParams) EIPs() []int {
 	eips := make([]int, len(p.ExtraEIPs))
 	for i, eip := range p.ExtraEIPs {
 		eips[i] = int(eip)
@@ -146,7 +144,7 @@ func validateEIPs(i interface{}) error {
 }
 
 func validateChainConfig(i interface{}) error {
-	cfg, ok := i.(V2ChainConfig)
+	cfg, ok := i.(LegacyChainConfig)
 	if !ok {
 		return fmt.Errorf("invalid chain config type: %T", i)
 	}
@@ -155,7 +153,7 @@ func validateChainConfig(i interface{}) error {
 }
 
 func validateEIP712AllowedMsgs(i interface{}) error {
-	allowedMsgs, ok := i.([]V2EIP712AllowedMsg)
+	allowedMsgs, ok := i.([]types.EIP712AllowedMsg)
 	if !ok {
 		return fmt.Errorf("invalid EIP712AllowedMsg slice type: %T", i)
 	}
@@ -170,9 +168,4 @@ func validateEIP712AllowedMsgs(i interface{}) error {
 	}
 
 	return nil
-}
-
-// IsLondon returns if london hardfork is enabled.
-func IsLondon(ethConfig *params.ChainConfig, height int64) bool {
-	return ethConfig.IsLondon(big.NewInt(height))
 }

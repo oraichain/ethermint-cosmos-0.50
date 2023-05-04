@@ -52,6 +52,10 @@ func NewKeeper(
 		panic(err)
 	}
 
+	if !ss.HasKeyTable() {
+		ss = ss.WithKeyTable(types.ParamKeyTable())
+	}
+
 	return Keeper{
 		cdc:          cdc,
 		storeKey:     storeKey,

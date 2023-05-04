@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -15,7 +15,7 @@ import (
 
 // EthereumConfig returns an Ethereum ChainConfig for EVM state transitions.
 // All the negative or nil values are converted to nil
-func (cc V2ChainConfig) EthereumConfig(chainID *big.Int) *params.ChainConfig {
+func (cc LegacyChainConfig) EthereumConfig(chainID *big.Int) *params.ChainConfig {
 	return &params.ChainConfig{
 		ChainID:                 chainID,
 		HomesteadBlock:          getBlockValue(cc.HomesteadBlock),
@@ -41,23 +41,23 @@ func (cc V2ChainConfig) EthereumConfig(chainID *big.Int) *params.ChainConfig {
 }
 
 // DefaultChainConfig returns default evm parameters.
-func DefaultChainConfig() V2ChainConfig {
-	homesteadBlock := sdk.ZeroInt()
-	daoForkBlock := sdk.ZeroInt()
-	eip150Block := sdk.ZeroInt()
-	eip155Block := sdk.ZeroInt()
-	eip158Block := sdk.ZeroInt()
-	byzantiumBlock := sdk.ZeroInt()
-	constantinopleBlock := sdk.ZeroInt()
-	petersburgBlock := sdk.ZeroInt()
-	istanbulBlock := sdk.ZeroInt()
-	muirGlacierBlock := sdk.ZeroInt()
-	berlinBlock := sdk.ZeroInt()
-	londonBlock := sdk.ZeroInt()
-	arrowGlacierBlock := sdk.ZeroInt()
-	mergeForkBlock := sdk.ZeroInt()
+func DefaultChainConfig() LegacyChainConfig {
+	homesteadBlock := sdkmath.ZeroInt()
+	daoForkBlock := sdkmath.ZeroInt()
+	eip150Block := sdkmath.ZeroInt()
+	eip155Block := sdkmath.ZeroInt()
+	eip158Block := sdkmath.ZeroInt()
+	byzantiumBlock := sdkmath.ZeroInt()
+	constantinopleBlock := sdkmath.ZeroInt()
+	petersburgBlock := sdkmath.ZeroInt()
+	istanbulBlock := sdkmath.ZeroInt()
+	muirGlacierBlock := sdkmath.ZeroInt()
+	berlinBlock := sdkmath.ZeroInt()
+	londonBlock := sdkmath.ZeroInt()
+	arrowGlacierBlock := sdkmath.ZeroInt()
+	mergeForkBlock := sdkmath.ZeroInt()
 
-	return V2ChainConfig{
+	return LegacyChainConfig{
 		HomesteadBlock:      &homesteadBlock,
 		DAOForkBlock:        &daoForkBlock,
 		DAOForkSupport:      true,
@@ -77,7 +77,7 @@ func DefaultChainConfig() V2ChainConfig {
 	}
 }
 
-func getBlockValue(block *sdk.Int) *big.Int {
+func getBlockValue(block *sdkmath.Int) *big.Int {
 	if block == nil || block.IsNegative() {
 		return nil
 	}
@@ -87,7 +87,7 @@ func getBlockValue(block *sdk.Int) *big.Int {
 
 // Validate performs a basic validation of the ChainConfig params. The function will return an error
 // if any of the block values is uninitialized (i.e nil) or if the EIP150Hash is an invalid hash.
-func (cc V2ChainConfig) Validate() error {
+func (cc LegacyChainConfig) Validate() error {
 	if err := validateBlock(cc.HomesteadBlock); err != nil {
 		return sdkerrors.Wrap(err, "homesteadBlock")
 	}
@@ -149,7 +149,7 @@ func validateHash(hex string) error {
 	return nil
 }
 
-func validateBlock(block *sdk.Int) error {
+func validateBlock(block *sdkmath.Int) error {
 	// nil value means that the fork has not yet been applied
 	if block == nil {
 		return nil

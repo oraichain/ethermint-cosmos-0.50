@@ -1,47 +1,55 @@
 package v3_test
 
 import (
-	"encoding/json"
 	"testing"
 
+	"github.com/evmos/ethermint/x/evm/keeper"
 	"github.com/evmos/ethermint/x/evm/types"
+	"github.com/evmos/ethermint/x/evm/vm/geth"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/testutil"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/evmos/ethermint/app"
 	"github.com/evmos/ethermint/encoding"
-	v2types "github.com/evmos/ethermint/x/evm/migrations/v2/types"
 	v3 "github.com/evmos/ethermint/x/evm/migrations/v3"
+	legacytypes "github.com/evmos/ethermint/x/evm/types/legacy"
+	legacytestutil "github.com/evmos/ethermint/x/evm/types/legacy/testutil"
 )
 
 func TestMigrate(t *testing.T) {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
 
-	storeKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
-	tKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
-	ctx := testutil.DefaultContext(storeKey, tKey)
+	storeKey := sdk.NewKVStoreKey(types.ModuleName)
+	tKey := sdk.NewTransientStoreKey(types.TransientKey)
+	paramStoreKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
+	paramStoreTKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
+	ctx := legacytestutil.NewDBContext([]storetypes.StoreKey{storeKey, paramStoreKey}, []storetypes.StoreKey{tKey, paramStoreTKey})
 	kvStore := ctx.KVStore(storeKey)
 
 	paramstore := paramtypes.NewSubspace(
 		cdc,
 		encCfg.Amino,
-		storeKey,
-		tKey,
+		paramStoreKey,
+		paramStoreTKey,
 		"evm",
-	).WithKeyTable(v2types.ParamKeyTable())
+	).WithKeyTable(legacytypes.ParamKeyTable())
 
-	initialParams := v2types.DefaultParams()
+	initialParams := legacytypes.DefaultParams()
+
+	// new params treats an empty slice as nil
+	initialParams.EIP712AllowedMsgs = nil
+
 	paramstore.SetParamSet(ctx, &initialParams)
 
 	err := v3.MigrateStore(
 		ctx,
-		cdc,
-		encCfg.Amino,
+		paramstore,
 		storeKey,
-		tKey,
+		cdc,
 	)
 	require.NoError(t, err)
 
@@ -50,104 +58,50 @@ func TestMigrate(t *testing.T) {
 	var migratedParams types.Params
 	cdc.MustUnmarshal(paramsBz, &migratedParams)
 
-	// No changes to existing params
-	require.Equal(t, initialParams.EvmDenom, migratedParams.EvmDenom)
-	require.Equal(t, initialParams.EnableCall, migratedParams.EnableCall)
-	require.Equal(t, initialParams.EnableCreate, migratedParams.EnableCreate)
-	require.Equal(t, initialParams.ExtraEIPs, migratedParams.ExtraEIPs)
-	require.ElementsMatch(t, initialParams.EIP712AllowedMsgs, migratedParams.EIP712AllowedMsgs)
-
-	// New param should be false
-	require.Equal(t, false, migratedParams.AllowUnprotectedTxs)
-
-	// New ChainConfig options are set to nil
-	expectedChainConfig := types.DefaultChainConfig()
-	expectedChainConfig.GrayGlacierBlock = nil
-	expectedChainConfig.ShanghaiBlock = nil
-	expectedChainConfig.CancunBlock = nil
-
-	require.EqualValues(t, expectedChainConfig, migratedParams.ChainConfig)
+	legacytestutil.AssertParamsEqual(t, initialParams, migratedParams)
 }
 
 func TestMigrate_Mainnet(t *testing.T) {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
 
-	storeKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
-	tKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
-	ctx := testutil.DefaultContext(storeKey, tKey)
+	storeKey := sdk.NewKVStoreKey(types.ModuleName)
+	tKey := sdk.NewTransientStoreKey(types.TransientKey)
+	paramStoreKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
+	paramStoreTKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
+	ctx := legacytestutil.NewDBContext([]storetypes.StoreKey{storeKey, paramStoreKey}, []storetypes.StoreKey{tKey, paramStoreTKey})
 	kvStore := ctx.KVStore(storeKey)
 
-	initialChainConfig := v2types.DefaultChainConfig()
+	initialChainConfig := legacytypes.DefaultChainConfig()
 	initialChainConfig.LondonBlock = nil
 	initialChainConfig.ArrowGlacierBlock = nil
 	initialChainConfig.MergeForkBlock = nil
 
-	initialParams := v2types.V2Params{
+	initialParams := legacytypes.LegacyParams{
 		EvmDenom:     "akava",
 		EnableCreate: true,
 		EnableCall:   true,
 		ExtraEIPs:    nil,
 		ChainConfig:  initialChainConfig,
 		// Start with a subset of allowed messages
-		EIP712AllowedMsgs: []v2types.V2EIP712AllowedMsg{
-			{
-				MsgTypeUrl:       "/kava.evmutil.v1beta1.MsgConvertERC20ToCoin",
-				MsgValueTypeName: "MsgValueEVMConvertERC20ToCoin",
-				ValueTypes: []v2types.V2EIP712MsgAttrType{
-					{Name: "initiator", Type: "string"},
-					{Name: "receiver", Type: "string"},
-					{Name: "kava_erc20_address", Type: "string"},
-					{Name: "amount", Type: "string"},
-				},
-			},
-			{
-				MsgTypeUrl:       "/kava.evmutil.v1beta1.MsgConvertCoinToERC20",
-				MsgValueTypeName: "MsgValueEVMConvertCoinToERC20",
-				ValueTypes: []v2types.V2EIP712MsgAttrType{
-					{Name: "initiator", Type: "string"},
-					{Name: "receiver", Type: "string"},
-					{Name: "amount", Type: "Coin"},
-				},
-			},
-			// x/earn
-			{
-				MsgTypeUrl:       "/kava.earn.v1beta1.MsgDeposit",
-				MsgValueTypeName: "MsgValueEarnDeposit",
-				ValueTypes: []v2types.V2EIP712MsgAttrType{
-					{Name: "depositor", Type: "string"},
-					{Name: "amount", Type: "Coin"},
-					{Name: "strategy", Type: "int32"},
-				},
-			},
-			{
-				MsgTypeUrl:       "/kava.earn.v1beta1.MsgWithdraw",
-				MsgValueTypeName: "MsgValueEarnWithdraw",
-				ValueTypes: []v2types.V2EIP712MsgAttrType{
-					{Name: "from", Type: "string"},
-					{Name: "amount", Type: "Coin"},
-					{Name: "strategy", Type: "int32"},
-				},
-			},
-		},
+		EIP712AllowedMsgs: legacytestutil.TestEIP712AllowedMsgs,
 	}
 
 	paramstore := paramtypes.NewSubspace(
 		cdc,
 		encCfg.Amino,
-		storeKey,
-		tKey,
+		paramStoreKey,
+		paramStoreTKey,
 		"evm",
-	).WithKeyTable(v2types.ParamKeyTable())
+	).WithKeyTable(legacytypes.ParamKeyTable())
 
 	paramstore.SetParamSet(ctx, &initialParams)
 
 	err := v3.MigrateStore(
 		ctx,
-		cdc,
-		encCfg.Amino,
+		paramstore,
 		storeKey,
-		tKey,
+		cdc,
 	)
 	require.NoError(t, err)
 
@@ -156,31 +110,102 @@ func TestMigrate_Mainnet(t *testing.T) {
 	var migratedParams types.Params
 	cdc.MustUnmarshal(paramsBz, &migratedParams)
 
-	require.Equal(t, initialParams.EvmDenom, migratedParams.EvmDenom)
-	require.Equal(t, initialParams.EnableCall, migratedParams.EnableCall)
-	require.Equal(t, initialParams.EnableCreate, migratedParams.EnableCreate)
-	require.Equal(t, false, migratedParams.AllowUnprotectedTxs)
-	require.Equal(t, initialParams.ExtraEIPs, migratedParams.ExtraEIPs)
+	// ensure migrated params match initial params
+	legacytestutil.AssertParamsEqual(t, initialParams, migratedParams)
+}
 
-	expectedEIP712AllowedMsgsJson, err := json.Marshal(initialParams.EIP712AllowedMsgs)
-	require.NoError(t, err)
+func TestKeyTableCompatiabilityWithKeeper(t *testing.T) {
+	encCfg := encoding.MakeConfig(app.ModuleBasics)
+	cdc := encCfg.Codec
 
-	migratedEIP712AllowedMsgsJson, err := json.Marshal(migratedParams.EIP712AllowedMsgs)
-	require.NoError(t, err)
+	storeKey := sdk.NewKVStoreKey(types.ModuleName)
+	tKey := sdk.NewTransientStoreKey(types.TransientKey)
+	paramStoreKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
+	paramStoreTKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
+	ctx := legacytestutil.NewDBContext([]storetypes.StoreKey{storeKey, paramStoreKey}, []storetypes.StoreKey{tKey, paramStoreTKey})
 
-	// Convert to JSON since they are different types but of same field and values
-	require.JSONEq(t, string(expectedEIP712AllowedMsgsJson), string(migratedEIP712AllowedMsgsJson))
+	ak := app.Setup(false, nil).AccountKeeper
 
-	expectedChainConfig := types.DefaultChainConfig()
-	// Previously nil ChainConfig options are still nil
-	expectedChainConfig.LondonBlock = nil
-	expectedChainConfig.ArrowGlacierBlock = nil
-	expectedChainConfig.MergeNetsplitBlock = nil
+	// only used to set initial params
+	initialSubspace := paramtypes.NewSubspace(
+		cdc,
+		encCfg.Amino,
+		paramStoreKey,
+		paramStoreTKey,
+		"evm",
+	).WithKeyTable(legacytypes.ParamKeyTable())
+	initialParams := legacytypes.DefaultParams()
+	initialSubspace.SetParamSet(ctx, &initialParams)
 
-	// New ChainConfig options are set to nil
-	expectedChainConfig.GrayGlacierBlock = nil
-	expectedChainConfig.ShanghaiBlock = nil
-	expectedChainConfig.CancunBlock = nil
+	// vanilla subspace (no key table) that keeper
+	// will register a key table on
+	subspace := paramtypes.NewSubspace(
+		cdc,
+		encCfg.Amino,
+		paramStoreKey,
+		paramStoreTKey,
+		"evm",
+	)
+	keeper.NewKeeper(
+		cdc, storeKey, tKey, authtypes.NewModuleAddress("gov"),
+		ak,
+		nil, nil, nil, nil,
+		geth.NewEVM,
+		"",
+		subspace,
+	)
 
-	require.EqualValues(t, expectedChainConfig, migratedParams.ChainConfig)
+	// ensure that the migration is compatible with the keeper legacy
+	// key table registration
+	require.NotPanics(t, func() {
+		v3.MigrateStore(
+			ctx,
+			subspace,
+			storeKey,
+			cdc,
+		)
+
+	}, "type mismatch with registered table")
+}
+
+func TestMigrationRegistersItsOwnKeyTable(t *testing.T) {
+	encCfg := encoding.MakeConfig(app.ModuleBasics)
+	cdc := encCfg.Codec
+
+	storeKey := sdk.NewKVStoreKey(types.ModuleName)
+	tKey := sdk.NewTransientStoreKey(types.TransientKey)
+	paramStoreKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
+	paramStoreTKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
+	ctx := legacytestutil.NewDBContext([]storetypes.StoreKey{storeKey, paramStoreKey}, []storetypes.StoreKey{tKey, paramStoreTKey})
+
+	// only used to set initial params
+	initialSubspace := paramtypes.NewSubspace(
+		cdc,
+		encCfg.Amino,
+		paramStoreKey,
+		paramStoreTKey,
+		"evm",
+	).WithKeyTable(legacytypes.ParamKeyTable())
+	initialParams := legacytypes.DefaultParams()
+	initialSubspace.SetParamSet(ctx, &initialParams)
+
+	// vanilla subspace (no key table) that MigrateStore
+	// will register a key table on
+	subspace := paramtypes.NewSubspace(
+		cdc,
+		encCfg.Amino,
+		paramStoreKey,
+		paramStoreTKey,
+		"evm",
+	)
+	// ensure that the migration is compatible with the keeper legacy
+	// key table registration
+	require.NotPanics(t, func() {
+		v3.MigrateStore(
+			ctx,
+			subspace,
+			storeKey,
+			cdc,
+		)
+	})
 }

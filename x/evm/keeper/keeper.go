@@ -34,6 +34,7 @@ import (
 	ethermint "github.com/evmos/ethermint/types"
 	"github.com/evmos/ethermint/x/evm/statedb"
 	"github.com/evmos/ethermint/x/evm/types"
+	legacytypes "github.com/evmos/ethermint/x/evm/types/legacy"
 	evm "github.com/evmos/ethermint/x/evm/vm"
 )
 
@@ -41,8 +42,6 @@ import (
 type Keeper struct {
 	// Protobuf codec
 	cdc codec.BinaryCodec
-	// Amino Codec used for legacy parameters
-	legacyAmino *codec.LegacyAmino
 	// Store key required for the EVM Prefix KVStore. It is required by:
 	// - storing account's Storage State
 	// - storing account's Code
@@ -52,10 +51,6 @@ type Keeper struct {
 
 	// key to access the transient store, which is reset on every block during Commit
 	transientKey storetypes.StoreKey
-
-	// keys used by migrator and interaction with legacy parameter store
-	paramStoreKey  storetypes.StoreKey
-	paramStoreTKey storetypes.StoreKey
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this should be the x/gov module account.
 	authority sdk.AccAddress
@@ -89,9 +84,7 @@ type Keeper struct {
 // NewKeeper generates new evm module keeper
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	legacyAmino *codec.LegacyAmino,
 	storeKey, transientKey storetypes.StoreKey,
-	paramStoreKey, paramStoreTKey storetypes.StoreKey,
 	authority sdk.AccAddress,
 	ak types.AccountKeeper,
 	bankKeeper types.BankKeeper,
@@ -112,10 +105,13 @@ func NewKeeper(
 		panic(err)
 	}
 
+	if !ss.HasKeyTable() {
+		ss = ss.WithKeyTable(legacytypes.ParamKeyTable())
+	}
+
 	// NOTE: we pass in the parameter space to the CommitStateDB in order to use custom denominations for the EVM operations
 	return &Keeper{
 		cdc:               cdc,
-		legacyAmino:       legacyAmino,
 		authority:         authority,
 		accountKeeper:     ak,
 		bankKeeper:        bankKeeper,
@@ -123,8 +119,6 @@ func NewKeeper(
 		feeMarketKeeper:   fmk,
 		storeKey:          storeKey,
 		transientKey:      transientKey,
-		paramStoreKey:     paramStoreKey,
-		paramStoreTKey:    paramStoreTKey,
 		customPrecompiles: customPrecompiles,
 		evmConstructor:    evmConstructor,
 		tracer:            tracer,
