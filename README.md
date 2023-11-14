@@ -63,5 +63,5 @@ The following chat channels and forums are a great spot to ask questions about E
 - [Evmos Telegram](https://t.me/EvmosOrg)
 - [Altiplanic Twitter](https://twitter.com/Altiplanic_io)
 
-
+## Integration tests
 
