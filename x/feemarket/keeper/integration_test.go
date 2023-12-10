@@ -25,11 +25,11 @@ import (
 	"github.com/evmos/ethermint/testutil"
 	"github.com/evmos/ethermint/x/feemarket/types"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 )
 

@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmlog "github.com/cometbft/cometbft/libs/log"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+	"github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -12,10 +16,6 @@ import (
 	rpctypes "github.com/evmos/ethermint/rpc/types"
 	ethermint "github.com/evmos/ethermint/types"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmlog "github.com/tendermint/tendermint/libs/log"
-	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
-	"github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 	"google.golang.org/grpc/metadata"
 )

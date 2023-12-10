@@ -4,6 +4,9 @@ import (
 	"math/big"
 	"testing"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmlog "github.com/cometbft/cometbft/libs/log"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,9 +18,6 @@ import (
 	"github.com/evmos/ethermint/tests"
 	"github.com/evmos/ethermint/x/evm/types"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmlog "github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
