@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
+	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmlog "github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -16,7 +17,6 @@ import (
 	rpctypes "github.com/evmos/ethermint/rpc/types"
 	ethermint "github.com/evmos/ethermint/types"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
-	dbm "github.com/tendermint/tm-db"
 	"google.golang.org/grpc/metadata"
 )
 

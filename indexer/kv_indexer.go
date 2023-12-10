@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -28,7 +29,6 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/ethereum/go-ethereum/common"
 	rpctypes "github.com/evmos/ethermint/rpc/types"
-	dbm "github.com/tendermint/tm-db"
 
 	ethermint "github.com/evmos/ethermint/types"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"

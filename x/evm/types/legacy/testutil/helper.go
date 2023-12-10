@@ -3,6 +3,7 @@ package testutil
 import (
 	"testing"
 
+	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -11,7 +12,6 @@ import (
 	"github.com/evmos/ethermint/x/evm/types"
 	legacytypes "github.com/evmos/ethermint/x/evm/types/legacy"
 	"github.com/stretchr/testify/require"
-	dbm "github.com/tendermint/tm-db"
 )
 
 // NewDefaultContext with multile mounted stores

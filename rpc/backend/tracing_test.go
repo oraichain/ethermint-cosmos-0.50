@@ -3,6 +3,7 @@ package backend
 import (
 	"fmt"
 
+	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmlog "github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -15,7 +16,6 @@ import (
 	"github.com/evmos/ethermint/indexer"
 	"github.com/evmos/ethermint/rpc/backend/mocks"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
-	dbm "github.com/tendermint/tm-db"
 )
 
 func (suite *BackendTestSuite) TestTraceTransaction() {
