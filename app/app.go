@@ -288,7 +288,7 @@ func NewEthermintApp(
 		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey,
-		evidencetypes.StoreKey, capabilitytypes.StoreKey,
+		evidencetypes.StoreKey, capabilitytypes.StoreKey, consensusparamtypes.StoreKey,
 		feegrant.StoreKey, authzkeeper.StoreKey,
 		// ibc keys
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
@@ -394,6 +394,15 @@ func NewEthermintApp(
 		app.BaseApp,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String())
 
+	// register the staking hooks
+	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
+	stakingKeeper.SetHooks(
+		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(),
+			app.SlashingKeeper.Hooks()),
+	)
+
+	app.StakingKeeper = *stakingKeeper
+
 	app.AuthzKeeper = authzkeeper.NewKeeper(
 		keys[authzkeeper.StoreKey],
 		appCodec,
@@ -414,13 +423,13 @@ func NewEthermintApp(
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey],
 		authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
+		app.AccountKeeper, app.BankKeeper, stakingKeeper, app.FeeMarketKeeper,
 		nil, geth.NewEVM, tracer, evmSs,
 	)
 
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
-		appCodec, keys[ibcexported.StoreKey], app.GetSubspace(ibcexported.ModuleName), app.StakingKeeper, app.UpgradeKeeper, scopedIBCKeeper,
+		appCodec, keys[ibcexported.StoreKey], app.GetSubspace(ibcexported.ModuleName), stakingKeeper, app.UpgradeKeeper, scopedIBCKeeper,
 	)
 
 	// register the proposal types
@@ -438,6 +447,8 @@ func NewEthermintApp(
 		appCodec, keys[govtypes.StoreKey], app.AccountKeeper, app.BankKeeper,
 		stakingKeeper, app.MsgServiceRouter(), govConfig, authAddr,
 	)
+
+	app.StakingKeeper = *stakingKeeper
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
