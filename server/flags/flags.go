@@ -42,12 +42,6 @@ const (
 	GRPCWebAddress = "grpc-web.address"
 )
 
-// Cosmos API flags
-const (
-	RPCEnable         = "api.enable"
-	EnabledUnsafeCors = "api.enabled-unsafe-cors"
-)
-
 // JSON-RPC flags
 const (
 	JSONRPCEnable              = "json-rpc.enable"

@@ -185,14 +185,20 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().Uint64(server.FlagMinRetainBlocks, 0, "Minimum block height offset during ABCI commit to prune Tendermint blocks")
 	cmd.Flags().String(srvflags.AppDBBackend, "", "The type of database for application and snapshots databases")
 
+	cmd.Flags().Bool(server.FlagAPIEnable, false, "Define if the API server should be enabled")
+	cmd.Flags().Bool(server.FlagAPISwagger, false, "Define if swagger documentation should automatically be registered (Note: the API must also be enabled)")
+	cmd.Flags().String(server.FlagAPIAddress, serverconfig.DefaultAPIAddress, "the API server address to listen on")
+	cmd.Flags().Uint(server.FlagAPIMaxOpenConnections, 1000, "Define the number of maximum open connections")
+	cmd.Flags().Uint(server.FlagRPCReadTimeout, 10, "Define the Tendermint RPC read timeout (in seconds)")
+	cmd.Flags().Uint(server.FlagRPCWriteTimeout, 0, "Define the Tendermint RPC write timeout (in seconds)")
+	cmd.Flags().Uint(server.FlagRPCMaxBodyBytes, 1000000, "Define the Tendermint maximum response body (in bytes)")
+	cmd.Flags().Bool(server.FlagAPIEnableUnsafeCORS, false, "Define if CORS should be enabled (unsafe - use it at your own risk)")
+
 	cmd.Flags().Bool(srvflags.GRPCOnly, false, "Start the node in gRPC query only mode without Tendermint process")
 	cmd.Flags().Bool(srvflags.GRPCEnable, true, "Define if the gRPC server should be enabled")
 	cmd.Flags().String(srvflags.GRPCAddress, serverconfig.DefaultGRPCAddress, "the gRPC server address to listen on")
 	cmd.Flags().Bool(srvflags.GRPCWebEnable, true, "Define if the gRPC-Web server should be enabled. (Note: gRPC must also be enabled.)")
 	cmd.Flags().String(srvflags.GRPCWebAddress, serverconfig.DefaultGRPCWebAddress, "The gRPC-Web server address to listen on")
-
-	cmd.Flags().Bool(srvflags.RPCEnable, false, "Defines if Cosmos-sdk REST server should be enabled")
-	cmd.Flags().Bool(srvflags.EnabledUnsafeCors, false, "Defines if CORS should be enabled (unsafe - use it at your own risk)")
 
 	cmd.Flags().Bool(srvflags.JSONRPCEnable, true, "Define if the JSON-RPC server should be enabled")
 	cmd.Flags().StringSlice(srvflags.JSONRPCAPI, config.GetDefaultAPINamespaces(), "Defines a list of JSON-RPC namespaces that should be enabled")
@@ -219,6 +225,8 @@ which accepts a path for the resulting pprof file.
 
 	cmd.Flags().Uint64(server.FlagStateSyncSnapshotInterval, 0, "State sync snapshot interval")
 	cmd.Flags().Uint32(server.FlagStateSyncSnapshotKeepRecent, 2, "State sync snapshot to keep")
+
+	cmd.Flags().Bool(server.FlagDisableIAVLFastNode, false, "Disable fast node for IAVL tree")
 
 	// add support for all Tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
