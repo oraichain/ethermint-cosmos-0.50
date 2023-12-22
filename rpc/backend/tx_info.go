@@ -262,7 +262,7 @@ func (b *Backend) GetTransactionByBlockHashAndIndex(hash common.Hash, idx hexuti
 	b.logger.Debug("eth_getTransactionByBlockHashAndIndex", "hash", hash.Hex(), "index", idx)
 	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
 	if !ok {
-		b.logger.Error("invalid rpc client")
+		return nil, errors.New("invalid rpc client")
 	}
 	block, err := sc.BlockByHash(b.ctx, hash.Bytes())
 	if err != nil {

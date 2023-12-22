@@ -123,6 +123,7 @@ func (b *Backend) GetBlockTransactionCountByHash(hash common.Hash) *hexutil.Uint
 	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
 	if !ok {
 		b.logger.Error("invalid rpc client")
+		return nil
 	}
 
 	block, err := sc.BlockByHash(b.ctx, hash.Bytes())
@@ -201,6 +202,8 @@ func (b *Backend) TendermintBlockResultByNumber(height *int64) (*tmrpctypes.Resu
 	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
 	if !ok {
 		b.logger.Error("invalid rpc client")
+		return nil, errors.New("invalid rpc client")
+
 	}
 	return sc.BlockResults(b.ctx, height)
 }
@@ -210,6 +213,7 @@ func (b *Backend) TendermintBlockByHash(blockHash common.Hash) (*tmrpctypes.Resu
 	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
 	if !ok {
 		b.logger.Error("invalid rpc client")
+		return nil, errors.New("invalid rpc client")
 	}
 	resBlock, err := sc.BlockByHash(b.ctx, blockHash.Bytes())
 	if err != nil {
