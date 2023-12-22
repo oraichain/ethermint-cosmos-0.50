@@ -319,9 +319,12 @@ func NewEthermintApp(
 
 	// init params keeper and subspaces
 	app.ParamsKeeper = initParamsKeeper(appCodec, cdc, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
-	// set the BaseApp's parameter store
+
+	// allow x/gov to modify consensus parameters
 	authAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[consensusparamtypes.StoreKey], authAddr)
+
+	// set the BaseApp's parameter store to the consensus keeper
 	bApp.SetParamStore(&app.ConsensusParamsKeeper)
 
 	// add capability keeper and ScopeToModule for ibc module
@@ -478,9 +481,6 @@ func NewEthermintApp(
 	app.EvidenceKeeper = *evidenceKeeper
 
 	/****  Module Options ****/
-
-	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
-	// we prefer to be more strict in what arguments the modules expect.
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
