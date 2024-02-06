@@ -214,7 +214,7 @@ replace (
 	// use cosmos keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// Use cosmos-sdk fork with staking transfer events, and custom tally handler support
-	github.com/cosmos/cosmos-sdk => github.com/kava-labs/cosmos-sdk v0.47.2-0.20240101221523-62b74a63ed1b
+	github.com/cosmos/cosmos-sdk => github.com/kava-labs/cosmos-sdk v0.47.7-kava.1
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.0

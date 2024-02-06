@@ -18,6 +18,7 @@ package backend
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -125,7 +126,52 @@ func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfi
 		return nil, err
 	}
 
-	return decodedResult, nil
+	jsonResult, ok := decodedResult.(map[string]interface{})
+
+	if !ok {
+		// gracefully fallback to default behavior
+		return decodedResult, nil
+	}
+
+	// handle edge cases in differences between traced tx status
+	// and actual tx status when it was executed as part of a block
+	// this can happen when
+	// - tracing a tx succeeds even though when the tx was executed
+	// the block gas meter became exhausted
+	if jsonResult["failed"] != transaction.Failed {
+		// override trace transaction status with actual tx status
+		jsonResult["failed"] = transaction.Failed
+		_, exists := jsonResult["error"]
+
+		if !exists {
+			// use tendermint as source of truth for error message
+			// and gas usage
+			query := fmt.Sprintf("%s.%s='%s'", evmtypes.TypeMsgEthereumTx, evmtypes.AttributeKeyEthereumTxHash, hash.Hex())
+			resTxs, err := b.clientCtx.Client.TxSearch(b.ctx, query, false, nil, nil, "")
+
+			if err != nil {
+				panic(err)
+			}
+
+			if resTxs.TotalCount != 1 {
+				// gracefully fallback to default behavior
+				return decodedResult, nil
+			}
+
+			txMe := resTxs.Txs[0]
+
+			// using the actual gas used amount for when the tx was executed
+			jsonResult["gas_used"] = txMe.TxResult.GasUsed
+
+			// TODO: supporting configuring max error string length
+			// some indexing services (e.g. blockscout) have a character limit
+			// for the field that stores this data
+			maxErrorStringLength := math.Min(200, float64(len(txMe.TxResult.Log)-1))
+			jsonResult["error"] = txMe.TxResult.Log[0:int64(maxErrorStringLength)]
+		}
+	}
+
+	return jsonResult, nil
 }
 
 // TraceBlock configures a new tracer according to the provided configuration, and
