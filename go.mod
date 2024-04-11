@@ -2,7 +2,7 @@ module github.com/evmos/ethermint
 
 go 1.21
 
-toolchain go1.21.6
+toolchain go1.21.0
 
 require (
 	cosmossdk.io/errors v1.0.1

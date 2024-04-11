@@ -17,10 +17,10 @@
         "homepage": null,
         "owner": "tweag",
         "repo": "gomod2nix",
-        "rev": "40d32f82fc60d66402eb0972e6e368aeab3faf58",
-        "sha256": "0li17ynbg2wg0xqy655m5rmcw905sbv7d4ir35z7s5pg1yhhzxkp",
+        "rev": "30e3c3a9ec4ac8453282ca7f67fca9e1da12c3e6",
+        "sha256": "1m0q0p1xidsp61xfrbj8ld1dqk3fhyrfifxj2ks36yjbnzmi1x69",
         "type": "tarball",
-        "url": "https://github.com/tweag/gomod2nix/archive/40d32f82fc60d66402eb0972e6e368aeab3faf58.tar.gz",
+        "url": "https://github.com/tweag/gomod2nix/archive/30e3c3a9ec4ac8453282ca7f67fca9e1da12c3e6.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "niv": {
@@ -36,15 +36,27 @@
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nixpkgs": {
-        "branch": "master",
+        "branch": "release-23.11",
         "description": "Nix Packages collection",
         "homepage": "",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "ea2c6a6dda1aa35a80139a512a9dee375b0946e7",
-        "sha256": "0nd4nn9ryqa80ssw3j2kmr8wa73p2xz1hyxp280cdzqlmdfgw1lm",
+        "rev": "057f9aecfb71c4437d2b27d3323df7f93c010b7e",
+        "sha256": "1ndiv385w1qyb3b18vw13991fzb9wg4cl21wglk89grsfsnra41k",
         "type": "tarball",
-        "url": "https://github.com/NixOS/nixpkgs/archive/ea2c6a6dda1aa35a80139a512a9dee375b0946e7.tar.gz",
+        "url": "https://github.com/NixOS/nixpkgs/archive/057f9aecfb71c4437d2b27d3323df7f93c010b7e.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "poetry2nix": {
+        "branch": "master",
+        "description": "Convert poetry projects to nix automagically [maintainer=@adisbladis] ",
+        "homepage": "",
+        "owner": "nix-community",
+        "repo": "poetry2nix",
+        "rev": "e0b44e9e2d3aa855d1dd77b06f067cd0e0c3860d",
+        "sha256": "0zz3qzp2b5i9gw4yfxfrq07iadcdadackph12h02w19bb3535rm6",
+        "type": "tarball",
+        "url": "https://github.com/nix-community/poetry2nix/archive/e0b44e9e2d3aa855d1dd77b06f067cd0e0c3860d.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }

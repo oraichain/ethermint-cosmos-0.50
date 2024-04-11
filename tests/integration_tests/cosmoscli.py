@@ -637,8 +637,9 @@ class CosmosCLI:
         )
 
     def gov_propose(self, proposer, kind, proposal, **kwargs):
-        method = "submit-proposal"
+        method = "submit-legacy-proposal"
         kwargs.setdefault("gas_prices", DEFAULT_GAS_PRICE)
+        kwargs.setdefault("gas", DEFAULT_GAS)
         if kind == "software-upgrade":
             return json.loads(
                 self.raw(
@@ -648,6 +649,7 @@ class CosmosCLI:
                     kind,
                     proposal["name"],
                     "-y",
+                    "--no-validate",
                     from_=proposer,
                     # content
                     title=proposal.get("title"),
@@ -700,6 +702,7 @@ class CosmosCLI:
 
     def gov_vote(self, voter, proposal_id, option, **kwargs):
         kwargs.setdefault("gas_prices", DEFAULT_GAS_PRICE)
+        kwargs.setdefault("broadcast_mode", "sync")
         return json.loads(
             self.raw(
                 "tx",

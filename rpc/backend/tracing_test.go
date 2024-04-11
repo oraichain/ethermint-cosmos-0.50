@@ -7,7 +7,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmlog "github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	"github.com/cometbft/cometbft/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/ethereum/go-ethereum/common"
@@ -50,7 +49,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 	testCases := []struct {
 		name          string
 		registerMock  func()
-		block         *types.Block
+		block         *tmtypes.Block
 		responseBlock []*abci.ResponseDeliverTx
 		expResult     interface{}
 		expPass       bool
@@ -58,7 +57,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 		{
 			"fail - tx not found",
 			func() {},
-			&types.Block{Header: types.Header{Height: 1}, Data: types.Data{Txs: []types.Tx{}}},
+			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code: 0,
@@ -84,7 +83,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				RegisterBlockError(client, 1)
 			},
-			&types.Block{Header: types.Header{Height: 1}, Data: types.Data{Txs: []types.Tx{txBz}}},
+			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code: 0,
@@ -100,7 +99,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 					},
 				},
 			},
-			map[string]interface{}{"test": "hello"},
+			map[string]interface{}{"failed": false, "test": "hello"},
 			false,
 		},
 		{
@@ -108,10 +107,10 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 			func() {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
-				RegisterBlockMultipleTxs(client, 1, []types.Tx{txBz, txBz2})
+				RegisterBlockMultipleTxs(client, 1, []tmtypes.Tx{txBz, txBz2})
 				RegisterTraceTransactionWithPredecessors(queryClient, msgEthereumTx, []*evmtypes.MsgEthereumTx{msgEthereumTx})
 			},
-			&types.Block{Header: types.Header{Height: 1, ChainID: ChainID}, Data: types.Data{Txs: []types.Tx{txBz, txBz2}}},
+			&tmtypes.Block{Header: tmtypes.Header{Height: 1, ChainID: ChainID}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz, txBz2}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code: 0,
@@ -140,7 +139,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 					},
 				},
 			},
-			map[string]interface{}{"test": "hello"},
+			map[string]interface{}{"failed": false, "test": "hello"},
 			true,
 		},
 		{
@@ -151,7 +150,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 				RegisterBlock(client, 1, txBz)
 				RegisterTraceTransaction(queryClient, msgEthereumTx)
 			},
-			&types.Block{Header: types.Header{Height: 1}, Data: types.Data{Txs: []types.Tx{txBz}}},
+			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code: 0,
@@ -167,9 +166,44 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 					},
 				},
 			},
-			map[string]interface{}{"test": "hello"},
+			map[string]interface{}{"failed": false, "test": "hello"},
 			true,
 		},
+		// TODO: Actually test trace when out of gas, for BOTH:
+		// - "out of gas in location: block gas meter; gasWanted:"
+		// - "no block gas left to run tx: out of gas" (this is the one is not considered in tx indexer)
+		/*
+			{
+				"pass - out of gas error",
+				func() {
+					queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
+					client := suite.backend.clientCtx.Client.(*mocks.Client)
+					RegisterBlock(client, 1, txBz)
+					RegisterTraceTransaction(queryClient, msgEthereumTx)
+				},
+				&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
+				[]*abci.ResponseDeliverTx{
+					{
+						Code:      11,
+						GasWanted: 21000,
+						GasUsed:   21000,
+						Log:       rpctypes.ExceedBlockGasLimitError,
+						Events: []abci.Event{
+							{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
+								{Key: []byte("ethereumTxHash"), Value: []byte(txHash.Hex())},
+								{Key: []byte("txIndex"), Value: []byte("0")},
+								{Key: []byte("amount"), Value: []byte("1000")},
+								{Key: []byte("txGasUsed"), Value: []byte("21000")},
+								{Key: []byte("txHash"), Value: []byte("")},
+								{Key: []byte("recipient"), Value: []byte("0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7")},
+							}},
+						},
+					},
+				},
+				map[string]interface{}{"failed": true, "test": "hello"},
+				true,
+			},
+		*/
 	}
 
 	for _, tc := range testCases {

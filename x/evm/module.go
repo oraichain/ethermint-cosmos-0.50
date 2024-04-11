@@ -113,8 +113,6 @@ type AppModule struct {
 	AppModuleBasic
 	keeper *keeper.Keeper
 	ak     types.AccountKeeper
-	// legacySubspace is used solely for migration of x/params managed parameters
-	legacySubspace types.Subspace
 }
 
 // NewAppModule creates a new AppModule object

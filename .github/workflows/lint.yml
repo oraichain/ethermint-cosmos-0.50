@@ -16,7 +16,7 @@ jobs:
       # Required: setup-go, for all versions v3.0.0+ of golangci-lint
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.19
+          go-version: '1.21'
           check-latest: true
       - uses: actions/checkout@v3
       - uses: technote-space/get-diff-action@v6.1.2
@@ -58,9 +58,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: cachix/install-nix-action@v18
-      - uses: cachix/cachix-action@v12
-        with:
-          name: ethermint
       - uses: technote-space/get-diff-action@v6.1.2
         with:
           PATTERNS: |
@@ -72,11 +69,13 @@ jobs:
     name: Check gomod2nix.toml file is up to date
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.4
-      - uses: cachix/install-nix-action@v18
-      - uses: cachix/cachix-action@v12
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v26
         with:
-          name: ethermint
+          nix_path: nixpkgs=channel:nixos-23.11
+      - uses: cachix/cachix-action@v14
+        with:
+          name: crypto-ethermint
       - uses: technote-space/get-diff-action@v6.1.2
         with:
           PATTERNS: |
@@ -85,4 +84,5 @@ jobs:
         run: |
           nix run -f ./nix gomod2nix
           git diff --no-ext-diff --exit-code
-        if: env.GIT_DIFF
+# Run gomod2nix job every time, until we're sure it's stable
+#        if: env.GIT_DIFF

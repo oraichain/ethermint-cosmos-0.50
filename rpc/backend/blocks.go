@@ -203,8 +203,8 @@ func (b *Backend) TendermintBlockResultByNumber(height *int64) (*tmrpctypes.Resu
 	if !ok {
 		b.logger.Error("invalid rpc client")
 		return nil, errors.New("invalid rpc client")
-
 	}
+
 	return sc.BlockResults(b.ctx, height)
 }
 

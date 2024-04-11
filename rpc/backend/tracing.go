@@ -138,7 +138,7 @@ func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfi
 	// this can happen when
 	// - tracing a tx succeeds even though when the tx was executed
 	// the block gas meter became exhausted
-	if jsonResult["failed"] != transaction.Failed {
+	if transaction.Failed && jsonResult["failed"] != transaction.Failed {
 		// override trace transaction status with actual tx status
 		jsonResult["failed"] = transaction.Failed
 		_, exists := jsonResult["error"]
@@ -148,7 +148,6 @@ func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfi
 			// and gas usage
 			query := fmt.Sprintf("%s.%s='%s'", evmtypes.TypeMsgEthereumTx, evmtypes.AttributeKeyEthereumTxHash, hash.Hex())
 			resTxs, err := b.clientCtx.Client.TxSearch(b.ctx, query, false, nil, nil, "")
-
 			if err != nil {
 				panic(err)
 			}
