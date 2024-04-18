@@ -18,14 +18,15 @@ package types
 import (
 	"math/big"
 
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/params"
+
 	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 )
 
@@ -83,3 +84,13 @@ type (
 		WithKeyTable(table paramtypes.KeyTable) paramtypes.Subspace
 	}
 )
+
+// Constructor defines the function used to instantiate the EVM on
+// each state transition.
+type Constructor func(
+	blockCtx vm.BlockContext,
+	txCtx vm.TxContext,
+	stateDB vm.StateDB,
+	chainConfig *params.ChainConfig,
+	config vm.Config,
+) *vm.EVM
