@@ -26,8 +26,8 @@ import (
 
 // GetPrecompiles returns all the precompiled contracts defined given the
 // current chain configuration and block height.
-func GetPrecompiles(cfg *params.ChainConfig, blockNumber *big.Int) evm.PrecompiledContracts {
-	var precompiles evm.PrecompiledContracts
+func GetPrecompiles(cfg *params.ChainConfig, blockNumber *big.Int) evm.StatefulPrecompiledContracts {
+	var precompiles evm.StatefulPrecompiledContracts
 	switch {
 	case cfg.IsBerlin(blockNumber):
 		precompiles = vm.PrecompiledContractsBerlin

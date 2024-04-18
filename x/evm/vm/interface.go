@@ -18,6 +18,8 @@ package vm
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/precompile/contract"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
@@ -26,6 +28,8 @@ import (
 
 // PrecompiledContracts defines a map of address -> precompiled contract
 type PrecompiledContracts map[common.Address]vm.PrecompiledContract
+
+type StatefulPrecompiledContracts map[common.Address]contract.StatefulPrecompiledContract
 
 type StatefulPrecompiledContract interface {
 	vm.PrecompiledContract
@@ -58,7 +62,7 @@ type EVM interface {
 	ChainConfig() *params.ChainConfig
 
 	ActivePrecompiles(rules params.Rules) []common.Address
-	Precompile(addr common.Address) (vm.PrecompiledContract, bool)
+	Precompile(addr common.Address) (contract.StatefulPrecompiledContract, bool)
 	RunPrecompiledContract(
 		p StatefulPrecompiledContract,
 		addr common.Address,
