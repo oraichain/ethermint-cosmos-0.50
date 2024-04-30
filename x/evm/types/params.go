@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -105,7 +106,15 @@ func (p Params) Validate() error {
 		return err
 	}
 
-	return validateEIP712AllowedMsgs(p.EIP712AllowedMsgs)
+	if err := validateEIP712AllowedMsgs(p.EIP712AllowedMsgs); err != nil {
+		return err
+	}
+
+	if err := validateEnabledPrecompiles(p.EnabledPrecompiles); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // EIP712AllowedMsgFromMsgType returns the EIP712AllowedMsg for a given message type url.
@@ -181,6 +190,16 @@ func validateEIP712AllowedMsgs(i interface{}) error {
 			return fmt.Errorf("duplicate eip712 allowed legacy msg type: %s", allowedMsg.MsgTypeUrl)
 		}
 		msgTypes[allowedMsg.MsgTypeUrl] = true
+	}
+
+	return nil
+}
+
+func validateEnabledPrecompiles(enabledPrecompiles []string) error {
+	for _, addr := range enabledPrecompiles {
+		if !common.IsHexAddress(addr) {
+			return fmt.Errorf("invalid hex address: %v in enabled precompiles list", addr)
+		}
 	}
 
 	return nil

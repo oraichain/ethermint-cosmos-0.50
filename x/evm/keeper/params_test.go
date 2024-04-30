@@ -17,6 +17,11 @@ import (
 	legacytestutil "github.com/evmos/ethermint/x/evm/types/legacy/testutil"
 )
 
+const (
+	validEthAddress1 = "0xc0ffee254729296a45a3885639AC7E10F9d54979"
+	validEthAddress2 = "0xdF789447f8c5b3863bEB07F0272B78d1778EE11E"
+)
+
 func (suite *KeeperTestSuite) TestParams() {
 	params := suite.app.EvmKeeper.GetParams(suite.ctx)
 	suite.app.EvmKeeper.SetParams(suite.ctx, params)
@@ -98,6 +103,46 @@ func (suite *KeeperTestSuite) TestParams() {
 			func() interface{} {
 				evmParams := suite.app.EvmKeeper.GetParams(suite.ctx)
 				return evmParams.GetChainConfig()
+			},
+			true,
+		},
+		{
+			"success - EnabledPrecompiles param is set to empty slice and will be retrieved as nil",
+			func() interface{} {
+				params.EnabledPrecompiles = []string{}
+				suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				var typedNil []string = nil // NOTE: despite we set EnabledPrecompiles as []string{}, it will be retrieved as nil
+				return typedNil
+			},
+			func() interface{} {
+				evmParams := suite.app.EvmKeeper.GetParams(suite.ctx)
+				return evmParams.GetEnabledPrecompiles()
+			},
+			true,
+		},
+		{
+			"success - EnabledPrecompiles param is set to nil and can be retrieved correctly",
+			func() interface{} {
+				params.EnabledPrecompiles = nil
+				suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				return params.EnabledPrecompiles
+			},
+			func() interface{} {
+				evmParams := suite.app.EvmKeeper.GetParams(suite.ctx)
+				return evmParams.GetEnabledPrecompiles()
+			},
+			true,
+		},
+		{
+			"success - EnabledPrecompiles param is set to []string{\"0x100\", \"0x101\"} and can be retrieved correctly",
+			func() interface{} {
+				params.EnabledPrecompiles = []string{validEthAddress1, validEthAddress2}
+				suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				return params.EnabledPrecompiles
+			},
+			func() interface{} {
+				evmParams := suite.app.EvmKeeper.GetParams(suite.ctx)
+				return evmParams.GetEnabledPrecompiles()
 			},
 			true,
 		},

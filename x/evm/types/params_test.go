@@ -8,43 +8,78 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	validEthAddress   = "0xc0ffee254729296a45a3885639AC7E10F9d54979"
+	invalidEthAddress = "0xc0ffee254729296a45a3885639AC7E10F9d5497"
+)
+
 func TestParamsValidate(t *testing.T) {
 	extraEips := []int64{2929, 1884, 1344}
 	testCases := []struct {
-		name     string
-		params   Params
-		expError bool
+		name      string
+		getParams func() Params
+		expError  bool
 	}{
-		{"default", DefaultParams(), false},
 		{
-			"valid",
-			NewParams("ara", false, true, true, DefaultChainConfig(), extraEips, []EIP712AllowedMsg{}),
-			false,
+			name:      "default",
+			getParams: DefaultParams,
+			expError:  false,
 		},
 		{
-			"empty",
-			Params{},
-			true,
-		},
-		{
-			"invalid evm denom",
-			Params{
-				EvmDenom: "@!#!@$!@5^32",
+			name: "valid",
+			getParams: func() Params {
+				return NewParams("ara", false, true, true, DefaultChainConfig(), extraEips, []EIP712AllowedMsg{})
 			},
-			true,
+			expError: false,
 		},
 		{
-			"invalid eip",
-			Params{
-				EvmDenom:  "stake",
-				ExtraEIPs: []int64{1},
+			name: "empty",
+			getParams: func() Params {
+				return Params{}
 			},
-			true,
+			expError: true,
+		},
+		{
+			name: "invalid evm denom",
+			getParams: func() Params {
+				return Params{
+					EvmDenom: "@!#!@$!@5^32",
+				}
+			},
+			expError: true,
+		},
+		{
+			name: "invalid eip",
+			getParams: func() Params {
+				return Params{
+					EvmDenom:  "stake",
+					ExtraEIPs: []int64{1},
+				}
+			},
+			expError: true,
+		},
+		{
+			name: "valid enabled precompiles",
+			getParams: func() Params {
+				params := DefaultParams()
+				params.EnabledPrecompiles = []string{validEthAddress}
+				return params
+			},
+			expError: false,
+		},
+		{
+			name: "invalid enabled precompiles",
+			getParams: func() Params {
+				params := DefaultParams()
+				params.EnabledPrecompiles = []string{invalidEthAddress}
+				return params
+			},
+			expError: true,
 		},
 	}
 
 	for _, tc := range testCases {
-		err := tc.params.Validate()
+		err := tc.getParams().Validate()
 
 		if tc.expError {
 			require.Error(t, err, tc.name)
@@ -69,6 +104,13 @@ func TestParamsValidatePriv(t *testing.T) {
 	require.NoError(t, validateBool(true))
 	require.Error(t, validateEIPs(""))
 	require.NoError(t, validateEIPs([]int64{1884}))
+
+	require.Error(t, validateEnabledPrecompiles([]string{""}))
+	require.Error(t, validateEnabledPrecompiles([]string{invalidEthAddress}))
+	require.Error(t, validateEnabledPrecompiles([]string{validEthAddress, invalidEthAddress}))
+	require.NoError(t, validateEnabledPrecompiles(nil))
+	require.NoError(t, validateEnabledPrecompiles([]string{}))
+	require.NoError(t, validateEnabledPrecompiles([]string{validEthAddress}))
 }
 
 func TestValidateChainConfig(t *testing.T) {
