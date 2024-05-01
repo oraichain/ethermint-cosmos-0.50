@@ -3,8 +3,9 @@ package types
 import (
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
-
+	precompile_modules "github.com/ethereum/go-ethereum/precompile/modules"
 	"github.com/stretchr/testify/require"
 )
 
@@ -167,5 +168,64 @@ func TestIsLondon(t *testing.T) {
 	for _, tc := range testCases {
 		ethConfig := params.MainnetChainConfig
 		require.Equal(t, IsLondon(ethConfig, tc.height), tc.result)
+	}
+}
+
+func TestCheckIfEnabledPrecompilesAreRegistered(t *testing.T) {
+	m := func(addr string) precompile_modules.Module {
+		return precompile_modules.Module{
+			Address: common.HexToAddress(addr),
+		}
+	}
+	a := func(addr string) string {
+		return common.HexToAddress(addr).String()
+	}
+
+	testCases := []struct {
+		name               string
+		registeredModules  []precompile_modules.Module
+		enabledPrecompiles []string
+		expError           bool
+	}{
+		{
+			name:               "test-case #1",
+			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
+			enabledPrecompiles: []string{a("0x1"), a("0x2"), a("0x3")},
+			expError:           false,
+		},
+		{
+			name:               "test-case #2",
+			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
+			enabledPrecompiles: []string{a("0x1"), a("0x3")},
+			expError:           false,
+		},
+		{
+			name:               "test-case #3",
+			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
+			enabledPrecompiles: []string{},
+			expError:           false,
+		},
+		{
+			name:               "test-case #4",
+			registeredModules:  []precompile_modules.Module{},
+			enabledPrecompiles: []string{},
+			expError:           false,
+		},
+		{
+			name:               "test-case #5",
+			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
+			enabledPrecompiles: []string{"0x4"},
+			expError:           true,
+		},
+	}
+
+	for _, tc := range testCases {
+		err := CheckIfEnabledPrecompilesAreRegistered(tc.registeredModules, tc.enabledPrecompiles)
+
+		if tc.expError {
+			require.Error(t, err, tc.name)
+		} else {
+			require.NoError(t, err, tc.name)
+		}
 	}
 }

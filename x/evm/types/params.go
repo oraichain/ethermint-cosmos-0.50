@@ -19,11 +19,12 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/params"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/params"
+	precompile_modules "github.com/ethereum/go-ethereum/precompile/modules"
+
 	"github.com/evmos/ethermint/types"
 )
 
@@ -208,4 +209,20 @@ func validateEnabledPrecompiles(enabledPrecompiles []string) error {
 // IsLondon returns if london hardfork is enabled.
 func IsLondon(ethConfig *params.ChainConfig, height int64) bool {
 	return ethConfig.IsLondon(big.NewInt(height))
+}
+
+func CheckIfEnabledPrecompilesAreRegistered(registeredModules []precompile_modules.Module, enabledPrecompiles []string) error {
+	registeredAddrs := make(map[string]struct{}, len(registeredModules))
+
+	for _, module := range registeredModules {
+		registeredAddrs[module.Address.String()] = struct{}{}
+	}
+
+	for _, enabledPrecompile := range enabledPrecompiles {
+		if _, ok := registeredAddrs[enabledPrecompile]; !ok {
+			return fmt.Errorf("precompile %v is enabled but not registered", enabledPrecompile)
+		}
+	}
+
+	return nil
 }
