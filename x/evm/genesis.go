@@ -36,11 +36,12 @@ func InitGenesis(
 	k *keeper.Keeper,
 	accountKeeper types.AccountKeeper,
 	data types.GenesisState,
+	registeredModules []precompile_modules.Module,
 ) []abci.ValidatorUpdate {
 	k.WithChainID(ctx)
 
 	err := types.CheckIfEnabledPrecompilesAreRegistered(
-		precompile_modules.RegisteredModules(),
+		registeredModules,
 		data.Params.GetEnabledPrecompiles(),
 	)
 	if err != nil {

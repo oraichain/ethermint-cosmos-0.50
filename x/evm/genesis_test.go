@@ -3,9 +3,10 @@ package evm_test
 import (
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/ethereum/go-ethereum/common"
+	precompile_modules "github.com/ethereum/go-ethereum/precompile/modules"
+
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 	etherminttypes "github.com/evmos/ethermint/types"
 	"github.com/evmos/ethermint/x/evm"
@@ -18,106 +19,121 @@ func (suite *EvmTestSuite) TestInitGenesis() {
 	suite.Require().NoError(err)
 
 	address := common.HexToAddress(privkey.PubKey().Address().String())
+	hexAddr1 := "0x1000000000000000000000000000000000000000"
+	hexAddr2 := "0x2000000000000000000000000000000000000000"
 
 	var vmdb *statedb.StateDB
 
 	testCases := []struct {
-		name     string
-		malleate func()
-		genState *types.GenesisState
-		expPanic bool
+		name              string
+		malleate          func()
+		getGenState       func() *types.GenesisState
+		registeredModules []precompile_modules.Module
+		expPanic          bool
 	}{
 		{
-			"default",
-			func() {},
-			types.DefaultGenesisState(),
-			false,
+			name:     "default",
+			malleate: func() {},
+			getGenState: func() *types.GenesisState {
+				return types.DefaultGenesisState()
+			},
+			expPanic: false,
 		},
 		{
-			"valid account",
-			func() {
+			name: "valid account",
+			malleate: func() {
 				vmdb.AddBalance(address, big.NewInt(1))
 			},
-			&types.GenesisState{
-				Params: types.DefaultParams(),
-				Accounts: []types.GenesisAccount{
-					{
-						Address: address.String(),
-						Storage: types.Storage{
-							{Key: common.BytesToHash([]byte("key")).String(), Value: common.BytesToHash([]byte("value")).String()},
+			getGenState: func() *types.GenesisState {
+				return &types.GenesisState{
+					Params: types.DefaultParams(),
+					Accounts: []types.GenesisAccount{
+						{
+							Address: address.String(),
+							Storage: types.Storage{
+								{Key: common.BytesToHash([]byte("key")).String(), Value: common.BytesToHash([]byte("value")).String()},
+							},
 						},
 					},
-				},
+				}
 			},
-			false,
+			expPanic: false,
 		},
 		{
-			"account not found",
-			func() {},
-			&types.GenesisState{
-				Params: types.DefaultParams(),
-				Accounts: []types.GenesisAccount{
-					{
-						Address: address.String(),
+			name:     "account not found",
+			malleate: func() {},
+			getGenState: func() *types.GenesisState {
+				return &types.GenesisState{
+					Params: types.DefaultParams(),
+					Accounts: []types.GenesisAccount{
+						{
+							Address: address.String(),
+						},
 					},
-				},
+				}
 			},
-			true,
+			expPanic: true,
 		},
 		{
-			"invalid account type",
-			func() {
+			name: "invalid account type",
+			malleate: func() {
 				acc := authtypes.NewBaseAccountWithAddress(address.Bytes())
 				suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 			},
-			&types.GenesisState{
-				Params: types.DefaultParams(),
-				Accounts: []types.GenesisAccount{
-					{
-						Address: address.String(),
+			getGenState: func() *types.GenesisState {
+				return &types.GenesisState{
+					Params: types.DefaultParams(),
+					Accounts: []types.GenesisAccount{
+						{
+							Address: address.String(),
+						},
 					},
-				},
+				}
 			},
-			true,
+			expPanic: true,
 		},
 		{
-			"invalid code hash",
-			func() {
+			name: "invalid code hash",
+			malleate: func() {
 				acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, address.Bytes())
 				suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 			},
-			&types.GenesisState{
-				Params: types.DefaultParams(),
-				Accounts: []types.GenesisAccount{
-					{
-						Address: address.String(),
-						Code:    "ffffffff",
+			getGenState: func() *types.GenesisState {
+				return &types.GenesisState{
+					Params: types.DefaultParams(),
+					Accounts: []types.GenesisAccount{
+						{
+							Address: address.String(),
+							Code:    "ffffffff",
+						},
 					},
-				},
+				}
 			},
-			true,
+			expPanic: true,
 		},
 		{
-			"ignore empty account code checking",
-			func() {
+			name: "ignore empty account code checking",
+			malleate: func() {
 				acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, address.Bytes())
 
 				suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 			},
-			&types.GenesisState{
-				Params: types.DefaultParams(),
-				Accounts: []types.GenesisAccount{
-					{
-						Address: address.String(),
-						Code:    "",
+			getGenState: func() *types.GenesisState {
+				return &types.GenesisState{
+					Params: types.DefaultParams(),
+					Accounts: []types.GenesisAccount{
+						{
+							Address: address.String(),
+							Code:    "",
+						},
 					},
-				},
+				}
 			},
-			false,
+			expPanic: false,
 		},
 		{
-			"ignore empty account code checking with non-empty codehash",
-			func() {
+			name: "ignore empty account code checking with non-empty codehash",
+			malleate: func() {
 				ethAcc := &etherminttypes.EthAccount{
 					BaseAccount: authtypes.NewBaseAccount(address.Bytes(), nil, 0, 0),
 					CodeHash:    common.BytesToHash([]byte{1, 2, 3}).Hex(),
@@ -125,16 +141,69 @@ func (suite *EvmTestSuite) TestInitGenesis() {
 
 				suite.app.AccountKeeper.SetAccount(suite.ctx, ethAcc)
 			},
-			&types.GenesisState{
-				Params: types.DefaultParams(),
-				Accounts: []types.GenesisAccount{
-					{
-						Address: address.String(),
-						Code:    "",
+			getGenState: func() *types.GenesisState {
+				return &types.GenesisState{
+					Params: types.DefaultParams(),
+					Accounts: []types.GenesisAccount{
+						{
+							Address: address.String(),
+							Code:    "",
+						},
 					},
-				},
+				}
 			},
-			false,
+			expPanic: false,
+		},
+		{
+			name:     "precompile is enabled and registered",
+			malleate: func() {},
+			getGenState: func() *types.GenesisState {
+				defaultGen := types.DefaultGenesisState()
+				defaultGen.Params.EnabledPrecompiles = []string{hexAddr1}
+				return defaultGen
+			},
+			registeredModules: []precompile_modules.Module{
+				{Address: common.HexToAddress(hexAddr1)},
+			},
+			expPanic: false,
+		},
+		{
+			name:     "precompile is enabled, but not registered",
+			malleate: func() {},
+			getGenState: func() *types.GenesisState {
+				defaultGen := types.DefaultGenesisState()
+				defaultGen.Params.EnabledPrecompiles = []string{hexAddr1}
+				return defaultGen
+			},
+			registeredModules: nil,
+			expPanic:          true,
+		},
+		{
+			name:     "enabled precompiles are not sorted",
+			malleate: func() {},
+			getGenState: func() *types.GenesisState {
+				defaultGen := types.DefaultGenesisState()
+				defaultGen.Params.EnabledPrecompiles = []string{hexAddr2, hexAddr1}
+				return defaultGen
+			},
+			registeredModules: []precompile_modules.Module{
+				{Address: common.HexToAddress(hexAddr1)},
+				{Address: common.HexToAddress(hexAddr2)},
+			},
+			expPanic: true,
+		},
+		{
+			name:     "enabled precompiles are not unique",
+			malleate: func() {},
+			getGenState: func() *types.GenesisState {
+				defaultGen := types.DefaultGenesisState()
+				defaultGen.Params.EnabledPrecompiles = []string{hexAddr1, hexAddr1}
+				return defaultGen
+			},
+			registeredModules: []precompile_modules.Module{
+				{Address: common.HexToAddress(hexAddr1)},
+			},
+			expPanic: true,
 		},
 	}
 
@@ -149,13 +218,13 @@ func (suite *EvmTestSuite) TestInitGenesis() {
 			if tc.expPanic {
 				suite.Require().Panics(
 					func() {
-						_ = evm.InitGenesis(suite.ctx, suite.app.EvmKeeper, suite.app.AccountKeeper, *tc.genState)
+						_ = evm.InitGenesis(suite.ctx, suite.app.EvmKeeper, suite.app.AccountKeeper, *tc.getGenState(), tc.registeredModules)
 					},
 				)
 			} else {
 				suite.Require().NotPanics(
 					func() {
-						_ = evm.InitGenesis(suite.ctx, suite.app.EvmKeeper, suite.app.AccountKeeper, *tc.genState)
+						_ = evm.InitGenesis(suite.ctx, suite.app.EvmKeeper, suite.app.AccountKeeper, *tc.getGenState(), tc.registeredModules)
 					},
 				)
 			}
