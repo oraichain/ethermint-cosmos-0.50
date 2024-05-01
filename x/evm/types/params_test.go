@@ -112,6 +112,17 @@ func TestParamsValidatePriv(t *testing.T) {
 	require.NoError(t, validateEnabledPrecompiles(nil))
 	require.NoError(t, validateEnabledPrecompiles([]string{}))
 	require.NoError(t, validateEnabledPrecompiles([]string{validEthAddress}))
+
+	addr1 := "0x1000000000000000000000000000000000000000"
+	addr2 := "0x2000000000000000000000000000000000000000"
+
+	// check if sorted
+	require.NoError(t, validateEnabledPrecompiles([]string{addr1, addr2}))
+	require.Error(t, validateEnabledPrecompiles([]string{addr2, addr1}))
+
+	// check if unique
+	require.NoError(t, validateEnabledPrecompiles([]string{addr1, addr2}))
+	require.Error(t, validateEnabledPrecompiles([]string{addr1, addr1}))
 }
 
 func TestValidateChainConfig(t *testing.T) {
@@ -226,6 +237,90 @@ func TestCheckIfEnabledPrecompilesAreRegistered(t *testing.T) {
 			require.Error(t, err, tc.name)
 		} else {
 			require.NoError(t, err, tc.name)
+		}
+	}
+}
+
+func TestCheckIfSortedInBytesRepr(t *testing.T) {
+	addr1 := "0x1000000000000000000000000000000000000000"
+	addr2 := "0x2000000000000000000000000000000000000000"
+
+	// NOTE: we sort in bytes representation, so proper order will be []string{mixedCaseAddr, upperCaseAddr},
+	// and it differs from lexicographically sorted strings
+	upperCaseAddr := "0xAB00000000000000000000000000000000000000"
+	mixedCaseAddr := "0xaA00000000000000000000000000000000000000"
+
+	testCases := []struct {
+		name   string
+		addrs  []string
+		sorted bool
+	}{
+		{
+			name:   "test-case #1",
+			addrs:  []string{addr1, addr2},
+			sorted: true,
+		},
+		{
+			name:   "test-case #2",
+			addrs:  []string{addr2, addr1},
+			sorted: false,
+		},
+		{
+			name:   "test-case #3",
+			addrs:  []string{mixedCaseAddr, upperCaseAddr},
+			sorted: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		err := checkIfSortedInBytesRepr(tc.addrs)
+
+		if tc.sorted {
+			require.NoError(t, err, tc.name)
+		} else {
+			require.Error(t, err, tc.name)
+		}
+	}
+}
+
+func TestCheckIfUniqueInBytesRepr(t *testing.T) {
+	addr1 := "0x1000000000000000000000000000000000000000"
+	addr2 := "0x2000000000000000000000000000000000000000"
+
+	// NOTE: we check uniqueness in bytes representation, so lowerCaseAddr and mixedCaseAddr are the same,
+	// despite it differs in string representation
+	lowerCaseAddr := "0xab00000000000000000000000000000000000000"
+	mixedCaseAddr := "0xAb00000000000000000000000000000000000000"
+
+	testCases := []struct {
+		name   string
+		addrs  []string
+		unique bool
+	}{
+		{
+			name:   "test-case #1",
+			addrs:  []string{addr1, addr2},
+			unique: true,
+		},
+		{
+			name:   "test-case #2",
+			addrs:  []string{addr1, addr1},
+			unique: false,
+		},
+		{
+			name:   "test-case #3",
+			addrs:  []string{lowerCaseAddr, mixedCaseAddr},
+			unique: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		err := checkIfUniqueInBytesRepr(tc.addrs)
+
+		if tc.unique {
+			require.NoError(t, err, tc.name)
+		} else {
+			require.Error(t, err, tc.name)
 		}
 	}
 }
