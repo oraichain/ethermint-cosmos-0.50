@@ -242,32 +242,32 @@ func TestCheckIfEnabledPrecompilesAreRegistered(t *testing.T) {
 }
 
 func TestCheckIfSortedInBytesRepr(t *testing.T) {
-	addr1 := "0x1000000000000000000000000000000000000000"
-	addr2 := "0x2000000000000000000000000000000000000000"
+	addr1 := common.HexToAddress("0x1000000000000000000000000000000000000000")
+	addr2 := common.HexToAddress("0x2000000000000000000000000000000000000000")
 
 	// NOTE: we sort in bytes representation, so proper order will be []string{mixedCaseAddr, upperCaseAddr},
 	// and it differs from lexicographically sorted strings
-	upperCaseAddr := "0xAB00000000000000000000000000000000000000"
-	mixedCaseAddr := "0xaA00000000000000000000000000000000000000"
+	upperCaseAddr := common.HexToAddress("0xAB00000000000000000000000000000000000000")
+	mixedCaseAddr := common.HexToAddress("0xaA00000000000000000000000000000000000000")
 
 	testCases := []struct {
 		name   string
-		addrs  []string
+		addrs  []common.Address
 		sorted bool
 	}{
 		{
 			name:   "test-case #1",
-			addrs:  []string{addr1, addr2},
+			addrs:  []common.Address{addr1, addr2},
 			sorted: true,
 		},
 		{
 			name:   "test-case #2",
-			addrs:  []string{addr2, addr1},
+			addrs:  []common.Address{addr2, addr1},
 			sorted: false,
 		},
 		{
 			name:   "test-case #3",
-			addrs:  []string{mixedCaseAddr, upperCaseAddr},
+			addrs:  []common.Address{mixedCaseAddr, upperCaseAddr},
 			sorted: true,
 		},
 	}
@@ -284,32 +284,32 @@ func TestCheckIfSortedInBytesRepr(t *testing.T) {
 }
 
 func TestCheckIfUniqueInBytesRepr(t *testing.T) {
-	addr1 := "0x1000000000000000000000000000000000000000"
-	addr2 := "0x2000000000000000000000000000000000000000"
+	addr1 := common.HexToAddress("0x1000000000000000000000000000000000000000")
+	addr2 := common.HexToAddress("0x2000000000000000000000000000000000000000")
 
 	// NOTE: we check uniqueness in bytes representation, so lowerCaseAddr and mixedCaseAddr are the same,
 	// despite it differs in string representation
-	lowerCaseAddr := "0xab00000000000000000000000000000000000000"
-	mixedCaseAddr := "0xAb00000000000000000000000000000000000000"
+	lowerCaseAddr := common.HexToAddress("0xab00000000000000000000000000000000000000")
+	mixedCaseAddr := common.HexToAddress("0xAb00000000000000000000000000000000000000")
 
 	testCases := []struct {
 		name   string
-		addrs  []string
+		addrs  []common.Address
 		unique bool
 	}{
 		{
 			name:   "test-case #1",
-			addrs:  []string{addr1, addr2},
+			addrs:  []common.Address{addr1, addr2},
 			unique: true,
 		},
 		{
 			name:   "test-case #2",
-			addrs:  []string{addr1, addr1},
+			addrs:  []common.Address{addr1, addr1},
 			unique: false,
 		},
 		{
 			name:   "test-case #3",
-			addrs:  []string{lowerCaseAddr, mixedCaseAddr},
+			addrs:  []common.Address{lowerCaseAddr, mixedCaseAddr},
 			unique: false,
 		},
 	}
