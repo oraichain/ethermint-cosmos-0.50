@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -196,45 +197,46 @@ func TestCheckIfEnabledPrecompilesAreRegistered(t *testing.T) {
 		name               string
 		registeredModules  []precompile_modules.Module
 		enabledPrecompiles []string
-		expError           bool
+		errorMsg           string
 	}{
 		{
 			name:               "test-case #1",
 			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
 			enabledPrecompiles: []string{a("0x1"), a("0x2"), a("0x3")},
-			expError:           false,
+			errorMsg:           "",
 		},
 		{
 			name:               "test-case #2",
 			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
 			enabledPrecompiles: []string{a("0x1"), a("0x3")},
-			expError:           false,
+			errorMsg:           "",
 		},
 		{
 			name:               "test-case #3",
 			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
 			enabledPrecompiles: []string{},
-			expError:           false,
+			errorMsg:           "",
 		},
 		{
 			name:               "test-case #4",
 			registeredModules:  []precompile_modules.Module{},
 			enabledPrecompiles: []string{},
-			expError:           false,
+			errorMsg:           "",
 		},
 		{
 			name:               "test-case #5",
 			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
-			enabledPrecompiles: []string{"0x4"},
-			expError:           true,
+			enabledPrecompiles: []string{a("0x4")},
+			errorMsg:           fmt.Sprintf("precompile %v is enabled but not registered", a("0x4")),
 		},
 	}
 
 	for _, tc := range testCases {
 		err := CheckIfEnabledPrecompilesAreRegistered(tc.registeredModules, tc.enabledPrecompiles)
 
-		if tc.expError {
+		if tc.errorMsg != "" {
 			require.Error(t, err, tc.name)
+			require.Contains(t, err.Error(), tc.errorMsg)
 		} else {
 			require.NoError(t, err, tc.name)
 		}
