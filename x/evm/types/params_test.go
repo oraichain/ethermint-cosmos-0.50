@@ -200,31 +200,31 @@ func TestCheckIfEnabledPrecompilesAreRegistered(t *testing.T) {
 		errorMsg           string
 	}{
 		{
-			name:               "test-case #1",
+			name:               "success: all enabled precompiles are registered #1",
 			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
 			enabledPrecompiles: []string{a("0x1"), a("0x2"), a("0x3")},
 			errorMsg:           "",
 		},
 		{
-			name:               "test-case #2",
+			name:               "success: all enabled precompiles are registered #2",
 			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
 			enabledPrecompiles: []string{a("0x1"), a("0x3")},
 			errorMsg:           "",
 		},
 		{
-			name:               "test-case #3",
+			name:               "success: no enabled precompiles",
 			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
 			enabledPrecompiles: []string{},
 			errorMsg:           "",
 		},
 		{
-			name:               "test-case #4",
+			name:               "success: no enabled precompiles and no registered modules",
 			registeredModules:  []precompile_modules.Module{},
 			enabledPrecompiles: []string{},
 			errorMsg:           "",
 		},
 		{
-			name:               "test-case #5",
+			name:               "failure: precompile is enabled, but not registered",
 			registeredModules:  []precompile_modules.Module{m("0x1"), m("0x2"), m("0x3")},
 			enabledPrecompiles: []string{a("0x4")},
 			errorMsg:           fmt.Sprintf("precompile %v is enabled but not registered", a("0x4")),
@@ -232,14 +232,16 @@ func TestCheckIfEnabledPrecompilesAreRegistered(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		err := CheckIfEnabledPrecompilesAreRegistered(tc.registeredModules, tc.enabledPrecompiles)
+		t.Run(tc.name, func(t *testing.T) {
+			err := CheckIfEnabledPrecompilesAreRegistered(tc.registeredModules, tc.enabledPrecompiles)
 
-		if tc.errorMsg != "" {
-			require.Error(t, err, tc.name)
-			require.Contains(t, err.Error(), tc.errorMsg)
-		} else {
-			require.NoError(t, err, tc.name)
-		}
+			if tc.errorMsg != "" {
+				require.Error(t, err, tc.name)
+				require.Contains(t, err.Error(), tc.errorMsg)
+			} else {
+				require.NoError(t, err, tc.name)
+			}
+		})
 	}
 }
 
@@ -258,30 +260,32 @@ func TestCheckIfSortedInBytesRepr(t *testing.T) {
 		sorted bool
 	}{
 		{
-			name:   "test-case #1",
+			name:   "success: addresses are sorted",
 			addrs:  []common.Address{addr1, addr2},
 			sorted: true,
 		},
 		{
-			name:   "test-case #2",
+			name:   "failure: addresses are in reverse order",
 			addrs:  []common.Address{addr2, addr1},
 			sorted: false,
 		},
 		{
-			name:   "test-case #3",
+			name:   "success: addresses are sorted in bytes representation",
 			addrs:  []common.Address{mixedCaseAddr, upperCaseAddr},
 			sorted: true,
 		},
 	}
 
 	for _, tc := range testCases {
-		err := checkIfSortedInBytesRepr(tc.addrs)
+		t.Run(tc.name, func(t *testing.T) {
+			err := checkIfSortedInBytesRepr(tc.addrs)
 
-		if tc.sorted {
-			require.NoError(t, err, tc.name)
-		} else {
-			require.Error(t, err, tc.name)
-		}
+			if tc.sorted {
+				require.NoError(t, err, tc.name)
+			} else {
+				require.Error(t, err, tc.name)
+			}
+		})
 	}
 }
 
@@ -300,29 +304,31 @@ func TestCheckIfUniqueInBytesRepr(t *testing.T) {
 		unique bool
 	}{
 		{
-			name:   "test-case #1",
+			name:   "success: addresses are unique",
 			addrs:  []common.Address{addr1, addr2},
 			unique: true,
 		},
 		{
-			name:   "test-case #2",
+			name:   "failure: addresses are not unique",
 			addrs:  []common.Address{addr1, addr1},
 			unique: false,
 		},
 		{
-			name:   "test-case #3",
+			name:   "failure: addresses are not unique in bytes representation",
 			addrs:  []common.Address{lowerCaseAddr, mixedCaseAddr},
 			unique: false,
 		},
 	}
 
 	for _, tc := range testCases {
-		err := checkIfUniqueInBytesRepr(tc.addrs)
+		t.Run(tc.name, func(t *testing.T) {
+			err := checkIfUniqueInBytesRepr(tc.addrs)
 
-		if tc.unique {
-			require.NoError(t, err, tc.name)
-		} else {
-			require.Error(t, err, tc.name)
-		}
+			if tc.unique {
+				require.NoError(t, err, tc.name)
+			} else {
+				require.Error(t, err, tc.name)
+			}
+		})
 	}
 }
