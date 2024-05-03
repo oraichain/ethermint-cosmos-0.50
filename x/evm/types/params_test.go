@@ -338,7 +338,7 @@ func TestIsLondon(t *testing.T) {
 	}
 }
 
-func TestCheckIfEnabledPrecompilesAreRegistered(t *testing.T) {
+func TestValidatePrecompileRegistration(t *testing.T) {
 	m := func(addr string) precompile_modules.Module {
 		return precompile_modules.Module{
 			Address: common.HexToAddress(addr),
@@ -388,7 +388,7 @@ func TestCheckIfEnabledPrecompilesAreRegistered(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := CheckIfEnabledPrecompilesAreRegistered(tc.registeredModules, tc.enabledPrecompiles)
+			err := ValidatePrecompileRegistration(tc.registeredModules, tc.enabledPrecompiles)
 
 			if tc.errorMsg != "" {
 				require.Error(t, err, tc.name)

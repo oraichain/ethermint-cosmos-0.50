@@ -40,7 +40,7 @@ func InitGenesis(
 ) []abci.ValidatorUpdate {
 	k.WithChainID(ctx)
 
-	err := types.CheckIfEnabledPrecompilesAreRegistered(
+	err := types.ValidatePrecompileRegistration(
 		registeredModules,
 		data.Params.GetEnabledPrecompiles(),
 	)

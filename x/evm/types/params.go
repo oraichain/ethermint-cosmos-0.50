@@ -253,7 +253,8 @@ func IsLondon(ethConfig *params.ChainConfig, height int64) bool {
 	return ethConfig.IsLondon(big.NewInt(height))
 }
 
-func CheckIfEnabledPrecompilesAreRegistered(registeredModules []precompile_modules.Module, enabledPrecompiles []string) error {
+// ValidatePrecompileRegistration checks that all enabled precompiles are registered.
+func ValidatePrecompileRegistration(registeredModules []precompile_modules.Module, enabledPrecompiles []string) error {
 	registeredAddrs := make(map[string]struct{}, len(registeredModules))
 
 	for _, module := range registeredModules {
