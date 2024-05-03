@@ -18,8 +18,12 @@ import (
 )
 
 func (suite *KeeperTestSuite) TestParams() {
+	addr1 := "0x1000000000000000000000000000000000000000"
+	addr2 := "0x2000000000000000000000000000000000000000"
+
 	params := suite.app.EvmKeeper.GetParams(suite.ctx)
-	suite.app.EvmKeeper.SetParams(suite.ctx, params)
+	err := suite.app.EvmKeeper.SetParams(suite.ctx, params)
+	suite.Require().NoError(err)
 	testCases := []struct {
 		name      string
 		paramsFun func() interface{}
@@ -40,7 +44,8 @@ func (suite *KeeperTestSuite) TestParams() {
 			"success - EvmDenom param is set to \"inj\" and can be retrieved correctly",
 			func() interface{} {
 				params.EvmDenom = "inj"
-				suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				err := suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
 				return params.EvmDenom
 			},
 			func() interface{} {
@@ -53,7 +58,8 @@ func (suite *KeeperTestSuite) TestParams() {
 			"success - Check EnableCreate param is set to false and can be retrieved correctly",
 			func() interface{} {
 				params.EnableCreate = false
-				suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				err := suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
 				return params.EnableCreate
 			},
 			func() interface{} {
@@ -66,7 +72,8 @@ func (suite *KeeperTestSuite) TestParams() {
 			"success - Check EnableCall param is set to false and can be retrieved correctly",
 			func() interface{} {
 				params.EnableCall = false
-				suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				err := suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
 				return params.EnableCall
 			},
 			func() interface{} {
@@ -79,7 +86,8 @@ func (suite *KeeperTestSuite) TestParams() {
 			"success - Check AllowUnprotectedTxs param is set to false and can be retrieved correctly",
 			func() interface{} {
 				params.AllowUnprotectedTxs = false
-				suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				err := suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
 				return params.AllowUnprotectedTxs
 			},
 			func() interface{} {
@@ -92,7 +100,8 @@ func (suite *KeeperTestSuite) TestParams() {
 			"success - Check ChainConfig param is set to the default value and can be retrieved correctly",
 			func() interface{} {
 				params.ChainConfig = types.DefaultChainConfig()
-				suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				err := suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
 				return params.ChainConfig
 			},
 			func() interface{} {
@@ -100,6 +109,63 @@ func (suite *KeeperTestSuite) TestParams() {
 				return evmParams.GetChainConfig()
 			},
 			true,
+		},
+		{
+			"success - EnabledPrecompiles param is set to empty slice and will be retrieved as nil",
+			func() interface{} {
+				params.EnabledPrecompiles = []string{}
+				err := suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
+				var typedNil []string = nil // NOTE: despite we set EnabledPrecompiles as []string{}, it will be retrieved as nil
+				return typedNil
+			},
+			func() interface{} {
+				evmParams := suite.app.EvmKeeper.GetParams(suite.ctx)
+				return evmParams.GetEnabledPrecompiles()
+			},
+			true,
+		},
+		{
+			"success - EnabledPrecompiles param is set to nil and can be retrieved correctly",
+			func() interface{} {
+				params.EnabledPrecompiles = nil
+				err := suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
+				return params.EnabledPrecompiles
+			},
+			func() interface{} {
+				evmParams := suite.app.EvmKeeper.GetParams(suite.ctx)
+				return evmParams.GetEnabledPrecompiles()
+			},
+			true,
+		},
+		{
+			"success - EnabledPrecompiles param is set to []string{addr1, addr2} and can be retrieved correctly",
+			func() interface{} {
+				params.EnabledPrecompiles = []string{addr1, addr2}
+				err := suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
+				return params.EnabledPrecompiles
+			},
+			func() interface{} {
+				evmParams := suite.app.EvmKeeper.GetParams(suite.ctx)
+				return evmParams.GetEnabledPrecompiles()
+			},
+			true,
+		},
+		{
+			"failure - EnabledPrecompiles param is set to []string{addr2, addr1} which fails is_sorted validation",
+			func() interface{} {
+				params.EnabledPrecompiles = []string{addr2, addr1}
+				err := suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().Error(err)
+				return params.EnabledPrecompiles
+			},
+			func() interface{} {
+				evmParams := suite.app.EvmKeeper.GetParams(suite.ctx)
+				return evmParams.GetEnabledPrecompiles()
+			},
+			false,
 		},
 	}
 	for _, tc := range testCases {

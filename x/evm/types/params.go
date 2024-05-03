@@ -16,13 +16,16 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/params"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/params"
+	precompile_modules "github.com/ethereum/go-ethereum/precompile/modules"
+
 	"github.com/evmos/ethermint/types"
 )
 
@@ -105,7 +108,15 @@ func (p Params) Validate() error {
 		return err
 	}
 
-	return validateEIP712AllowedMsgs(p.EIP712AllowedMsgs)
+	if err := validateEIP712AllowedMsgs(p.EIP712AllowedMsgs); err != nil {
+		return err
+	}
+
+	if err := validateEnabledPrecompiles(p.EnabledPrecompiles); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // EIP712AllowedMsgFromMsgType returns the EIP712AllowedMsg for a given message type url.
@@ -186,7 +197,77 @@ func validateEIP712AllowedMsgs(i interface{}) error {
 	return nil
 }
 
+func validateEnabledPrecompiles(enabledPrecompiles []string) error {
+	for _, addr := range enabledPrecompiles {
+		if !common.IsHexAddress(addr) {
+			return fmt.Errorf("invalid hex address: %v in enabled precompiles list", addr)
+		}
+	}
+
+	addrs := make([]common.Address, len(enabledPrecompiles))
+	for i, precompile := range enabledPrecompiles {
+		addrs[i] = common.HexToAddress(precompile)
+	}
+
+	if err := validateSortingInBytesRepr(addrs); err != nil {
+		return fmt.Errorf("enabled precompiles are not sorted: %v", err)
+	}
+
+	if err := validateUniquenessInBytesRepr(addrs); err != nil {
+		return fmt.Errorf("enabled precompiles are not unique: %v", err)
+	}
+
+	return nil
+}
+
+// validateSortingInBytesRepr checks if bytes representation of addresses are sorted in ascending order
+func validateSortingInBytesRepr(addrs []common.Address) error {
+	n := len(addrs)
+
+	for i := 0; i < n-1; i++ {
+		cmp := bytes.Compare(addrs[i].Bytes(), addrs[i+1].Bytes())
+		if cmp == 1 {
+			return fmt.Errorf("addresses are not sorted, %v > %v", addrs[i].Hex(), addrs[i+1].Hex())
+		}
+	}
+
+	return nil
+}
+
+// validateUniquenessInBytesRepr checks if bytes representation of addresses are unique
+func validateUniquenessInBytesRepr(addrs []common.Address) error {
+	n := len(addrs)
+
+	exists := make(map[common.Address]struct{}, n)
+	for _, addr := range addrs {
+		if _, ok := exists[addr]; ok {
+			return fmt.Errorf("addr %v not unique", addr.Hex())
+		}
+
+		exists[addr] = struct{}{}
+	}
+
+	return nil
+}
+
 // IsLondon returns if london hardfork is enabled.
 func IsLondon(ethConfig *params.ChainConfig, height int64) bool {
 	return ethConfig.IsLondon(big.NewInt(height))
+}
+
+// ValidatePrecompileRegistration checks that all enabled precompiles are registered.
+func ValidatePrecompileRegistration(registeredModules []precompile_modules.Module, enabledPrecompiles []string) error {
+	registeredAddrs := make(map[string]struct{}, len(registeredModules))
+
+	for _, module := range registeredModules {
+		registeredAddrs[module.Address.String()] = struct{}{}
+	}
+
+	for _, enabledPrecompile := range enabledPrecompiles {
+		if _, ok := registeredAddrs[enabledPrecompile]; !ok {
+			return fmt.Errorf("precompile %v is enabled but not registered", enabledPrecompile)
+		}
+	}
+
+	return nil
 }
