@@ -209,18 +209,19 @@ func validateEnabledPrecompiles(enabledPrecompiles []string) error {
 		addrs[i] = common.HexToAddress(precompile)
 	}
 
-	if err := checkIfSortedInBytesRepr(addrs); err != nil {
+	if err := validateSortingInBytesRepr(addrs); err != nil {
 		return fmt.Errorf("enabled precompiles are not sorted: %v", err)
 	}
 
-	if err := checkIfUniqueInBytesRepr(addrs); err != nil {
+	if err := validateUniquenessInBytesRepr(addrs); err != nil {
 		return fmt.Errorf("enabled precompiles are not unique: %v", err)
 	}
 
 	return nil
 }
 
-func checkIfSortedInBytesRepr(addrs []common.Address) error {
+// validateSortingInBytesRepr checks if bytes representation of addresses are sorted in ascending order
+func validateSortingInBytesRepr(addrs []common.Address) error {
 	n := len(addrs)
 
 	for i := 0; i < n-1; i++ {
@@ -233,7 +234,8 @@ func checkIfSortedInBytesRepr(addrs []common.Address) error {
 	return nil
 }
 
-func checkIfUniqueInBytesRepr(addrs []common.Address) error {
+// validateUniquenessInBytesRepr checks if bytes representation of addresses are unique
+func validateUniquenessInBytesRepr(addrs []common.Address) error {
 	n := len(addrs)
 
 	exists := make(map[common.Address]struct{}, n)

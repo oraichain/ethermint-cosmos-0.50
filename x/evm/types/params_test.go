@@ -148,7 +148,7 @@ func TestEnabledPrecompilesAddressCorrectness(t *testing.T) {
 	}
 }
 
-func TestEnabledPrecompilesOrderInBytesRepr(t *testing.T) {
+func TestEnabledPrecompilesSortingInBytesRepr(t *testing.T) {
 	const (
 		addr1 = "0x1000000000000000000000000000000000000000"
 		addr2 = "0x2000000000000000000000000000000000000000"
