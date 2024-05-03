@@ -26,6 +26,8 @@ message Params {
   bool allow_unprotected_txs = 7;
   // enabled_precompiles contains list of hex-encoded evm addresses of enabled precompiled contracts.
   // Precompile must be registered before it can be enabled.
+  // enabled_precompiles should be sorted in ascending order and unique.
+  // sorting and uniqueness are checked against bytes representation of addresses
   repeated string enabled_precompiles = 8;
 }
 
