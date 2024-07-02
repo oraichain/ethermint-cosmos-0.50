@@ -16,10 +16,11 @@
 package eip712
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/simapp/params"
+	"cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -190,8 +191,6 @@ func decodeProtobufSignDoc(signDocBytes []byte) (apitypes.TypedData, error) {
 		Gas:    authInfo.Fee.GasLimit,
 	}
 
-	tip := authInfo.Tip
-
 	// WrapTxToTypedData expects the payload as an Amino Sign Doc
 	signBytes := legacytx.StdSignBytes(
 		signDoc.ChainId,
@@ -201,7 +200,6 @@ func decodeProtobufSignDoc(signDocBytes []byte) (apitypes.TypedData, error) {
 		*stdFee,
 		msgs,
 		body.Memo,
-		tip,
 	)
 
 	typedData, err := WrapTxToTypedData(
@@ -232,19 +230,23 @@ func validatePayloadMessages(msgs []sdk.Msg) error {
 		return errors.New("unable to build EIP-712 payload: transaction does contain any messages")
 	}
 
-	var msgSigner sdk.AccAddress
-
+	var msgSigner []byte
 	for i, m := range msgs {
-		if len(m.GetSigners()) != 1 {
+		msgSigners, _, err := protoCodec.GetMsgV1Signers(m)
+		if err != nil {
+			return errors.New("unable to build EIP-712 payload: unable to get signers from messages")
+		}
+
+		if len(msgSigners) != 1 {
 			return errors.New("unable to build EIP-712 payload: expect exactly 1 signer")
 		}
 
 		if i == 0 {
-			msgSigner = m.GetSigners()[0]
+			msgSigner = msgSigners[0]
 			continue
 		}
 
-		if !msgSigner.Equals(m.GetSigners()[0]) {
+		if !bytes.Equal(msgSigner, msgSigners[0]) {
 			return errors.New("unable to build EIP-712 payload: multiple signers detected")
 		}
 	}

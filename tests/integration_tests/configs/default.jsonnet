@@ -1,14 +1,8 @@
 {
-  dotenv: '../../../scripts/.env',
+  dotenv: '../../../scripts/env',
   'ethermint_9000-1': {
     cmd: 'ethermintd',
     'start-flags': '--trace',
-    config: {
-      mempool: {
-        // use v1 mempool to enable tx prioritization
-        version: 'v1',
-      },
-    },
     'app-config': {
       'minimum-gas-prices': '0aphoton',
       'index-events': ['ethereum_tx.ethereumTxHash'],
@@ -45,10 +39,12 @@
       mnemonic: '${SIGNER2_MNEMONIC}',
     }],
     genesis: {
-      consensus_params: {
-        block: {
-          max_bytes: '1048576',
-          max_gas: '81500000',
+      consensus: {
+        params: {
+          block: {
+            max_bytes: '1048576',
+            max_gas: '81500000',
+          },
         },
       },
       app_state: {

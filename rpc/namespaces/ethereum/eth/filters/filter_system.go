@@ -23,12 +23,12 @@ import (
 
 	"github.com/pkg/errors"
 
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	"github.com/tendermint/tendermint/libs/log"
-	tmquery "github.com/tendermint/tendermint/libs/pubsub/query"
-	coretypes "github.com/tendermint/tendermint/rpc/core/types"
-	rpcclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
-	tmtypes "github.com/tendermint/tendermint/types"
+	"cosmossdk.io/log"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	tmquery "github.com/cometbft/cometbft/libs/pubsub/query"
+	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+	tmtypes "github.com/cometbft/cometbft/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -42,13 +42,16 @@ import (
 )
 
 var (
-	txEvents  = tmtypes.QueryForEvent(tmtypes.EventTx).String()
-	evmEvents = tmquery.MustParse(fmt.Sprintf("%s='%s' AND %s.%s='%s'",
-		tmtypes.EventTypeKey,
-		tmtypes.EventTx,
-		sdk.EventTypeMessage,
-		sdk.AttributeKeyModule, evmtypes.ModuleName)).String()
+	txEvents     = tmtypes.QueryForEvent(tmtypes.EventTx).String()
 	headerEvents = tmtypes.QueryForEvent(tmtypes.EventNewBlockHeader).String()
+	blockEvents  = tmtypes.QueryForEvent(tmtypes.EventNewBlock).String()
+	evmEvents    = tmquery.MustCompile(
+		fmt.Sprintf("%s='%s' AND %s.%s='%s'",
+			tmtypes.EventTypeKey,
+			tmtypes.EventTx,
+			sdk.EventTypeMessage,
+			sdk.AttributeKeyModule, evmtypes.ModuleName),
+	).String()
 )
 
 // EventSystem creates subscriptions, processes events and broadcasts them to the
@@ -212,6 +215,20 @@ func (es EventSystem) SubscribeNewHeads() (*Subscription, pubsub.UnsubscribeFunc
 		id:        rpc.NewID(),
 		typ:       filters.BlocksSubscription,
 		event:     headerEvents,
+		created:   time.Now().UTC(),
+		headers:   make(chan *ethtypes.Header),
+		installed: make(chan struct{}, 1),
+		err:       make(chan error, 1),
+	}
+	return es.subscribe(sub)
+}
+
+// SubscribeNewHeads subscribes to new block headers events.
+func (es EventSystem) SubscribeNewBlocks() (*Subscription, pubsub.UnsubscribeFunc, error) {
+	sub := &Subscription{
+		id:        rpc.NewID(),
+		typ:       filters.BlocksSubscription,
+		event:     blockEvents,
 		created:   time.Now().UTC(),
 		headers:   make(chan *ethtypes.Header),
 		installed: make(chan struct{}, 1),

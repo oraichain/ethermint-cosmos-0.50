@@ -17,8 +17,8 @@ package feemarket
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/evmos/ethermint/x/feemarket/keeper"
 	"github.com/evmos/ethermint/x/feemarket/types"
@@ -35,15 +35,19 @@ func InitGenesis(
 		panic(errorsmod.Wrap(err, "could not set parameters at genesis"))
 	}
 
-	k.SetBlockGasWanted(ctx, data.BlockGas)
+	err = k.SetBlockGasWanted(ctx, data.BlockGas)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "could not set block gas wanted"))
+	}
 
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis exports genesis state of the fee market module
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
+	storedGasWanted, _ := k.GetBlockGasWanted(ctx)
 	return &types.GenesisState{
 		Params:   k.GetParams(ctx),
-		BlockGas: k.GetBlockGasWanted(ctx),
+		BlockGas: storedGasWanted,
 	}
 }

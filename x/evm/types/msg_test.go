@@ -20,8 +20,8 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/evmos/ethermint/app"
 	"github.com/evmos/ethermint/encoding"
+	"github.com/evmos/ethermint/x/evm"
 	"github.com/evmos/ethermint/x/evm/types"
 )
 
@@ -52,7 +52,7 @@ func (suite *MsgsTestSuite) SetupTest() {
 	suite.chainID = big.NewInt(1)
 	suite.hundredBigInt = big.NewInt(100)
 
-	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+	encodingConfig := encoding.MakeTestEncodingConfig(evm.AppModuleBasic{})
 	suite.clientCtx = client.Context{}.WithTxConfig(encodingConfig.TxConfig)
 }
 
@@ -60,8 +60,7 @@ func (suite *MsgsTestSuite) TestMsgEthereumTx_Constructor() {
 	msg := types.NewTx(nil, 0, &suite.to, nil, 100000, nil, nil, nil, []byte("test"), nil)
 
 	// suite.Require().Equal(msg.Data.To, suite.to.Hex())
-	suite.Require().Equal(msg.Route(), types.RouterKey)
-	suite.Require().Equal(msg.Type(), types.TypeMsgEthereumTx)
+	suite.Require().Equal(sdk.MsgTypeURL(msg), "/ethermint.evm.v1.MsgEthereumTx")
 	// suite.Require().NotNil(msg.To())
 	suite.Require().Equal(msg.GetMsgs(), []sdk.Msg{msg})
 	suite.Require().Panics(func() { msg.GetSigners() })

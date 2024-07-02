@@ -24,11 +24,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/evmos/ethermint/rpc/types"
 
-	"github.com/tendermint/tendermint/libs/log"
+	"cosmossdk.io/log"
 
-	coretypes "github.com/tendermint/tendermint/rpc/core/types"
-	rpcclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
-	tmtypes "github.com/tendermint/tendermint/types"
+	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+	tmtypes "github.com/cometbft/cometbft/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -334,42 +334,42 @@ func (api *PublicFilterAPI) NewHeads(ctx context.Context) (*rpc.Subscription, er
 	api.events.WithContext(ctx)
 	rpcSub := notifier.CreateSubscription()
 
-	headersSub, cancelSubs, err := api.events.SubscribeNewHeads()
+	blocksSub, cancelSubs, err := api.events.SubscribeNewBlocks()
 	if err != nil {
 		return &rpc.Subscription{}, err
 	}
 
-	go func(headersCh <-chan coretypes.ResultEvent) {
+	go func(blocksCh <-chan coretypes.ResultEvent) {
 		defer cancelSubs()
 
 		for {
 			select {
-			case ev, ok := <-headersCh:
+			case ev, ok := <-blocksCh:
 				if !ok {
-					headersSub.Unsubscribe(api.events)
+					blocksSub.Unsubscribe(api.events)
 					return
 				}
 
-				data, ok := ev.Data.(tmtypes.EventDataNewBlockHeader)
+				data, ok := ev.Data.(tmtypes.EventDataNewBlock)
 				if !ok {
 					api.logger.Debug("event data type mismatch", "type", fmt.Sprintf("%T", ev.Data))
 					continue
 				}
 
-				baseFee := types.BaseFeeFromEvents(data.ResultBeginBlock.Events)
+				baseFee := types.BaseFeeFromEvents(data.ResultFinalizeBlock.Events)
 
 				// TODO: fetch bloom from events
-				header := types.EthHeaderFromTendermint(data.Header, ethtypes.Bloom{}, baseFee)
+				header := types.EthHeaderFromTendermint(data.Block.Header, ethtypes.Bloom{}, baseFee)
 				_ = notifier.Notify(rpcSub.ID, header)
 			case <-rpcSub.Err():
-				headersSub.Unsubscribe(api.events)
+				blocksSub.Unsubscribe(api.events)
 				return
 			case <-notifier.Closed():
-				headersSub.Unsubscribe(api.events)
+				blocksSub.Unsubscribe(api.events)
 				return
 			}
 		}
-	}(headersSub.eventCh)
+	}(blocksSub.eventCh)
 
 	return rpcSub, err
 }
@@ -401,7 +401,7 @@ func (api *PublicFilterAPI) Logs(ctx context.Context, crit filters.FilterCriteri
 				}
 
 				// filter only events from EVM module txs
-				_, isMsgEthereumTx := ev.Events[evmtypes.TypeMsgEthereumTx]
+				_, isMsgEthereumTx := ev.Events[evmtypes.EventTypeEthereumTx]
 
 				if !isMsgEthereumTx {
 					// ignore transaction as it's not from the evm module

@@ -1,8 +1,8 @@
 package v5
 
 import (
+	corestore "cosmossdk.io/core/store"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/evmos/ethermint/x/evm/types"
 
@@ -15,7 +15,7 @@ import (
 // a single params key.
 func MigrateStore(
 	ctx sdk.Context,
-	storeKey storetypes.StoreKey,
+	storeService corestore.KVStoreService,
 	cdc codec.BinaryCodec,
 ) error {
 	var (
@@ -24,11 +24,18 @@ func MigrateStore(
 		params      types.Params
 	)
 
-	store := ctx.KVStore(storeKey)
+	store := storeService.OpenKVStore(ctx)
 
-	denom := string(store.Get(types.ParamStoreKeyEVMDenom))
+	value, err := store.Get(types.ParamStoreKeyEVMDenom)
+	if err != nil {
+		return err
+	}
+	denom := string(value)
 
-	extraEIPsBz := store.Get(types.ParamStoreKeyExtraEIPs)
+	extraEIPsBz, err := store.Get(types.ParamStoreKeyExtraEIPs)
+	if err != nil {
+		return err
+	}
 	cdc.MustUnmarshal(extraEIPsBz, &extraEIPs)
 
 	// revert ExtraEIP change for Evmos testnet
@@ -36,22 +43,43 @@ func MigrateStore(
 		extraEIPs.EIPs = []int64{}
 	}
 
-	chainCfgBz := store.Get(types.ParamStoreKeyChainConfig)
+	chainCfgBz, err := store.Get(types.ParamStoreKeyChainConfig)
+	if err != nil {
+		return err
+	}
 	cdc.MustUnmarshal(chainCfgBz, &chainConfig)
 
 	params.EvmDenom = denom
 	params.ExtraEIPs = extraEIPs.EIPs
 	params.ChainConfig = chainConfig
-	params.EnableCreate = store.Has(types.ParamStoreKeyEnableCreate)
-	params.EnableCall = store.Has(types.ParamStoreKeyEnableCall)
-	params.AllowUnprotectedTxs = store.Has(types.ParamStoreKeyAllowUnprotectedTxs)
+	if params.EnableCreate, err = store.Has(types.ParamStoreKeyEnableCreate); err != nil {
+		return err
+	}
+	if params.EnableCall, err = store.Has(types.ParamStoreKeyEnableCall); err != nil {
+		return err
+	}
+	if params.AllowUnprotectedTxs, err = store.Has(types.ParamStoreKeyAllowUnprotectedTxs); err != nil {
+		return err
+	}
 
-	store.Delete(types.ParamStoreKeyChainConfig)
-	store.Delete(types.ParamStoreKeyExtraEIPs)
-	store.Delete(types.ParamStoreKeyEVMDenom)
-	store.Delete(types.ParamStoreKeyEnableCreate)
-	store.Delete(types.ParamStoreKeyEnableCall)
-	store.Delete(types.ParamStoreKeyAllowUnprotectedTxs)
+	if err = store.Delete(types.ParamStoreKeyChainConfig); err != nil {
+		return err
+	}
+	if err = store.Delete(types.ParamStoreKeyExtraEIPs); err != nil {
+		return err
+	}
+	if err = store.Delete(types.ParamStoreKeyEVMDenom); err != nil {
+		return err
+	}
+	if err = store.Delete(types.ParamStoreKeyEnableCreate); err != nil {
+		return err
+	}
+	if err = store.Delete(types.ParamStoreKeyEnableCall); err != nil {
+		return err
+	}
+	if err = store.Delete(types.ParamStoreKeyAllowUnprotectedTxs); err != nil {
+		return err
+	}
 
 	if err := params.Validate(); err != nil {
 		return err
@@ -59,6 +87,10 @@ func MigrateStore(
 
 	bz := cdc.MustMarshal(&params)
 
-	store.Set(types.KeyPrefixParams, bz)
+	err = store.Set(types.KeyPrefixParams, bz)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

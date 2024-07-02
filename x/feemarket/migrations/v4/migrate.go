@@ -1,8 +1,8 @@
 package v4
 
 import (
+	corestore "cosmossdk.io/core/store"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/evmos/ethermint/x/feemarket/types"
 )
@@ -12,12 +12,12 @@ import (
 // and managed by the Cosmos SDK params module and stores them directly into the x/evm module state.
 func MigrateStore(
 	ctx sdk.Context,
-	storeKey storetypes.StoreKey,
+	storeService corestore.KVStoreService,
 	legacySubspace types.Subspace,
 	cdc codec.BinaryCodec,
 ) error {
 	var (
-		store  = ctx.KVStore(storeKey)
+		store  = storeService.OpenKVStore(ctx)
 		params types.Params
 	)
 
@@ -32,7 +32,10 @@ func MigrateStore(
 		return err
 	}
 
-	store.Set(types.ParamsKey, bz)
+	err = store.Set(types.ParamsKey, bz)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

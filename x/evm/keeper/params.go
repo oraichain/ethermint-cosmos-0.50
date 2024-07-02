@@ -22,8 +22,8 @@ import (
 
 // GetParams returns the total set of evm parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.KeyPrefixParams)
+	store := k.storeService.OpenKVStore(ctx)
+	bz, _ := store.Get(types.KeyPrefixParams)
 	if len(bz) == 0 {
 		return k.GetLegacyParams(ctx)
 	}
@@ -37,13 +37,17 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 		return err
 	}
 
-	store := ctx.KVStore(k.storeKey)
+	store := k.storeService.OpenKVStore(ctx)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
 
-	store.Set(types.KeyPrefixParams, bz)
+	err = store.Set(types.KeyPrefixParams, bz)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

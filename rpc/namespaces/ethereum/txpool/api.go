@@ -16,7 +16,7 @@
 package txpool
 
 import (
-	"github.com/tendermint/tendermint/libs/log"
+	"cosmossdk.io/log"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 

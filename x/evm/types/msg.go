@@ -20,17 +20,21 @@ import (
 	"fmt"
 	"math/big"
 
-	sdkmath "cosmossdk.io/math"
+	protov2 "google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	signing "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	evmapi "github.com/evmos/ethermint/api/ethermint/evm/v1"
 
 	"github.com/evmos/ethermint/types"
 
@@ -47,12 +51,6 @@ var (
 	_ sdk.Msg    = &MsgUpdateParams{}
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
-)
-
-// message type and route constants
-const (
-	// TypeMsgEthereumTx defines the type string of an Ethereum transaction
-	TypeMsgEthereumTx = "ethereum_tx"
 )
 
 // NewTx returns a reference to a new Ethereum transaction message.
@@ -172,12 +170,6 @@ func (msg *MsgEthereumTx) FromEthereumTx(tx *ethtypes.Transaction) error {
 	return nil
 }
 
-// Route returns the route value of an MsgEthereumTx.
-func (msg MsgEthereumTx) Route() string { return RouterKey }
-
-// Type returns the type value of an MsgEthereumTx.
-func (msg MsgEthereumTx) Type() string { return TypeMsgEthereumTx }
-
 // ValidateBasic implements the sdk.Msg interface. It performs basic validation
 // checks of a Transaction. If returns an error if validation fails.
 func (msg MsgEthereumTx) ValidateBasic() error {
@@ -220,11 +212,28 @@ func (msg *MsgEthereumTx) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{msg}
 }
 
+func (msg *MsgEthereumTx) GetMsgsV2() ([]protov2.Message, error) {
+	m := evmapi.MsgEthereumTx{
+		Data: &anypb.Any{
+			TypeUrl: msg.Data.TypeUrl,
+			Value:   msg.Data.Value,
+		},
+		Size: msg.Size_,
+		Hash: msg.Hash,
+		From: msg.From,
+	}
+	return []protov2.Message{&m}, nil
+}
+
 // GetSigners returns the expected signers for an Ethereum transaction message.
 // For such a message, there should exist only a single 'signer'.
 //
 // NOTE: This method panics if 'Sign' hasn't been called first.
 func (msg *MsgEthereumTx) GetSigners() []sdk.AccAddress {
+	if len(msg.From) > 0 {
+		return []sdk.AccAddress{common.HexToAddress(msg.From).Bytes()}
+	}
+
 	data, err := UnpackTxData(msg.Data)
 	if err != nil {
 		panic(err)
@@ -264,7 +273,7 @@ func (msg *MsgEthereumTx) Sign(ethSigner ethtypes.Signer, keyringSigner keyring.
 	tx := msg.AsTransaction()
 	txHash := ethSigner.Hash(tx)
 
-	sig, _, err := keyringSigner.SignByAddress(from, txHash.Bytes())
+	sig, _, err := keyringSigner.SignByAddress(from, txHash.Bytes(), signing.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
 	if err != nil {
 		return err
 	}
@@ -391,7 +400,7 @@ func (msg *MsgEthereumTx) UnmarshalBinary(b []byte) error {
 }
 
 // BuildTx builds the canonical cosmos tx from ethereum msg
-func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (signing.Tx, error) {
+func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (authsigning.Tx, error) {
 	builder, ok := b.(authtx.ExtensionOptionsTxBuilder)
 	if !ok {
 		return nil, errors.New("unsupported builder")
@@ -427,23 +436,52 @@ func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (signing.
 	return tx, nil
 }
 
-// GetSigners returns the expected signers for a MsgUpdateParams message.
-func (m MsgUpdateParams) GetSigners() []sdk.AccAddress {
-	//#nosec G703 -- gosec raises a warning about a non-handled error which we deliberately ignore here
-	addr, _ := sdk.AccAddressFromBech32(m.Authority)
-	return []sdk.AccAddress{addr}
-}
-
-// ValidateBasic does a sanity check of the provided data
-func (m *MsgUpdateParams) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
-		return errorsmod.Wrap(err, "invalid authority address")
+func GetSignersFromMsgEthereumTxV2(msg protov2.Message) ([][]byte, error) {
+	msgv1, err := GetMsgEthereumTxFromMsgV2(msg)
+	if err != nil {
+		return nil, err
 	}
 
-	return m.Params.Validate()
+	signers := [][]byte{}
+	for _, signer := range msgv1.GetSigners() {
+		signers = append(signers, signer.Bytes())
+	}
+
+	return signers, nil
 }
 
-// GetSignBytes implements the LegacyMsg interface.
-func (m MsgUpdateParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
+func GetMsgEthereumTxFromMsgV2(msg protov2.Message) (MsgEthereumTx, error) {
+	msgv2, ok := msg.(*evmapi.MsgEthereumTx)
+	if !ok {
+		return MsgEthereumTx{}, fmt.Errorf("invalid x/evm/MsgEthereumTx msg v2: %v", msg)
+	}
+
+	var dataAny *codectypes.Any
+	var err error
+	switch msgv2.Data.TypeUrl {
+	case "/ethermint.evm.v1.LegacyTx":
+		legacyTx := LegacyTx{}
+		ModuleCdc.MustUnmarshal(msgv2.Data.Value, &legacyTx)
+		dataAny, err = PackTxData(&legacyTx)
+		if err != nil {
+			return MsgEthereumTx{}, err
+		}
+	case "/ethermint.evm.v1.DynamicFeeTx":
+		dynamicFeeTx := DynamicFeeTx{}
+		ModuleCdc.MustUnmarshal(msgv2.Data.Value, &dynamicFeeTx)
+		dataAny, err = PackTxData(&dynamicFeeTx)
+		if err != nil {
+			return MsgEthereumTx{}, err
+		}
+	case "/ethermint.evm.v1.AccessListTx":
+		accessListTx := AccessListTx{}
+		ModuleCdc.MustUnmarshal(msgv2.Data.Value, &accessListTx)
+		dataAny, err = PackTxData(&accessListTx)
+		if err != nil {
+			return MsgEthereumTx{}, err
+		}
+	}
+	msgv1 := MsgEthereumTx{Data: dataAny}
+	msgv1.Hash = msgv1.AsTransaction().Hash().Hex()
+	return msgv1, nil
 }

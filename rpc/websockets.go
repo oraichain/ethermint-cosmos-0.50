@@ -34,12 +34,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth/filters"
-	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 
-	"github.com/tendermint/tendermint/libs/log"
-	rpcclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
-	tmtypes "github.com/tendermint/tendermint/types"
+	"cosmossdk.io/log"
+	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+	tmtypes "github.com/cometbft/cometbft/types"
 
 	"github.com/evmos/ethermint/rpc/ethereum/pubsub"
 	rpcfilters "github.com/evmos/ethermint/rpc/namespaces/ethereum/eth/filters"
@@ -384,31 +383,29 @@ func (api *pubSubAPI) subscribe(wsConn *wsConn, subID rpc.ID, params []interface
 }
 
 func (api *pubSubAPI) subscribeNewHeads(wsConn *wsConn, subID rpc.ID) (pubsub.UnsubscribeFunc, error) {
-	sub, unsubFn, err := api.events.SubscribeNewHeads()
+	sub, unsubFn, err := api.events.SubscribeNewBlocks()
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating block filter")
 	}
 
-	// TODO: use events
-	baseFee := big.NewInt(params.InitialBaseFee)
-
 	go func() {
-		headersCh := sub.Event()
+		blocksCh := sub.Event()
 		errCh := sub.Err()
 		for {
 			select {
-			case event, ok := <-headersCh:
+			case event, ok := <-blocksCh:
 				if !ok {
 					return
 				}
 
-				data, ok := event.Data.(tmtypes.EventDataNewBlockHeader)
+				data, ok := event.Data.(tmtypes.EventDataNewBlock)
 				if !ok {
 					api.logger.Debug("event data type mismatch", "type", fmt.Sprintf("%T", event.Data))
 					continue
 				}
 
-				header := types.EthHeaderFromTendermint(data.Header, ethtypes.Bloom{}, baseFee)
+				baseFee := types.BaseFeeFromEvents(data.ResultFinalizeBlock.Events)
+				header := types.EthHeaderFromTendermint(data.Block.Header, ethtypes.Bloom{}, baseFee)
 
 				// write to ws conn
 				res := &SubscriptionNotification{

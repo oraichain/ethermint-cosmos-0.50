@@ -68,6 +68,8 @@ func (suite *EvmTestSuite) TestInitGenesis() {
 			"invalid account type",
 			func() {
 				acc := authtypes.NewBaseAccountWithAddress(address.Bytes())
+				accNum := suite.app.AccountKeeper.NextAccountNumber(suite.ctx)
+				acc.SetAccountNumber(accNum)
 				suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 			},
 			&types.GenesisState{
@@ -118,8 +120,9 @@ func (suite *EvmTestSuite) TestInitGenesis() {
 		{
 			"ignore empty account code checking with non-empty codehash",
 			func() {
+				accNum := suite.app.AccountKeeper.NextAccountNumber(suite.ctx)
 				ethAcc := &etherminttypes.EthAccount{
-					BaseAccount: authtypes.NewBaseAccount(address.Bytes(), nil, 0, 0),
+					BaseAccount: authtypes.NewBaseAccount(address.Bytes(), nil, accNum, 0),
 					CodeHash:    common.BytesToHash([]byte{1, 2, 3}).Hex(),
 				}
 

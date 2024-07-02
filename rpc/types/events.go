@@ -19,12 +19,12 @@ import (
 	"fmt"
 	"strconv"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethermint "github.com/evmos/ethermint/types"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // EventFormat is the format version of the events.
@@ -89,7 +89,7 @@ type ParsedTxs struct {
 
 // ParseTxResult parse eth tx infos from cosmos-sdk events.
 // It supports two event formats, the formats are described in the comments of the format constants.
-func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error) {
+func ParseTxResult(result *abci.ExecTxResult, tx sdk.Tx) (*ParsedTxs, error) {
 	format := eventFormatUnknown
 	// the index of current ethereum_tx event in format 1 or the second part of format 2
 	eventIndex := -1
@@ -266,7 +266,7 @@ func fillTxAttribute(tx *ParsedTx, key []byte, value []byte) error {
 
 func fillTxAttributes(tx *ParsedTx, attrs []abci.EventAttribute) error {
 	for _, attr := range attrs {
-		if err := fillTxAttribute(tx, attr.Key, attr.Value); err != nil {
+		if err := fillTxAttribute(tx, []byte(attr.Key), []byte(attr.Value)); err != nil {
 			return err
 		}
 	}

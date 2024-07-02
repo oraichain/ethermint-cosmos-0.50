@@ -3,24 +3,27 @@ package testutil
 import (
 	"time"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/evmos/ethermint/app"
 )
 
 // Commit commits a block at a given time. Reminder: At the end of each
-// Tendermint Consensus round the following methods are run
-//  1. BeginBlock
-//  2. DeliverTx
-//  3. EndBlock
-//  4. Commit
+// CometBFT Consensus round the following methods are run
+//  1. FinalizeBlock
+//  2. Commit
 func Commit(ctx sdk.Context, app *app.EthermintApp, t time.Duration, vs *tmtypes.ValidatorSet) (sdk.Context, error) {
 	header := ctx.BlockHeader()
 
 	if vs != nil {
-		res := app.EndBlock(abci.RequestEndBlock{Height: header.Height})
+		res, err := app.FinalizeBlock(&abci.RequestFinalizeBlock{
+			Height: header.Height,
+		})
+		if err != nil {
+			return ctx, err
+		}
 
 		nextVals, err := applyValSetChanges(vs, res.ValidatorUpdates)
 		if err != nil {
@@ -29,18 +32,22 @@ func Commit(ctx sdk.Context, app *app.EthermintApp, t time.Duration, vs *tmtypes
 		header.ValidatorsHash = vs.Hash()
 		header.NextValidatorsHash = nextVals.Hash()
 	} else {
-		app.EndBlocker(ctx, abci.RequestEndBlock{Height: header.Height})
+		_, err := app.FinalizeBlock(&abci.RequestFinalizeBlock{
+			Height: header.Height,
+		})
+		if err != nil {
+			return ctx, err
+		}
 	}
 
-	_ = app.Commit()
+	_, err := app.Commit()
+	if err != nil {
+		return ctx, err
+	}
 
 	header.Height++
 	header.Time = header.Time.Add(t)
 	header.AppHash = app.LastCommitID().Hash
-
-	app.BeginBlock(abci.RequestBeginBlock{
-		Header: header,
-	})
 
 	return ctx.WithBlockHeader(header), nil
 }
