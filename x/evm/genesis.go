@@ -24,7 +24,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-
+	precompile_modules "github.com/ethereum/go-ethereum/precompile/modules"
 	ethermint "github.com/evmos/ethermint/types"
 	"github.com/evmos/ethermint/x/evm/keeper"
 	"github.com/evmos/ethermint/x/evm/types"
@@ -36,10 +36,19 @@ func InitGenesis(
 	k *keeper.Keeper,
 	accountKeeper types.AccountKeeper,
 	data types.GenesisState,
+	registeredModules []precompile_modules.Module,
 ) []abci.ValidatorUpdate {
 	k.WithChainID(ctx)
 
-	err := k.SetParams(ctx, data.Params)
+	err := types.ValidatePrecompileRegistration(
+		registeredModules,
+		data.Params.GetEnabledPrecompiles(),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = k.SetParams(ctx, data.Params)
 	if err != nil {
 		panic(fmt.Errorf("error setting params %s", err))
 	}

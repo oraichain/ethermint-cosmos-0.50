@@ -217,8 +217,9 @@ schema = 3
     version = "v1.6.1"
     hash = "sha256-zOpoaepCfPLmU9iQji/Ait+SVEHI9eF3rwtW0h/8lho="
   [mod."github.com/ethereum/go-ethereum"]
-    version = "v1.10.26"
-    hash = "sha256-gkMEwJ4rOgn12amD4QpZ4th/10uyTTeoFmpseuKDQPs="
+    version = "v1.10.27-0.20240308170502-da7973e5eee0"
+    hash = "sha256-/KkxjI8UtvtIriAcAySHQcmKyohO9W0vLdBLVo47myM="
+    replaced = "github.com/Kava-Labs/go-ethereum"
   [mod."github.com/felixge/httpsnoop"]
     version = "v1.0.4"
     hash = "sha256-c1JKoRSndwwOyOxq9ddCe+8qn7mG9uRq2o/822x5O/c="
@@ -587,8 +588,8 @@ schema = 3
     version = "v0.17.0"
     hash = "sha256-M2ZZQZt449RJL18YpzGiAiqfGsDVMsr1IVWbYp/G/go="
   [mod."golang.org/x/sync"]
-    version = "v0.6.0"
-    hash = "sha256-LLims/wjDZtIqlYCVHREewcUOX4hwRwplEuZKPOJ/HI="
+    version = "v0.7.0"
+    hash = "sha256-2ETllEu2GDWoOd/yMkOkLC2hWBpKzbVZ8LhjLu0d2A8="
   [mod."golang.org/x/sys"]
     version = "v0.19.0"
     hash = "sha256-cmuL31TYLJmDm/fDnI2Sn0wB88cpdOHV1+urorsJWx4="
@@ -602,8 +603,8 @@ schema = 3
     version = "v0.5.0"
     hash = "sha256-W6RgwgdYTO3byIPOFxrP2IpAZdgaGowAaVfYby7AULU="
   [mod."golang.org/x/tools"]
-    version = "v0.7.0"
-    hash = "sha256-ZEjfFulQd6U9r4mEJ5RZOnW49NZnQnrCFLMKCgLg7go="
+    version = "v0.20.0"
+    hash = "sha256-g5T5FrNPO/cf2W1lc+/93FcFB3HftPjqI72FueD9Wt8="
   [mod."google.golang.org/api"]
     version = "v0.162.0"
     hash = "sha256-+AsT4DPjefEmPPelZoSHuQ8nCHhmhhUWU4UGnJ/8+fg="

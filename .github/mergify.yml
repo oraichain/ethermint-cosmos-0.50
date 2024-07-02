@@ -1,0 +1,91 @@
+# Mergify is a Github app that automates workflows.
+# It is used by kava-labs/ethermint to help automate backporting to previous releases.
+
+# For details on this file, see https://docs.mergify.com/getting-started/#configuration
+# For backport-specific details, see https://docs.mergify.com/workflow/actions/backport
+
+defaults:
+  actions:
+    backport:
+      assignees:
+        - "{{ author }}"
+
+pull_request_rules:
+  # one PR label to rule them all
+  - name: Backport patches to all kava/release/* branches
+    conditions:
+      - base=main
+      - label=backport/all
+    actions:
+      backport:
+        branches:
+          - kava/release/v0.17.x
+          - kava/release/v0.18.x
+          - kava/release/v0.19.x
+          - kava/release/v0.21.x
+          - kava/release/v0.23.x
+          - kava/release/v0.24.x
+          - kava/release/v0.26.x
+
+  - name: Backport patches to the kava/release/v0.17.x branch
+    conditions:
+      - base=main
+      - label=backport/v0.17
+    actions:
+      backport:
+        branches:
+          - kava/release/v0.17.x
+
+  - name: Backport patches to the kava/release/v0.18.x branch
+    conditions:
+      - base=main
+      - label=backport/v0.18
+    actions:
+      backport:
+        branches:
+          - kava/release/v0.18.x
+
+  - name: Backport patches to the kava/release/v0.19.x branch
+    conditions:
+      - base=main
+      - label=backport/v0.19
+    actions:
+      backport:
+        branches:
+          - kava/release/v0.19.x
+
+  - name: Backport patches to the kava/release/v0.21.x branch
+    conditions:
+      - base=main
+      - label=backport/v0.21
+    actions:
+      backport:
+        branches:
+          - kava/release/v0.21.x
+
+  - name: Backport patches to the kava/release/v0.23.x branch
+    conditions:
+      - base=main
+      - label=backport/v0.23
+    actions:
+      backport:
+        branches:
+          - kava/release/v0.23.x
+
+  - name: Backport patches to the kava/release/v0.24.x branch
+    conditions:
+      - base=main
+      - label=backport/v0.24
+    actions:
+      backport:
+        branches:
+          - kava/release/v0.24.x
+
+  - name: Backport patches to the kava/release/v0.26.x branch
+    conditions:
+      - base=main
+      - label=backport/v0.26
+    actions:
+      backport:
+        branches:
+          - kava/release/v0.26.x
