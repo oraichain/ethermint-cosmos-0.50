@@ -26,15 +26,10 @@ import (
 	"runtime/pprof"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/telemetry"
-
-	"github.com/spf13/cobra"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
+	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/tools/rosetta"
+	crgserver "cosmossdk.io/tools/rosetta/lib/server"
+	"github.com/Kava-Labs/opendb"
 	dbm "github.com/cometbft/cometbft-db"
 	abciserver "github.com/cometbft/cometbft/abci/server"
 	tcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
@@ -43,23 +38,23 @@ import (
 	"github.com/cometbft/cometbft/p2p"
 	pvm "github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/proxy"
-	"github.com/cometbft/cometbft/rpc/client/local"
-
-	"cosmossdk.io/tools/rosetta"
-	crgserver "cosmossdk.io/tools/rosetta/lib/server"
-
-	ethmetricsexp "github.com/ethereum/go-ethereum/metrics/exp"
-
-	errorsmod "cosmossdk.io/errors"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
+	"github.com/cometbft/cometbft/rpc/client/local"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 	"github.com/cosmos/cosmos-sdk/server/types"
 	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
+	"github.com/cosmos/cosmos-sdk/telemetry"
+	ethmetricsexp "github.com/ethereum/go-ethereum/metrics/exp"
+	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/evmos/ethermint/indexer"
 	ethdebug "github.com/evmos/ethermint/rpc/namespaces/ethereum/debug"
@@ -295,6 +290,16 @@ func startStandAlone(ctx *server.Context, opts StartOptions) error {
 	return server.WaitForQuitSignals()
 }
 
+// DBProviderFromAppOpts returns a database using the DBBackend and DBDir specified in the ctx.Config.
+// It uses opendb package which takes into account appOpts and provides configurability and observability.
+func DBProviderFromAppOpts(appOpts types.AppOptions) node.DBProvider {
+	return func(ctx *node.DBContext) (dbm.DB, error) {
+		dbType := dbm.BackendType(ctx.Config.DBBackend)
+
+		return opendb.OpenDB(appOpts, ctx.Config.DBDir(), ctx.ID, dbType)
+	}
+}
+
 // legacyAminoCdc is used for the legacy REST API
 func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOptions) (err error) {
 	cfg := ctx.Config
@@ -385,7 +390,7 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 			nodeKey,
 			proxy.NewLocalClientCreator(app),
 			genDocProvider,
-			node.DefaultDBProvider,
+			DBProviderFromAppOpts(ctx.Viper),
 			node.DefaultMetricsProvider(cfg.Instrumentation),
 			ctx.Logger.With("server", "node"),
 		)
@@ -430,7 +435,7 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 
 	var idxer ethermint.EVMTxIndexer
 	if config.JSONRPC.EnableIndexer {
-		idxDB, err := OpenIndexerDB(home, server.GetAppDBBackend(ctx.Viper))
+		idxDB, err := OpenIndexerDB(ctx.Viper, home, server.GetAppDBBackend(ctx.Viper))
 		if err != nil {
 			logger.Error("failed to open evm indexer DB", "error", err.Error())
 			return err
@@ -648,9 +653,10 @@ func openDB(_ types.AppOptions, rootDir string, backendType dbm.BackendType) (db
 }
 
 // OpenIndexerDB opens the custom eth indexer db, using the same db backend as the main app
-func OpenIndexerDB(rootDir string, backendType dbm.BackendType) (dbm.DB, error) {
+func OpenIndexerDB(appOpts types.AppOptions, rootDir string, backendType dbm.BackendType) (dbm.DB, error) {
 	dataDir := filepath.Join(rootDir, "data")
-	return dbm.NewDB("evmindexer", backendType, dataDir)
+
+	return opendb.OpenDB(appOpts, dataDir, "evmindexer", backendType)
 }
 
 func openTraceWriter(traceWriterFile string) (w io.Writer, err error) {
