@@ -21,12 +21,12 @@ import (
 	ethermint "github.com/evmos/ethermint/types"
 )
 
-// Validate performs a basic validation of a GenesisAccount fields.
-func (ga GenesisAccount) Validate() error {
-	if err := ethermint.ValidateAddress(ga.Address); err != nil {
-		return err
+// NewGenesisState creates a new genesis state.
+func NewGenesisState(params Params, accounts []GenesisAccount) *GenesisState {
+	return &GenesisState{
+		Accounts: accounts,
+		Params:   params,
 	}
-	return ga.Storage.Validate()
 }
 
 // DefaultGenesisState sets default evm genesis state with empty accounts and default params and
@@ -38,27 +38,34 @@ func DefaultGenesisState() *GenesisState {
 	}
 }
 
-// NewGenesisState creates a new genesis state.
-func NewGenesisState(params Params, accounts []GenesisAccount) *GenesisState {
-	return &GenesisState{
-		Accounts: accounts,
-		Params:   params,
+// Validate performs a basic validation of a GenesisAccount fields.
+func (ga GenesisAccount) Validate() error {
+	if err := ethermint.ValidateAddress(ga.Address); err != nil {
+		return err
 	}
+	return ga.Storage.Validate()
 }
 
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	seenAccounts := make(map[string]bool)
+	seenAccounts := make(map[string]struct{})
+
 	for _, acc := range gs.Accounts {
-		if seenAccounts[acc.Address] {
-			return fmt.Errorf("duplicated genesis account %s", acc.Address)
-		}
 		if err := acc.Validate(); err != nil {
 			return fmt.Errorf("invalid genesis account %s: %w", acc.Address, err)
 		}
-		seenAccounts[acc.Address] = true
+
+		if _, ok := seenAccounts[acc.Address]; ok {
+			return fmt.Errorf("duplicated genesis account %s", acc.Address)
+		}
+
+		seenAccounts[acc.Address] = struct{}{}
 	}
 
-	return gs.Params.Validate()
+	if err := gs.Params.Validate(); err != nil {
+		return fmt.Errorf("invalid params: %w", err)
+	}
+
+	return nil
 }

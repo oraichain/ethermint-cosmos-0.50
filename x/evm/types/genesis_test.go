@@ -1,225 +1,312 @@
-package types
+package types_test
 
 import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/suite"
-
-	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+	"github.com/evmos/ethermint/x/evm/types"
+	"github.com/stretchr/testify/require"
 )
 
-type GenesisTestSuite struct {
-	suite.Suite
-
-	address string
-	hash    common.Hash
-	code    string
+func defaultGenesisAccount() types.GenesisAccount {
+	return types.GenesisAccount{
+		Address: common.BytesToAddress([]byte{0x01}).String(),
+		Code:    common.Bytes2Hex([]byte{0x01, 0x02, 0x03}),
+		Storage: types.Storage{},
+	}
 }
 
-func (suite *GenesisTestSuite) SetupTest() {
-	priv, err := ethsecp256k1.GenerateKey()
-	suite.Require().NoError(err)
-
-	suite.address = common.BytesToAddress(priv.PubKey().Address().Bytes()).String()
-	suite.hash = common.BytesToHash([]byte("hash"))
-	suite.code = common.Bytes2Hex([]byte{1, 2, 3})
-}
-
-func TestGenesisTestSuite(t *testing.T) {
-	suite.Run(t, new(GenesisTestSuite))
-}
-
-func (suite *GenesisTestSuite) TestValidateGenesisAccount() {
+func TestGenesisAccountValidate(t *testing.T) {
 	testCases := []struct {
-		name           string
-		genesisAccount GenesisAccount
-		expPass        bool
+		name        string
+		getAccount  func() types.GenesisAccount
+		expectedErr string
 	}{
 		{
-			"valid genesis account",
-			GenesisAccount{
-				Address: suite.address,
-				Code:    suite.code,
-				Storage: Storage{
-					NewState(suite.hash, suite.hash),
-				},
+			name: "default is valid",
+			getAccount: func() types.GenesisAccount {
+				return defaultGenesisAccount()
 			},
-			true,
+			expectedErr: "",
 		},
 		{
-			"empty account address bytes",
-			GenesisAccount{
-				Address: "",
-				Code:    suite.code,
-				Storage: Storage{
-					NewState(suite.hash, suite.hash),
-				},
+			name: "invalid empty address",
+			getAccount: func() types.GenesisAccount {
+				account := defaultGenesisAccount()
+
+				account.Address = ""
+
+				return account
 			},
-			false,
+			expectedErr: "invalid address",
 		},
 		{
-			"empty code bytes",
-			GenesisAccount{
-				Address: suite.address,
-				Code:    "",
-				Storage: Storage{
-					NewState(suite.hash, suite.hash),
-				},
+			name: "invalid address length",
+			getAccount: func() types.GenesisAccount {
+				account := defaultGenesisAccount()
+
+				account.Address = account.Address[:len(account.Address)-1]
+
+				return account
 			},
-			true,
+			expectedErr: "invalid address",
+		},
+		{
+			name: "invalid empty storage key",
+			getAccount: func() types.GenesisAccount {
+				account := defaultGenesisAccount()
+
+				account.Storage = append(account.Storage, types.State{
+					Key: "",
+				})
+
+				return account
+			},
+			expectedErr: "state key hash cannot be blank",
+		},
+		{
+			name: "valid with set storage state",
+			getAccount: func() types.GenesisAccount {
+				account := defaultGenesisAccount()
+
+				account.Storage = append(account.Storage, types.State{
+					Key:   common.BytesToHash([]byte{0x01}).String(),
+					Value: common.BytesToHash([]byte{0x02}).String(),
+				})
+
+				return account
+			},
+			expectedErr: "",
+		},
+		{
+			name: "valid with empty code",
+			getAccount: func() types.GenesisAccount {
+				account := defaultGenesisAccount()
+
+				account.Code = ""
+
+				return account
+			},
+			expectedErr: "",
 		},
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-		err := tc.genesisAccount.Validate()
-		if tc.expPass {
-			suite.Require().NoError(err, tc.name)
-		} else {
-			suite.Require().Error(err, tc.name)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.getAccount().Validate()
+
+			if tc.expectedErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedErr)
+			}
+		})
 	}
 }
 
-func (suite *GenesisTestSuite) TestValidateGenesis() {
+func TestGenesisStateValidate(t *testing.T) {
 	testCases := []struct {
-		name     string
-		genState *GenesisState
-		expPass  bool
+		name        string
+		getState    func() *types.GenesisState
+		expectedErr string
 	}{
 		{
-			name:     "default",
-			genState: DefaultGenesisState(),
-			expPass:  true,
+			name: "default state is valid",
+			getState: func() *types.GenesisState {
+				return types.DefaultGenesisState()
+			},
+			expectedErr: "",
 		},
 		{
-			name: "valid genesis",
-			genState: &GenesisState{
-				Accounts: []GenesisAccount{
-					{
-						Address: suite.address,
+			name: "valid genesis with genesis accounts of same and different state",
+			getState: func() *types.GenesisState {
+				state := types.DefaultGenesisState()
 
-						Code: suite.code,
-						Storage: Storage{
-							{Key: suite.hash.String()},
+				state.Accounts = append(state.Accounts,
+					types.GenesisAccount{
+						Address: common.BytesToAddress([]byte{0x01}).String(),
+						Code:    common.Bytes2Hex([]byte{0x01, 0x02, 0x03}),
+						Storage: types.Storage{
+							types.State{
+								Key:   common.BytesToHash([]byte{0x01}).String(),
+								Value: common.BytesToHash([]byte{0x02}).String(),
+							},
+							types.State{
+								Key:   common.BytesToHash([]byte{0x02}).String(),
+								Value: common.BytesToHash([]byte{0x03}).String(),
+							},
 						},
 					},
-				},
-				Params: DefaultParams(),
-			},
-			expPass: true,
-		},
-		{
-			name:     "empty genesis",
-			genState: &GenesisState{},
-			expPass:  false,
-		},
-		{
-			name:     "copied genesis",
-			genState: NewGenesisState(DefaultGenesisState().Params, DefaultGenesisState().Accounts),
-			expPass:  true,
-		},
-		{
-			name: "invalid genesis",
-			genState: &GenesisState{
-				Accounts: []GenesisAccount{
-					{
-						Address: common.Address{}.String(),
-					},
-				},
-			},
-			expPass: false,
-		},
-		{
-			name: "invalid genesis account",
-			genState: &GenesisState{
-				Accounts: []GenesisAccount{
-					{
-						Address: "123456",
-
-						Code: suite.code,
-						Storage: Storage{
-							{Key: suite.hash.String()},
+					types.GenesisAccount{
+						Address: common.BytesToAddress([]byte{0x02}).String(),
+						Code:    common.Bytes2Hex([]byte{0x01, 0x02, 0x03}),
+						Storage: types.Storage{
+							types.State{
+								Key:   common.BytesToHash([]byte{0x01}).String(),
+								Value: common.BytesToHash([]byte{0x02}).String(),
+							},
+							types.State{
+								Key:   common.BytesToHash([]byte{0x02}).String(),
+								Value: common.BytesToHash([]byte{0x03}).String(),
+							},
 						},
 					},
-				},
-				Params: DefaultParams(),
-			},
-			expPass: false,
-		},
-		{
-			name: "duplicated genesis account",
-			genState: &GenesisState{
-				Accounts: []GenesisAccount{
-					{
-						Address: suite.address,
-
-						Code: suite.code,
-						Storage: Storage{
-							NewState(suite.hash, suite.hash),
+					types.GenesisAccount{
+						Address: common.BytesToAddress([]byte{0x03}).String(),
+						Code:    common.Bytes2Hex([]byte{0x04, 0x05, 0x06}),
+						Storage: types.Storage{
+							types.State{
+								Key:   common.BytesToHash([]byte{0x03}).String(),
+								Value: common.BytesToHash([]byte{0x04}).String(),
+							},
+							types.State{
+								Key:   common.BytesToHash([]byte{0x05}).String(),
+								Value: common.BytesToHash([]byte{0x06}).String(),
+							},
 						},
 					},
-					{
-						Address: suite.address,
+				)
 
-						Code: suite.code,
-						Storage: Storage{
-							NewState(suite.hash, suite.hash),
-						},
-					},
-				},
+				return state
 			},
-			expPass: false,
+			expectedErr: "",
 		},
 		{
-			name: "duplicated tx log",
-			genState: &GenesisState{
-				Accounts: []GenesisAccount{
-					{
-						Address: suite.address,
-
-						Code: suite.code,
-						Storage: Storage{
-							{Key: suite.hash.String()},
-						},
-					},
-				},
+			name: "empty genesis does not contain valid parameters",
+			getState: func() *types.GenesisState {
+				return &types.GenesisState{}
 			},
-			expPass: false,
+			expectedErr: "invalid params",
 		},
 		{
-			name: "invalid tx log",
-			genState: &GenesisState{
-				Accounts: []GenesisAccount{
-					{
-						Address: suite.address,
-
-						Code: suite.code,
-						Storage: Storage{
-							{Key: suite.hash.String()},
-						},
-					},
-				},
+			name: "default parameters and no accounts is valid",
+			getState: func() *types.GenesisState {
+				state := &types.GenesisState{}
+				state.Params = types.DefaultParams()
+				return state
 			},
-			expPass: false,
+			expectedErr: "",
 		},
 		{
-			name: "invalid params",
-			genState: &GenesisState{
-				Params: Params{},
+			name: "genesis is invalid with an invalid genesis account address",
+			getState: func() *types.GenesisState {
+				state := types.DefaultGenesisState()
+
+				account := defaultGenesisAccount()
+				account.Address = "0x...."
+
+				state.Accounts = append(state.Accounts, account)
+
+				return state
 			},
-			expPass: false,
+			expectedErr: "invalid address",
+		},
+		{
+			name: "genesis is invalid with an invalid genesis account storage key",
+			getState: func() *types.GenesisState {
+				state := types.DefaultGenesisState()
+
+				account := defaultGenesisAccount()
+				account.Storage = append(account.Storage, types.State{
+					Key:   "", // invalid empty key
+					Value: "",
+				})
+
+				state.Accounts = append(state.Accounts, account)
+
+				return state
+			},
+			expectedErr: "invalid storage state",
+		},
+		{
+			name: "genesis is invalid with a genesis account that has duplicated storage keys",
+			getState: func() *types.GenesisState {
+				state := types.DefaultGenesisState()
+
+				account := defaultGenesisAccount()
+				account.Storage = append(account.Storage,
+					types.State{
+						Key:   common.BytesToHash([]byte{0x01}).String(),
+						Value: "val1",
+					},
+					types.State{
+						Key:   common.BytesToHash([]byte{0x01}).String(),
+						Value: "val2",
+					},
+				)
+
+				state.Accounts = append(state.Accounts, account)
+
+				return state
+			},
+			expectedErr: "duplicate state key",
+		},
+		{
+			name: "genesis is invalid with a duplicate genesis account",
+			getState: func() *types.GenesisState {
+				state := types.DefaultGenesisState()
+
+				account1 := defaultGenesisAccount()
+				account2 := defaultGenesisAccount()
+
+				state.Accounts = append(state.Accounts, account1, account2)
+
+				return state
+			},
+			expectedErr: "duplicated genesis account",
+		},
+		{
+			name: "genesis account validation is checked before uniqueness",
+			getState: func() *types.GenesisState {
+				state := types.DefaultGenesisState()
+
+				account1 := defaultGenesisAccount()
+				account1.Address = ""
+
+				account2 := defaultGenesisAccount()
+				account2.Address = ""
+
+				state.Accounts = append(state.Accounts, account1, account2)
+
+				return state
+			},
+			expectedErr: "invalid genesis account",
+		},
+		{
+			name: "genesis is invalid if evm denom is invalid",
+			getState: func() *types.GenesisState {
+				state := types.DefaultGenesisState()
+
+				state.Params.EvmDenom = "@@@@"
+
+				return state
+			},
+			expectedErr: "invalid denom",
+		},
+		{
+			name: "genesis is invalid if enabled precompile is invalid",
+			getState: func() *types.GenesisState {
+				state := types.DefaultGenesisState()
+
+				state.Params.EnabledPrecompiles = append(state.Params.EnabledPrecompiles, "0x....")
+
+				return state
+			},
+			expectedErr: "invalid hex address",
 		},
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-		err := tc.genState.Validate()
-		if tc.expPass {
-			suite.Require().NoError(err, tc.name)
-		} else {
-			suite.Require().Error(err, tc.name)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.getState().Validate()
+
+			if tc.expectedErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedErr)
+			}
+		})
 	}
 }
