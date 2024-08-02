@@ -23,14 +23,14 @@ func TestGenesisAccountValidate(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name: "default is valid",
+			name: "Default is valid",
 			getAccount: func() types.GenesisAccount {
 				return defaultGenesisAccount()
 			},
 			expectedErr: "",
 		},
 		{
-			name: "invalid empty address",
+			name: "Invalid empty address",
 			getAccount: func() types.GenesisAccount {
 				account := defaultGenesisAccount()
 
@@ -41,7 +41,7 @@ func TestGenesisAccountValidate(t *testing.T) {
 			expectedErr: "invalid address",
 		},
 		{
-			name: "invalid address length",
+			name: "Invalid address length",
 			getAccount: func() types.GenesisAccount {
 				account := defaultGenesisAccount()
 
@@ -52,7 +52,7 @@ func TestGenesisAccountValidate(t *testing.T) {
 			expectedErr: "invalid address",
 		},
 		{
-			name: "invalid empty storage key",
+			name: "Invalid empty storage key",
 			getAccount: func() types.GenesisAccount {
 				account := defaultGenesisAccount()
 
@@ -65,7 +65,7 @@ func TestGenesisAccountValidate(t *testing.T) {
 			expectedErr: "state key hash cannot be blank",
 		},
 		{
-			name: "valid with set storage state",
+			name: "Valid with set storage state",
 			getAccount: func() types.GenesisAccount {
 				account := defaultGenesisAccount()
 
@@ -79,7 +79,7 @@ func TestGenesisAccountValidate(t *testing.T) {
 			expectedErr: "",
 		},
 		{
-			name: "valid with empty code",
+			name: "Invalid with empty code",
 			getAccount: func() types.GenesisAccount {
 				account := defaultGenesisAccount()
 
@@ -87,7 +87,7 @@ func TestGenesisAccountValidate(t *testing.T) {
 
 				return account
 			},
-			expectedErr: "",
+			expectedErr: "code can not be empty",
 		},
 	}
 
@@ -203,6 +203,20 @@ func TestGenesisStateValidate(t *testing.T) {
 			expectedErr: "invalid address",
 		},
 		{
+			name: "genesis is invalid with empty code",
+			getState: func() *types.GenesisState {
+				state := types.DefaultGenesisState()
+
+				account := defaultGenesisAccount()
+				account.Code = ""
+
+				state.Accounts = append(state.Accounts, account)
+
+				return state
+			},
+			expectedErr: "code can not be empty",
+		},
+		{
 			name: "genesis is invalid with an invalid genesis account storage key",
 			getState: func() *types.GenesisState {
 				state := types.DefaultGenesisState()
@@ -294,6 +308,18 @@ func TestGenesisStateValidate(t *testing.T) {
 				return state
 			},
 			expectedErr: "invalid hex address",
+		},
+		{
+			name: "genesis is invalid if enabled precompile does not have a matching genesis account",
+			getState: func() *types.GenesisState {
+				state := types.DefaultGenesisState()
+
+				account := defaultGenesisAccount()
+				state.Params.EnabledPrecompiles = append(state.Params.EnabledPrecompiles, account.Address)
+
+				return state
+			},
+			expectedErr: "must have a matching genesis account",
 		},
 	}
 
