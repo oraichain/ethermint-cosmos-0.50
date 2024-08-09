@@ -19,8 +19,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 )
 
@@ -58,6 +60,24 @@ func ConstructUntypedEIP712Data(
 		panic(err)
 	}
 	return sdk.MustSortJSON(bz)
+}
+
+// ComputeTypedDataHash computes keccak hash of typed data for signing.
+func ComputeTypedDataHash(typedData apitypes.TypedData) ([]byte, error) {
+	domainSeparator, err := typedData.HashStruct("EIP712Domain", typedData.Domain.Map())
+	if err != nil {
+		err = errorsmod.Wrap(err, "failed to pack and hash typedData EIP712Domain")
+		return nil, err
+	}
+
+	typedDataHash, err := typedData.HashStruct(typedData.PrimaryType, typedData.Message)
+	if err != nil {
+		err = errorsmod.Wrap(err, "failed to pack and hash typedData primary type")
+		return nil, err
+	}
+
+	rawData := []byte(fmt.Sprintf("\x19\x01%s%s", string(domainSeparator), string(typedDataHash)))
+	return crypto.Keccak256(rawData), nil
 }
 
 // WrapTxToTypedData wraps an Amino-encoded Cosmos Tx JSON SignDoc
