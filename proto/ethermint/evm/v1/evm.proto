@@ -23,12 +23,9 @@ message Params {
   // chain_config defines the EVM chain configuration parameters
   ChainConfig chain_config = 5
       [(gogoproto.moretags) = "yaml:\"chain_config\"", (amino.dont_omitempty) = true, (gogoproto.nullable) = false];
-  // eip712_allowed_msgs contains list of allowed eip712 msgs and their types
-  repeated EIP712AllowedMsg eip712_allowed_msgs = 6
-      [(gogoproto.customname) = "EIP712AllowedMsgs", (gogoproto.nullable) = false];
   // allow_unprotected_txs defines if replay-protected (i.e non EIP155
   // signed) transactions can be executed on the state machine.
-  bool allow_unprotected_txs = 7;
+  bool allow_unprotected_txs = 6;
 }
 
 // ChainConfig defines the Ethereum ChainConfig parameters using *sdk.Int values
@@ -264,36 +261,4 @@ message TraceConfig {
   bool enable_return_data = 12 [(gogoproto.jsontag) = "enableReturnData"];
   // tracer_json_config configures the tracer using a JSON string
   string tracer_json_config = 13 [(gogoproto.jsontag) = "tracerConfig"];
-}
-
-// EIP712AllowedMsg stores an allowed legacy msg and its eip712 type.
-message EIP712AllowedMsg {
-  // msg_type_url is a msg's proto type name. ie "/cosmos.bank.v1beta1.MsgSend"
-  string msg_type_url = 1;
-
-  // msg_value_type_name is a name of the eip712 value type. ie "MsgValueSend"
-  string msg_value_type_name = 2;
-
-  // value_types is a list of msg value types
-  repeated EIP712MsgAttrType value_types = 3 [(gogoproto.nullable) = false];
-
-  // nested_types is a list of msg value nested types
-  repeated EIP712NestedMsgType nested_types = 4 [(gogoproto.nullable) = false];
-}
-
-// EIP712NestedMsgType is the eip712 type of a single message.
-message EIP712NestedMsgType {
-  // name of the nested type. ie "Fee", "Coin"
-  string name = 1;
-
-  // attrs of the nested type
-  repeated EIP712MsgAttrType attrs = 2 [(gogoproto.nullable) = false];
-}
-
-// EIP712MsgAttrType is the eip712 type of a single message attribute.
-message EIP712MsgAttrType {
-  // name
-  string name = 1;
-  // type
-  string type = 2;
 }

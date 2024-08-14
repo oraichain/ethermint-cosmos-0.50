@@ -80,3 +80,4 @@ dependency-graph.png
 
 # OpenZeppelin contracts
 contracts/@openzeppelin/*
+app/testdata/
