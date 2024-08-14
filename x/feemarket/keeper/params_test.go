@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"reflect"
 
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/evmos/ethermint/app"
@@ -80,8 +80,8 @@ func (suite *KeeperTestSuite) TestSetGetParams() {
 func (suite *KeeperTestSuite) TestLegacyParamsKeyTableRegistration() {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
-	storeKey := sdk.NewKVStoreKey(types.ModuleName)
-	tKey := sdk.NewTransientStoreKey(types.TransientKey)
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
+	tKey := storetypes.NewTransientStoreKey(types.TransientKey)
 	ctx := testutil.DefaultContext(storeKey, tKey)
 
 	// paramspace used only for setting legacy parameters (not given to keeper)

@@ -22,7 +22,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -38,9 +37,9 @@ func ConstructUntypedEIP712Data(
 	fee legacytx.StdFee,
 	msgs []sdk.Msg,
 	memo string,
-	tip *tx.Tip,
+
 ) []byte {
-	signBytes := legacytx.StdSignBytes(chainID, accnum, sequence, timeout, fee, msgs, memo, tip)
+	signBytes := legacytx.StdSignBytes(chainID, accnum, sequence, timeout, fee, msgs, memo)
 	var inInterface map[string]interface{}
 	err := json.Unmarshal(signBytes, &inInterface)
 	if err != nil {

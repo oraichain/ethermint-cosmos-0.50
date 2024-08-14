@@ -5,7 +5,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -179,10 +178,10 @@ func (suite *KeeperTestSuite) TestParams() {
 func (suite *KeeperTestSuite) TestLegacyParamsKeyTableRegistration() {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
-	storeKey := sdk.NewKVStoreKey(types.ModuleName)
-	tKey := sdk.NewTransientStoreKey(types.TransientKey)
-	paramStoreKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
-	paramStoreTKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
+	tKey := storetypes.NewTransientStoreKey(types.TransientKey)
+	paramStoreKey := storetypes.NewKVStoreKey(paramtypes.ModuleName)
+	paramStoreTKey := storetypes.NewTransientStoreKey(paramtypes.TStoreKey)
 	ctx := legacytestutil.NewDBContext([]storetypes.StoreKey{storeKey, paramStoreKey}, []storetypes.StoreKey{tKey, paramStoreTKey})
 	ak := suite.app.AccountKeeper
 
@@ -239,10 +238,10 @@ func (suite *KeeperTestSuite) TestLegacyParamsKeyTableRegistration() {
 func (suite *KeeperTestSuite) TestRenamedFieldReturnsProperValueForLegacyParams() {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
-	storeKey := sdk.NewKVStoreKey(types.ModuleName)
-	tKey := sdk.NewTransientStoreKey(types.TransientKey)
-	paramStoreKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
-	paramStoreTKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
+	tKey := storetypes.NewTransientStoreKey(types.TransientKey)
+	paramStoreKey := storetypes.NewKVStoreKey(paramtypes.ModuleName)
+	paramStoreTKey := storetypes.NewTransientStoreKey(paramtypes.TStoreKey)
 	ctx := legacytestutil.NewDBContext([]storetypes.StoreKey{storeKey, paramStoreKey}, []storetypes.StoreKey{tKey, paramStoreTKey})
 	ak := suite.app.AccountKeeper
 
@@ -287,10 +286,10 @@ func (suite *KeeperTestSuite) TestRenamedFieldReturnsProperValueForLegacyParams(
 func (suite *KeeperTestSuite) TestNilLegacyParamsDoNotPanic() {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
-	storeKey := sdk.NewKVStoreKey(types.ModuleName)
-	tKey := sdk.NewTransientStoreKey(types.TransientKey)
-	paramStoreKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
-	paramStoreTKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
+	tKey := storetypes.NewTransientStoreKey(types.TransientKey)
+	paramStoreKey := storetypes.NewKVStoreKey(paramtypes.ModuleName)
+	paramStoreTKey := storetypes.NewTransientStoreKey(paramtypes.TStoreKey)
 	ctx := legacytestutil.NewDBContext([]storetypes.StoreKey{storeKey, paramStoreKey}, []storetypes.StoreKey{tKey, paramStoreTKey})
 	ak := suite.app.AccountKeeper
 

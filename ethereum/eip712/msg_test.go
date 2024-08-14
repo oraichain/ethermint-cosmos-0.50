@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -67,9 +68,9 @@ func TestExtractMsgTypes(t *testing.T) {
 			name:    "success",
 			success: true,
 			msgs: []sdk.Msg{
-				bankTypes.NewMsgSend(fromAddr, toAddr, sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(1)))),
-				stakingTypes.NewMsgDelegate(fromAddr, valAddr, sdk.NewCoin("atom", sdk.NewInt(1))),
-				bankTypes.NewMsgSend(fromAddr, toAddr, sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(2)))),
+				bankTypes.NewMsgSend(fromAddr, toAddr, sdk.NewCoins(sdk.NewCoin("atom", sdkmath.NewInt(1)))),
+				stakingTypes.NewMsgDelegate(fromAddr.String(), valAddr.String(), sdk.NewCoin("atom", sdkmath.NewInt(1))),
+				bankTypes.NewMsgSend(fromAddr, toAddr, sdk.NewCoins(sdk.NewCoin("atom", sdkmath.NewInt(2)))),
 			},
 			exp: `{
 				"Coin": [
@@ -125,13 +126,13 @@ func TestExtractMsgTypes(t *testing.T) {
 		{
 			name: "fails if msg is not allowed",
 			msgs: []sdk.Msg{
-				bankTypes.NewMsgSend(fromAddr, toAddr, sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(1)))),
+				bankTypes.NewMsgSend(fromAddr, toAddr, sdk.NewCoins(sdk.NewCoin("atom", sdkmath.NewInt(1)))),
 				bankTypes.NewMsgMultiSend(
-					[]bankTypes.Input{
-						{Address: fromAddr.String(), Coins: sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(1)))},
+					bankTypes.Input{
+						Address: fromAddr.String(), Coins: sdk.NewCoins(sdk.NewCoin("atom", sdkmath.NewInt(1))),
 					},
 					[]bankTypes.Output{
-						{Address: toAddr.String(), Coins: sdk.NewCoins(sdk.NewCoin("atom", sdk.NewInt(1)))},
+						{Address: toAddr.String(), Coins: sdk.NewCoins(sdk.NewCoin("atom", sdkmath.NewInt(1)))},
 					},
 				),
 			},

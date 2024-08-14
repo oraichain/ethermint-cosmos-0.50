@@ -32,6 +32,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	evmapi "github.com/evmos/ethermint/api/ethermint/evm/v1"
+	protov2 "google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/evmos/ethermint/types"
 
@@ -218,6 +221,19 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 // GetMsgs returns a single MsgEthereumTx as an sdk.Msg.
 func (msg *MsgEthereumTx) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{msg}
+}
+
+func (msg *MsgEthereumTx) GetMsgsV2() ([]protov2.Message, error) {
+	m := evmapi.MsgEthereumTx{
+		Data: &anypb.Any{
+			TypeUrl: msg.Data.TypeUrl,
+			Value:   msg.Data.Value,
+		},
+		Size: msg.Size_,
+		Hash: msg.Hash,
+		From: msg.From,
+	}
+	return []protov2.Message{&m}, nil
 }
 
 // GetSigners returns the expected signers for an Ethereum transaction message.

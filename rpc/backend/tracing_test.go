@@ -3,9 +3,9 @@ package backend
 import (
 	"fmt"
 
+	tmlog "cosmossdk.io/log"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
-	tmlog "github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/crypto"
@@ -50,7 +50,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 		name          string
 		registerMock  func()
 		block         *tmtypes.Block
-		responseBlock []*abci.ResponseDeliverTx
+		responseBlock []*abci.ExecTxResult
 		expResult     interface{}
 		expPass       bool
 	}{
@@ -58,7 +58,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 			"fail - tx not found",
 			func() {},
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{}}},
-			[]*abci.ResponseDeliverTx{
+			[]*abci.ExecTxResult{
 				{
 					Code: 0,
 					Events: []abci.Event{
@@ -84,7 +84,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 				RegisterBlockError(client, 1)
 			},
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
-			[]*abci.ResponseDeliverTx{
+			[]*abci.ExecTxResult{
 				{
 					Code: 0,
 					Events: []abci.Event{
@@ -111,7 +111,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 				RegisterTraceTransactionWithPredecessors(queryClient, msgEthereumTx, []*evmtypes.MsgEthereumTx{msgEthereumTx})
 			},
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1, ChainID: ChainID}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz, txBz2}}},
-			[]*abci.ResponseDeliverTx{
+			[]*abci.ExecTxResult{
 				{
 					Code: 0,
 					Events: []abci.Event{
@@ -151,7 +151,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 				RegisterTraceTransaction(queryClient, msgEthereumTx)
 			},
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
-			[]*abci.ResponseDeliverTx{
+			[]*abci.ExecTxResult{
 				{
 					Code: 0,
 					Events: []abci.Event{
@@ -182,7 +182,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 					RegisterTraceTransaction(queryClient, msgEthereumTx)
 				},
 				&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
-				[]*abci.ResponseDeliverTx{
+				[]*abci.ExecTxResult{
 					{
 						Code:      11,
 						GasWanted: 21000,

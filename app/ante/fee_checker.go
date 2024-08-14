@@ -31,7 +31,7 @@ import (
 
 // NewDynamicFeeChecker returns a `TxFeeChecker` that applies a dynamic fee to
 // Cosmos txs using the EIP-1559 fee market logic.
-// This can be called in both CheckTx and deliverTx modes.
+// This can be called in both CheckTx and finalizeBlock modes.
 // a) feeCap = tx.fees / tx.gas
 // b) tipFeeCap = tx.MaxPriorityPrice (default) or MaxInt64
 // - when `ExtensionOptionDynamicFeeTx` is omitted, `tipFeeCap` defaults to `MaxInt64`.
@@ -120,7 +120,7 @@ func checkTxFeeWithValidatorMinGasPrices(ctx sdk.Context, tx sdk.FeeTx) (sdk.Coi
 
 		// Determine the required fees by multiplying each required minimum gas
 		// price by the gas limit, where fee = ceil(minGasPrice * gasLimit).
-		glDec := sdk.NewDec(int64(gas))
+		glDec := sdkmath.LegacyNewDec(int64(gas))
 
 		for i, gp := range minGasPrices {
 			fee := gp.Amount.Mul(glDec)

@@ -19,9 +19,9 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/log"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -61,7 +61,7 @@ func NewKVIndexer(db dbm.DB, logger log.Logger, clientCtx client.Context) *KVInd
 // - Parses eth Tx infos from cosmos-sdk events for every TxResult
 // - Iterates over all the messages of the Tx
 // - Builds and stores a indexer.TxResult based on parsed events for every message
-func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.ResponseDeliverTx) error {
+func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults *abci.ResponseFinalizeBlock) error {
 	height := block.Header.Height
 
 	batch := kv.db.NewBatch()
@@ -70,7 +70,7 @@ func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.Response
 	// record index of valid eth tx during the iteration
 	var ethTxIndex int32
 	for txIndex, tx := range block.Txs {
-		result := txResults[txIndex]
+		result := txResults.TxResults[txIndex]
 		if !rpctypes.TxSuccessOrExceedsBlockGasLimit(result) {
 			continue
 		}

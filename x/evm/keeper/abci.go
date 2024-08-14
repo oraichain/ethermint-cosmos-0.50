@@ -16,8 +16,6 @@
 package keeper
 
 import (
-	"context"
-
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -25,19 +23,17 @@ import (
 )
 
 // BeginBlock sets the sdk Context and EIP155 chain id to the Keeper.
-func (k *Keeper) BeginBlock(ctx context.Context) error { //nolint: revive
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	k.WithChainID(sdkCtx)
+func (k *Keeper) BeginBlock(ctx sdk.Context) error { //nolint: revive
+	k.WithChainID(ctx)
 	return nil
 }
 
 // EndBlock also retrieves the bloom filter value from the transient store and commits it to the
 // KVStore. The EVM end block logic doesn't update the validator set, thus it returns
 // an empty slice.
-func (k *Keeper) EndBlock(ctx context.Context) error {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
+func (k *Keeper) EndBlock(ctx sdk.Context) error {
 	// Gas costs are handled within msg handler so costs should be ignored
-	infCtx := sdkCtx.WithGasMeter(storetypes.NewInfiniteGasMeter())
+	infCtx := ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 
 	bloom := ethtypes.BytesToBloom(k.GetBlockBloomTransient(infCtx).Bytes())
 	k.EmitBlockBloomEvent(infCtx, bloom)

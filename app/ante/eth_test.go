@@ -252,7 +252,7 @@ func (suite AnteTestSuite) TestEthGasConsumeDecorator() {
 			0,
 			func() {
 				vmdb.AddBalance(addr, big.NewInt(1000000))
-				suite.ctx = suite.ctx.WithBlockGasMeter(sdk.NewGasMeter(1))
+				suite.ctx = suite.ctx.WithBlockGasMeter(storetypes.NewGasMeter(1))
 			},
 			false, true,
 			0,
@@ -263,7 +263,7 @@ func (suite AnteTestSuite) TestEthGasConsumeDecorator() {
 			tx2GasLimit, // it's capped
 			func() {
 				vmdb.AddBalance(addr, big.NewInt(1001000000000000))
-				suite.ctx = suite.ctx.WithBlockGasMeter(sdk.NewGasMeter(10000000000000000000))
+				suite.ctx = suite.ctx.WithBlockGasMeter(storetypes.NewGasMeter(10000000000000000000))
 			},
 			true, false,
 			tx2Priority,
@@ -274,7 +274,7 @@ func (suite AnteTestSuite) TestEthGasConsumeDecorator() {
 			tx2GasLimit, // it's capped
 			func() {
 				vmdb.AddBalance(addr, big.NewInt(1001000000000000))
-				suite.ctx = suite.ctx.WithBlockGasMeter(sdk.NewGasMeter(10000000000000000000))
+				suite.ctx = suite.ctx.WithBlockGasMeter(storetypes.NewGasMeter(10000000000000000000))
 			},
 			true, false,
 			dynamicFeeTxPriority,
@@ -300,7 +300,7 @@ func (suite AnteTestSuite) TestEthGasConsumeDecorator() {
 
 			if tc.expPanic {
 				suite.Require().Panics(func() {
-					_, _ = dec.AnteHandle(suite.ctx.WithIsCheckTx(true).WithGasMeter(sdk.NewGasMeter(1)), tc.tx, false, NextFn)
+					_, _ = dec.AnteHandle(suite.ctx.WithIsCheckTx(true).WithGasMeter(storetypes.NewGasMeter(1)), tc.tx, false, NextFn)
 				})
 				return
 			}

@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	storetypes "cosmossdk.io/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/evmos/ethermint/app"
@@ -23,10 +22,10 @@ func TestMigrate(t *testing.T) {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
 
-	storeKey := sdk.NewKVStoreKey(types.ModuleName)
-	tKey := sdk.NewTransientStoreKey(types.TransientKey)
-	paramStoreKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
-	paramStoreTKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
+	tKey := storetypes.NewTransientStoreKey(types.TransientKey)
+	paramStoreKey := storetypes.NewKVStoreKey(paramtypes.ModuleName)
+	paramStoreTKey := storetypes.NewTransientStoreKey(paramtypes.TStoreKey)
 	ctx := legacytestutil.NewDBContext([]storetypes.StoreKey{storeKey, paramStoreKey}, []storetypes.StoreKey{tKey, paramStoreTKey})
 	kvStore := ctx.KVStore(storeKey)
 
@@ -65,10 +64,10 @@ func TestMigrate_Mainnet(t *testing.T) {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
 
-	storeKey := sdk.NewKVStoreKey(types.ModuleName)
-	tKey := sdk.NewTransientStoreKey(types.TransientKey)
-	paramStoreKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
-	paramStoreTKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
+	tKey := storetypes.NewTransientStoreKey(types.TransientKey)
+	paramStoreKey := storetypes.NewKVStoreKey(paramtypes.ModuleName)
+	paramStoreTKey := storetypes.NewTransientStoreKey(paramtypes.TStoreKey)
 	ctx := legacytestutil.NewDBContext([]storetypes.StoreKey{storeKey, paramStoreKey}, []storetypes.StoreKey{tKey, paramStoreTKey})
 	kvStore := ctx.KVStore(storeKey)
 
@@ -118,10 +117,10 @@ func TestKeyTableCompatiabilityWithKeeper(t *testing.T) {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
 
-	storeKey := sdk.NewKVStoreKey(types.ModuleName)
-	tKey := sdk.NewTransientStoreKey(types.TransientKey)
-	paramStoreKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
-	paramStoreTKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
+	tKey := storetypes.NewTransientStoreKey(types.TransientKey)
+	paramStoreKey := storetypes.NewKVStoreKey(paramtypes.ModuleName)
+	paramStoreTKey := storetypes.NewTransientStoreKey(paramtypes.TStoreKey)
 	ctx := legacytestutil.NewDBContext([]storetypes.StoreKey{storeKey, paramStoreKey}, []storetypes.StoreKey{tKey, paramStoreTKey})
 
 	ak := app.Setup(false, nil).AccountKeeper
@@ -171,10 +170,10 @@ func TestMigrationRegistersItsOwnKeyTable(t *testing.T) {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	cdc := encCfg.Codec
 
-	storeKey := sdk.NewKVStoreKey(types.ModuleName)
-	tKey := sdk.NewTransientStoreKey(types.TransientKey)
-	paramStoreKey := sdk.NewKVStoreKey(paramtypes.ModuleName)
-	paramStoreTKey := sdk.NewTransientStoreKey(paramtypes.TStoreKey)
+	storeKey := storetypes.NewKVStoreKey(types.ModuleName)
+	tKey := storetypes.NewTransientStoreKey(types.TransientKey)
+	paramStoreKey := storetypes.NewKVStoreKey(paramtypes.ModuleName)
+	paramStoreTKey := storetypes.NewTransientStoreKey(paramtypes.TStoreKey)
 	ctx := legacytestutil.NewDBContext([]storetypes.StoreKey{storeKey, paramStoreKey}, []storetypes.StoreKey{tKey, paramStoreTKey})
 
 	// only used to set initial params
