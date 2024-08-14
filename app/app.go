@@ -336,13 +336,14 @@ func NewEthermintApp(
 	app.CapabilityKeeper.Seal()
 
 	// use custom Ethermint account for contracts
+	bech32Prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
 		ethermint.ProtoAccount,
 		maccPerms,
-		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
-		sdk.GetConfig().GetBech32AccountAddrPrefix(),
+		authcodec.NewBech32Codec(bech32Prefix),
+		bech32Prefix,
 		authAddr,
 	)
 
