@@ -50,7 +50,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 		name          string
 		registerMock  func()
 		block         *tmtypes.Block
-		responseBlock []*abci.ExecTxResult
+		responseBlock *abci.ResponseFinalizeBlock
 		expResult     interface{}
 		expPass       bool
 	}{
@@ -58,18 +58,20 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 			"fail - tx not found",
 			func() {},
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{}}},
-			[]*abci.ExecTxResult{
-				{
-					Code: 0,
-					Events: []abci.Event{
-						{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash.Hex()},
-							{Key: "txIndex", Value: "0"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
+			&abci.ResponseFinalizeBlock{
+				TxResults: []*abci.ExecTxResult{
+					{
+						Code: 0,
+						Events: []abci.Event{
+							{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
+								{Key: "ethereumTxHash", Value: txHash.Hex()},
+								{Key: "txIndex", Value: "0"},
+								{Key: "amount", Value: "1000"},
+								{Key: "txGasUsed", Value: "21000"},
+								{Key: "txHash", Value: ""},
+								{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
+							}},
+						},
 					},
 				},
 			},
@@ -84,18 +86,20 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 				RegisterBlockError(client, 1)
 			},
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
-			[]*abci.ExecTxResult{
-				{
-					Code: 0,
-					Events: []abci.Event{
-						{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash.Hex()},
-							{Key: "txIndex", Value: "0"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
+			&abci.ResponseFinalizeBlock{
+				TxResults: []*abci.ExecTxResult{
+					{
+						Code: 0,
+						Events: []abci.Event{
+							{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
+								{Key: "ethereumTxHash", Value: txHash.Hex()},
+								{Key: "txIndex", Value: "0"},
+								{Key: "amount", Value: "1000"},
+								{Key: "txGasUsed", Value: "21000"},
+								{Key: "txHash", Value: ""},
+								{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
+							}},
+						},
 					},
 				},
 			},
@@ -111,31 +115,33 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 				RegisterTraceTransactionWithPredecessors(queryClient, msgEthereumTx, []*evmtypes.MsgEthereumTx{msgEthereumTx})
 			},
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1, ChainID: ChainID}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz, txBz2}}},
-			[]*abci.ExecTxResult{
-				{
-					Code: 0,
-					Events: []abci.Event{
-						{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash.Hex()},
-							{Key: "txIndex", Value: "0"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
+			&abci.ResponseFinalizeBlock{
+				TxResults: []*abci.ExecTxResult{
+					{
+						Code: 0,
+						Events: []abci.Event{
+							{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
+								{Key: "ethereumTxHash", Value: txHash.Hex()},
+								{Key: "txIndex", Value: "0"},
+								{Key: "amount", Value: "1000"},
+								{Key: "txGasUsed", Value: "21000"},
+								{Key: "txHash", Value: ""},
+								{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
+							}},
+						},
 					},
-				},
-				{
-					Code: 0,
-					Events: []abci.Event{
-						{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash2.Hex()},
-							{Key: "txIndex", Value: "1"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
+					{
+						Code: 0,
+						Events: []abci.Event{
+							{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
+								{Key: "ethereumTxHash", Value: txHash2.Hex()},
+								{Key: "txIndex", Value: "1"},
+								{Key: "amount", Value: "1000"},
+								{Key: "txGasUsed", Value: "21000"},
+								{Key: "txHash", Value: ""},
+								{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
+							}},
+						},
 					},
 				},
 			},
@@ -151,18 +157,20 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 				RegisterTraceTransaction(queryClient, msgEthereumTx)
 			},
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
-			[]*abci.ExecTxResult{
-				{
-					Code: 0,
-					Events: []abci.Event{
-						{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash.Hex()},
-							{Key: "txIndex", Value: "0"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
+			&abci.ResponseFinalizeBlock{
+				TxResults: []*abci.ExecTxResult{
+					{
+						Code: 0,
+						Events: []abci.Event{
+							{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
+								{Key: "ethereumTxHash", Value: txHash.Hex()},
+								{Key: "txIndex", Value: "0"},
+								{Key: "amount", Value: "1000"},
+								{Key: "txGasUsed", Value: "21000"},
+								{Key: "txHash", Value: ""},
+								{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
+							}},
+						},
 					},
 				},
 			},
