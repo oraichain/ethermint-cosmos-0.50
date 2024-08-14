@@ -18,16 +18,16 @@ package keeper
 import (
 	"math/big"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/evmos/ethermint/x/feemarket/types"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GetParams returns the total set of fee market parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.ParamsKey)
+	store := k.storeService.OpenKVStore(ctx)
+	bz, _ := store.Get(types.ParamsKey)
 	if len(bz) == 0 {
 		var p types.Params
 		k.ss.GetParamSetIfExists(ctx, &p)
@@ -40,13 +40,16 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 
 // SetParams sets the fee market params in a single key
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	store := ctx.KVStore(k.storeKey)
+	store := k.storeService.OpenKVStore(ctx)
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
 
-	store.Set(types.ParamsKey, bz)
+	err = store.Set(types.ParamsKey, bz)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

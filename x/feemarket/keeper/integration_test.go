@@ -1,17 +1,17 @@
 package keeper_test
 
 import (
+	"context"
 	"encoding/json"
 	"math/big"
 	"strings"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	simutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -24,11 +24,11 @@ import (
 	"github.com/evmos/ethermint/tests"
 	"github.com/evmos/ethermint/testutil"
 	"github.com/evmos/ethermint/x/feemarket/types"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
 	dbm "github.com/cosmos/cosmos-db"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
@@ -63,7 +63,7 @@ var _ = Describe("Feemarket", func() {
 				})
 			})
 
-			Context("during FinalizeEthBlock", func() {
+			Context("during FinalizeBlock", func() {
 				It("should reject transactions with gasPrice < MinGasPrices", func() {
 					gasPrice := sdkmath.NewInt(2)
 					res := finalizeBlock(privKey, &gasPrice, &msg)
@@ -105,7 +105,7 @@ var _ = Describe("Feemarket", func() {
 				})
 			})
 
-			Context("during FinalizeEthBlock", func() {
+			Context("during FinalizeBlock", func() {
 				It("should reject transactions with gasPrice < MinGasPrices", func() {
 					gasPrice := sdkmath.NewInt(2)
 					res := finalizeBlock(privKey, &gasPrice, &msg)
@@ -156,7 +156,7 @@ var _ = Describe("Feemarket", func() {
 				})
 			})
 
-			Context("during FinalizeEthBlock", func() {
+			Context("during FinalizeBlock", func() {
 				It("should reject transactions with gasPrice < MinGasPrices", func() {
 					gasPrice := sdkmath.NewInt(2)
 					res := finalizeBlock(privKey, &gasPrice, &msg)
@@ -446,11 +446,20 @@ var _ = Describe("Feemarket", func() {
 // given a local (validator config) and a gloabl (feemarket param) minGasPrice
 func setupTestWithContext(valMinGasPrice string, minGasPrice sdkmath.LegacyDec, baseFee sdkmath.Int) (*ethsecp256k1.PrivKey, banktypes.MsgSend) {
 	privKey, msg := setupTest(valMinGasPrice + s.denom)
+	// The BeginBlock, DeliverTx, and EndBlock logic has been combined into a single FinalizeBlock logic.
+	// Because the SetBaseFee is called in BeginBlock and Commit synchronizes the check state with
+	// the finalize state being committed, the SetBaseFee call in setupTestWithContext becomes meaningless.
+	// Therefore, s.Commit() should not be called. Also, for tests that use FinalizeEthBlock,
+	// we explicitly change it to call SetBaseFee in the finalize state as well.
 	params := types.DefaultParams()
 	params.MinGasPrice = minGasPrice
+	header := s.ctx.BlockHeader()
+	s.ctx = s.app.NewContextLegacy(true, header)
 	s.app.FeeMarketKeeper.SetParams(s.ctx, params)
 	s.app.FeeMarketKeeper.SetBaseFee(s.ctx, baseFee.BigInt())
-	s.Commit()
+	s.ctx = s.app.NewContextLegacy(false, header)
+	s.app.FeeMarketKeeper.SetParams(s.ctx, params)
+	s.app.FeeMarketKeeper.SetBaseFee(s.ctx, baseFee.BigInt())
 
 	return privKey, msg
 }
@@ -492,9 +501,9 @@ func setupChain(localMinGasPricesStr string) {
 		app.DefaultNodeHome,
 		5,
 		encoding.MakeConfig(app.ModuleBasics),
-		simtestutil.NewAppOptionsWithFlagHome(app.DefaultNodeHome),
+		simutils.NewAppOptionsWithFlagHome(app.DefaultNodeHome),
 		baseapp.SetMinGasPrices(localMinGasPricesStr),
-		baseapp.SetChainID("ethermint_9000-1"),
+		baseapp.SetChainID(app.ChainID),
 	)
 
 	genesisState := app.NewTestGenesisState(newapp.AppCodec())
@@ -506,7 +515,7 @@ func setupChain(localMinGasPricesStr string) {
 	// Initialize the chain
 	newapp.InitChain(
 		&abci.RequestInitChain{
-			ChainId:         "ethermint_9000-1",
+			ChainId:         app.ChainID,
 			Validators:      []abci.ValidatorUpdate{},
 			AppStateBytes:   stateBytes,
 			ConsensusParams: app.DefaultConsensusParams,
@@ -652,13 +661,10 @@ func prepareCosmosTx(priv *ethsecp256k1.PrivKey, gasPrice *sdkmath.Int, msgs ...
 		ChainID:       s.ctx.ChainID(),
 		AccountNumber: accNumber,
 		Sequence:      seq,
+		PubKey:        priv.PubKey(),
 	}
-
-	defaultSignMode, err = authsigning.APISignModeToInternal(encodingConfig.TxConfig.SignModeHandler().DefaultMode())
-	s.Require().NoError(err)
-
 	sigV2, err = tx.SignWithPrivKey(
-		s.ctx.Context(),
+		context.TODO(),
 		defaultSignMode, signerData,
 		txBuilder, priv, encodingConfig.TxConfig,
 		seq,

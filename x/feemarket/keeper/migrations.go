@@ -16,8 +16,6 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	v3 "github.com/evmos/ethermint/x/feemarket/migrations/v3"
 	"github.com/evmos/ethermint/x/feemarket/types"
 )
 
@@ -33,9 +31,4 @@ func NewMigrator(keeper Keeper, legacySubspace types.Subspace) Migrator {
 		keeper:         keeper,
 		legacySubspace: legacySubspace,
 	}
-}
-
-// Migrate2to3 migrates the store from consensus version 2 to 3
-func (m Migrator) Migrate2to3(ctx sdk.Context) error {
-	return v3.MigrateStore(ctx, m.keeper.storeKey, m.keeper.cdc)
 }

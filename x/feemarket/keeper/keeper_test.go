@@ -6,13 +6,14 @@ import (
 	"testing"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
+	"github.com/evmos/ethermint/encoding"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	sdkmath "cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -24,7 +25,6 @@ import (
 
 	"github.com/evmos/ethermint/app"
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
-	"github.com/evmos/ethermint/encoding"
 	"github.com/evmos/ethermint/tests"
 	ethermint "github.com/evmos/ethermint/types"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
@@ -34,7 +34,6 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
@@ -118,8 +117,9 @@ func (suite *KeeperTestSuite) SetupApp(checkTx bool) {
 	types.RegisterQueryServer(queryHelper, suite.app.FeeMarketKeeper)
 	suite.queryClient = types.NewQueryClient(queryHelper)
 
+	accNum := suite.app.AccountKeeper.NextAccountNumber(suite.ctx)
 	acc := &ethermint.EthAccount{
-		BaseAccount: authtypes.NewBaseAccount(sdk.AccAddress(suite.address.Bytes()), nil, 0, 0),
+		BaseAccount: authtypes.NewBaseAccount(sdk.AccAddress(suite.address.Bytes()), nil, accNum, 0),
 		CodeHash:    common.BytesToHash(crypto.Keccak256(nil)).String(),
 	}
 
@@ -137,11 +137,10 @@ func (suite *KeeperTestSuite) SetupApp(checkTx bool) {
 	err = suite.app.StakingKeeper.SetValidatorByConsAddr(suite.ctx, validator)
 	require.NoError(t, err)
 	suite.app.StakingKeeper.SetValidator(suite.ctx, validator)
-
 	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	suite.clientCtx = client.Context{}.WithTxConfig(encodingConfig.TxConfig)
 	suite.ethSigner = ethtypes.LatestSignerForChainID(suite.app.EvmKeeper.ChainID())
-	suite.appCodec = encodingConfig.Codec
+	suite.appCodec = suite.app.AppCodec()
 	suite.denom = evmtypes.DefaultEVMDenom
 }
 
@@ -186,7 +185,8 @@ func (suite *KeeperTestSuite) TestSetGetBlockGasWanted() {
 		{
 			"with last block given",
 			func() {
-				suite.app.FeeMarketKeeper.SetBlockGasWanted(suite.ctx, uint64(1000000))
+				err := suite.app.FeeMarketKeeper.SetBlockGasWanted(suite.ctx, uint64(1000000))
+				suite.Require().NoError(err)
 			},
 			uint64(1000000),
 		},
@@ -194,8 +194,9 @@ func (suite *KeeperTestSuite) TestSetGetBlockGasWanted() {
 	for _, tc := range testCases {
 		tc.malleate()
 
-		gas := suite.app.FeeMarketKeeper.GetBlockGasWanted(suite.ctx)
+		gas, err := suite.app.FeeMarketKeeper.GetBlockGasWanted(suite.ctx)
 		suite.Require().Equal(tc.expGas, gas, tc.name)
+		suite.Require().NoError(err)
 	}
 }
 

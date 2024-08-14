@@ -41,6 +41,8 @@ import (
 	"github.com/evmos/ethermint/encoding"
 )
 
+const ChainID = "ethermint_9000-1"
+
 // DefaultConsensusParams defines the default Tendermint consensus params used in
 // EthermintApp testing.
 var DefaultConsensusParams = &tmproto.ConsensusParams{
@@ -76,7 +78,7 @@ func SetupWithDB(isCheckTx bool, patchGenesis func(*EthermintApp, simapp.Genesis
 		5,
 		encoding.MakeConfig(ModuleBasics),
 		simutils.NewAppOptionsWithFlagHome(DefaultNodeHome),
-		baseapp.SetChainID("ethermint_9000-1"),
+		baseapp.SetChainID(ChainID),
 	)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
@@ -93,7 +95,7 @@ func SetupWithDB(isCheckTx bool, patchGenesis func(*EthermintApp, simapp.Genesis
 		// Initialize the chain
 		_, err = app.InitChain(
 			&abci.RequestInitChain{
-				ChainId:         "ethermint_9000-1",
+				ChainId:         ChainID,
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
