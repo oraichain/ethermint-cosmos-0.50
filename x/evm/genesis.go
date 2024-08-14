@@ -87,6 +87,7 @@ func InitGenesis(
 
 		// check that the EVM balance the matches the account balance
 		acc := accountKeeper.GetAccount(ctx, accAddress)
+
 		if acc == nil {
 			panic(fmt.Errorf("account not found for address %s", account.Address))
 		}

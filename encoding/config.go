@@ -25,7 +25,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/cosmos/gogoproto/proto"
+	evmv1 "github.com/evmos/ethermint/api/ethermint/evm/v1"
 	enccodec "github.com/evmos/ethermint/encoding/codec"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	protov2 "google.golang.org/protobuf/proto"
 )
 
 // MakeConfig creates an EncodingConfig for testing
@@ -41,6 +44,8 @@ func MakeConfig(mb module.BasicManager) params.EncodingConfig {
 	}
 
 	// evm/MsgEthereumTx
+	signingOptions.DefineCustomGetSigners(protov2.MessageName(&evmv1.MsgEthereumTx{}), evmtypes.GetSignersFromMsgEthereumTxV2)
+
 	interfaceRegistry, _ := types.NewInterfaceRegistryWithOptions(types.InterfaceRegistryOptions{
 		ProtoFiles:     proto.HybridResolver,
 		SigningOptions: signingOptions,
