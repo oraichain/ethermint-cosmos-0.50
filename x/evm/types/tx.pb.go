@@ -9,7 +9,7 @@ import (
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
 	types "github.com/cosmos/cosmos-sdk/codec/types"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
@@ -88,13 +88,13 @@ type LegacyTx struct {
 	// nonce corresponds to the account nonce (transaction sequence).
 	Nonce uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	// gas_price defines the value for each gas unit
-	GasPrice *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=gas_price,json=gasPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"gas_price,omitempty"`
+	GasPrice *sdkmath.Int `protobuf:"bytes,2,opt,name=gas_price,json=gasPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"gas_price,omitempty"`
 	// gas defines the gas limit defined for the transaction.
 	GasLimit uint64 `protobuf:"varint,3,opt,name=gas,proto3" json:"gas,omitempty"`
 	// to is the hex formatted address of the recipient
 	To string `protobuf:"bytes,4,opt,name=to,proto3" json:"to,omitempty"`
 	// value defines the unsigned integer value of the transaction amount.
-	Amount *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=value,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"value,omitempty"`
+	Amount *sdkmath.Int `protobuf:"bytes,5,opt,name=value,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"value,omitempty"`
 	// data is the data payload bytes of the transaction.
 	Data []byte `protobuf:"bytes,6,opt,name=data,proto3" json:"data,omitempty"`
 	// v defines the signature value
@@ -141,17 +141,17 @@ var xxx_messageInfo_LegacyTx proto.InternalMessageInfo
 // AccessListTx is the data of EIP-2930 access list transactions.
 type AccessListTx struct {
 	// chain_id of the destination EVM chain
-	ChainID *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"chainID"`
+	ChainID *sdkmath.Int `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"chainID"`
 	// nonce corresponds to the account nonce (transaction sequence).
 	Nonce uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	// gas_price defines the value for each gas unit
-	GasPrice *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=gas_price,json=gasPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"gas_price,omitempty"`
+	GasPrice *sdkmath.Int `protobuf:"bytes,3,opt,name=gas_price,json=gasPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"gas_price,omitempty"`
 	// gas defines the gas limit defined for the transaction.
 	GasLimit uint64 `protobuf:"varint,4,opt,name=gas,proto3" json:"gas,omitempty"`
 	// to is the recipient address in hex format
 	To string `protobuf:"bytes,5,opt,name=to,proto3" json:"to,omitempty"`
 	// value defines the unsigned integer value of the transaction amount.
-	Amount *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=value,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"value,omitempty"`
+	Amount *sdkmath.Int `protobuf:"bytes,6,opt,name=value,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"value,omitempty"`
 	// data is the data payload bytes of the transaction.
 	Data []byte `protobuf:"bytes,7,opt,name=data,proto3" json:"data,omitempty"`
 	// accesses is an array of access tuples
@@ -200,19 +200,19 @@ var xxx_messageInfo_AccessListTx proto.InternalMessageInfo
 // DynamicFeeTx is the data of EIP-1559 dinamic fee transactions.
 type DynamicFeeTx struct {
 	// chain_id of the destination EVM chain
-	ChainID *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"chainID"`
+	ChainID *sdkmath.Int `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"chainID"`
 	// nonce corresponds to the account nonce (transaction sequence).
 	Nonce uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	// gas_tip_cap defines the max value for the gas tip
-	GasTipCap *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=gas_tip_cap,json=gasTipCap,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"gas_tip_cap,omitempty"`
+	GasTipCap *sdkmath.Int `protobuf:"bytes,3,opt,name=gas_tip_cap,json=gasTipCap,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"gas_tip_cap,omitempty"`
 	// gas_fee_cap defines the max value for the gas fee
-	GasFeeCap *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,opt,name=gas_fee_cap,json=gasFeeCap,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"gas_fee_cap,omitempty"`
+	GasFeeCap *sdkmath.Int `protobuf:"bytes,4,opt,name=gas_fee_cap,json=gasFeeCap,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"gas_fee_cap,omitempty"`
 	// gas defines the gas limit defined for the transaction.
 	GasLimit uint64 `protobuf:"varint,5,opt,name=gas,proto3" json:"gas,omitempty"`
 	// to is the hex formatted address of the recipient
 	To string `protobuf:"bytes,6,opt,name=to,proto3" json:"to,omitempty"`
 	// value defines the the transaction amount.
-	Amount *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,7,opt,name=value,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"value,omitempty"`
+	Amount *sdkmath.Int `protobuf:"bytes,7,opt,name=value,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"value,omitempty"`
 	// data is the data payload bytes of the transaction.
 	Data []byte `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
 	// accesses is an array of access tuples
@@ -1680,7 +1680,7 @@ func (m *LegacyTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
+			var v sdkmath.Int
 			m.GasPrice = &v
 			if err := m.GasPrice.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1767,7 +1767,7 @@ func (m *LegacyTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
+			var v sdkmath.Int
 			m.Amount = &v
 			if err := m.Amount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1989,7 +1989,7 @@ func (m *AccessListTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
+			var v sdkmath.Int
 			m.ChainID = &v
 			if err := m.ChainID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2044,7 +2044,7 @@ func (m *AccessListTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
+			var v sdkmath.Int
 			m.GasPrice = &v
 			if err := m.GasPrice.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2131,7 +2131,7 @@ func (m *AccessListTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
+			var v sdkmath.Int
 			m.Amount = &v
 			if err := m.Amount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2387,7 +2387,7 @@ func (m *DynamicFeeTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
+			var v sdkmath.Int
 			m.ChainID = &v
 			if err := m.ChainID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2442,7 +2442,7 @@ func (m *DynamicFeeTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
+			var v sdkmath.Int
 			m.GasTipCap = &v
 			if err := m.GasTipCap.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2478,7 +2478,7 @@ func (m *DynamicFeeTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
+			var v sdkmath.Int
 			m.GasFeeCap = &v
 			if err := m.GasFeeCap.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2565,7 +2565,7 @@ func (m *DynamicFeeTx) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
+			var v sdkmath.Int
 			m.Amount = &v
 			if err := m.Amount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err

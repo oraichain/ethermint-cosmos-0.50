@@ -159,7 +159,7 @@ schema = 3
   [mod."github.com/cosmos/iavl"]
     version = "v1.1.2"
     hash = "sha256-fhh5fN1BMDxbF4PobERMQdIb9vIrxaSl0tRXas0WKmc="
-  [mod."github.com/cosmos/ibc-go/v7"]
+  [mod."github.com/cosmos/ibc-go/v8"]
     version = "v7.3.1"
     hash = "sha256-5lRAQaQRscTMVKeKlsiWtLFauK/gjL9cD7gTJgUbddQ="
   [mod."github.com/cosmos/ics23/go"]
