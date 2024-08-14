@@ -2,10 +2,10 @@ import configparser
 import json
 import re
 import subprocess
-import time
 from pathlib import Path
 
 import pytest
+from dateutil.parser import isoparse
 from pystarport import ports
 from pystarport.cluster import SUPERVISOR_CONFIG_FILE
 
@@ -13,12 +13,15 @@ from .network import Ethermint, setup_custom_ethermint
 from .utils import (
     ADDRS,
     CONTRACTS,
-    approve_proposal,
     deploy_contract,
+    parse_events,
     send_transaction,
     wait_for_block,
+    wait_for_block_time,
     wait_for_port,
 )
+
+pytestmark = pytest.mark.upgrade
 
 
 def init_cosmovisor(home):
@@ -112,13 +115,24 @@ def test_cosmovisor_upgrade(custom_ethermint: Ethermint):
             "title": "upgrade test",
             "description": "ditto",
             "upgrade-height": target_height,
-            "deposit": "10000000aphoton",
+            "deposit": "10000aphoton",
         },
     )
     assert rsp["code"] == 0, rsp["raw_log"]
-    # wait until tx will be processed
-    time.sleep(5)
-    approve_proposal(custom_ethermint, rsp)
+
+    # get proposal_id
+    ev = parse_events(rsp["logs"])["submit_proposal"]
+    proposal_id = ev["proposal_id"]
+
+    rsp = cli.gov_vote("validator", proposal_id, "yes")
+    assert rsp["code"] == 0, rsp["raw_log"]
+    # rsp = custom_ethermint.cosmos_cli(1).gov_vote("validator", proposal_id, "yes")
+    # assert rsp["code"] == 0, rsp["raw_log"]
+
+    proposal = cli.query_proposal(proposal_id)
+    wait_for_block_time(cli, isoparse(proposal["voting_end_time"]))
+    proposal = cli.query_proposal(proposal_id)
+    assert proposal["status"] == "PROPOSAL_STATUS_PASSED", proposal
 
     # update cli chain binary
     custom_ethermint.chain_binary = (
@@ -158,3 +172,13 @@ def test_cosmovisor_upgrade(custom_ethermint: Ethermint):
     assert old_erc20_balance == contract.caller(
         block_identifier=target_height - 2
     ).balanceOf(ADDRS["validator"])
+    p = json.loads(
+        cli.raw(
+            "query",
+            "ibc",
+            "client",
+            "params",
+            home=cli.data_dir,
+        )
+    )
+    assert p == {"allowed_clients": ["06-solomachine", "07-tendermint", "09-localhost"]}

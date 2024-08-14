@@ -32,16 +32,16 @@ def custom_ethermint(tmp_path_factory):
 
 
 def grpc_eth_call(
-        port: int,
-        args: dict,
-        expect_cb,
-        chain_id=None,
-        proposer_address=None,
+    port: int,
+    args: dict,
+    expect_cb,
+    chain_id=None,
+    proposer_address=None,
 ):
     """
     do a eth_call through grpc gateway directly
     """
-    max_retry = 10
+    max_retry = 5
     sleep = 1
     success = False
     for i in range(max_retry):
@@ -62,22 +62,6 @@ def grpc_eth_call(
     assert success, str(rsp)
 
 
-def wait_for_grpc_accept(port, host="127.0.0.1", timeout=40.0):
-    start_time = time.perf_counter()
-    while True:
-        rsp = grpc_eth_call(port, {})
-
-        if "connect: connection refused" not in rsp["message"]:
-            break
-
-        time.sleep(0.1)
-        if time.perf_counter() - start_time >= timeout:
-            raise TimeoutError(
-                "Waited too long for the port {} on host {} to start accepting "
-                "connections.".format(port, host)
-            )
-
-
 def test_grpc_mode(custom_ethermint):
     """
     - restart a fullnode in grpc-only mode
@@ -86,7 +70,6 @@ def test_grpc_mode(custom_ethermint):
     w3 = custom_ethermint.w3
     contract, _ = deploy_contract(w3, CONTRACTS["TestChainID"])
     assert 9000 == contract.caller.currentChainID()
-
     msg = {
         "to": contract.address,
         "data": contract.encodeABI(fn_name="currentChainID"),
@@ -106,7 +89,6 @@ def test_grpc_mode(custom_ethermint):
     supervisorctl(
         custom_ethermint.base_dir / "../tasks.ini", "stop", "ethermint_9000-1-node1"
     )
-
     # run grpc-only mode directly with existing chain state
     with (custom_ethermint.base_dir / "node1.log").open("a") as logfile:
         proc = subprocess.Popen(
@@ -126,18 +108,18 @@ def test_grpc_mode(custom_ethermint):
             wait_for_port(grpc_port)
             wait_for_port(api_port)
 
-            def expect_cb(rsp):
+            def expect_cb_internal1(rsp):
                 assert rsp["code"] != 0, str(rsp)
                 return "validator does not exist" in rsp["message"]
 
             # it don't works without proposer address neither
-            grpc_eth_call(api_port, msg, expect_cb, chain_id=9000)
+            grpc_eth_call(api_port, msg, expect_cb_internal1, chain_id=9000)
 
             # pass the first validator's consensus address to grpc query
             addr = custom_ethermint.cosmos_cli(0).consensus_address()
             cons_addr = decode_bech32(addr)
 
-            def expect_cb(rsp):
+            def expect_cb_internal2(rsp):
                 ret = base64.b64decode(rsp["ret"].encode())
                 return "code" not in rsp and 100 == int.from_bytes(ret, "big")
 
@@ -145,7 +127,7 @@ def test_grpc_mode(custom_ethermint):
             grpc_eth_call(
                 api_port,
                 msg,
-                expect_cb,
+                expect_cb_internal2,
                 chain_id=100,
                 proposer_address=base64.b64encode(cons_addr).decode(),
             )

@@ -14,7 +14,7 @@ from hexbytes import HexBytes
 from web3._utils.transactions import fill_nonce, fill_transaction_defaults
 from web3.exceptions import TimeExhausted
 
-load_dotenv(Path(__file__).parent.parent.parent / "scripts/.env")
+load_dotenv(Path(__file__).parent.parent.parent / "scripts/env")
 Account.enable_unaudited_hdwallet_features()
 ACCOUNTS = {
     "validator": Account.from_mnemonic(os.getenv("VALIDATOR1_MNEMONIC")),
@@ -31,6 +31,7 @@ TEST_CONTRACTS = {
     "BurnGas": "BurnGas.sol",
     "TestChainID": "ChainID.sol",
     "Mars": "Mars.sol",
+    "StateContract": "StateContract.sol",
 }
 
 
@@ -75,10 +76,10 @@ def w3_wait_for_new_blocks(w3, n, sleep=0.5):
 
 
 def wait_for_new_blocks(cli, n, sleep=0.5):
-    cur_height = begin_height = int((cli.status())["SyncInfo"]["latest_block_height"])
+    cur_height = begin_height = int((cli.status())["sync_info"]["latest_block_height"])
     while cur_height - begin_height < n:
         time.sleep(sleep)
-        cur_height = int((cli.status())["SyncInfo"]["latest_block_height"])
+        cur_height = int((cli.status())["sync_info"]["latest_block_height"])
     return cur_height
 
 
@@ -89,7 +90,7 @@ def wait_for_block(cli, height, timeout=240):
         except AssertionError as e:
             print(f"get sync status failed: {e}", file=sys.stderr)
         else:
-            current_height = int(status["SyncInfo"]["latest_block_height"])
+            current_height = int(status["sync_info"]["latest_block_height"])
             if current_height >= height:
                 break
             print("current block height", current_height)
@@ -116,7 +117,7 @@ def w3_wait_for_block(w3, height, timeout=240):
 def wait_for_block_time(cli, t):
     print("wait for block time", t)
     while True:
-        now = isoparse((cli.status())["SyncInfo"]["latest_block_time"])
+        now = isoparse((cli.status())["sync_info"]["latest_block_time"])
         print("block time now: ", now)
         if now >= t:
             break
@@ -198,40 +199,8 @@ def parse_events(logs):
     }
 
 
-def find_log_event_attrs(events, ev_type, cond=None):
-    for ev in events:
-        if ev["type"] == ev_type:
-            attrs = {attr["key"]: attr["value"] for attr in ev["attributes"]}
-            if cond is None or cond(attrs):
-                return attrs
-    return None
-
-
-def approve_proposal(n, rsp, status="PROPOSAL_STATUS_PASSED"):
-    cli = n.cosmos_cli()
-
-    # get proposal_id
-    tx = cli.query_tx("hash", rsp["txhash"])
-
-    def cb(attrs):
-        return "proposal_id" in attrs
-    ev = find_log_event_attrs(tx["logs"][0]["events"], "submit_proposal", cb)
-    proposal_id = ev["proposal_id"]
-
-    for i in range(len(n.config["validators"])):
-        rsp = n.cosmos_cli(i).gov_vote("validator", proposal_id, "yes", gas=1000000)
-        assert rsp["code"] == 0, rsp["raw_log"]
-    # wait until txs will be processed
-    time.sleep(5)
-    wait_for_new_blocks(cli, 1)
-
-    res = cli.query_tally(proposal_id)
-    res = res.get("tally") or res
-    assert (
-        int(res["yes_count"]) == cli.staking_pool()
-    ), "all validators should have voted yes"
-    print("wait for proposal to be activated")
-    proposal = cli.query_proposal(proposal_id)
-    wait_for_block_time(cli, isoparse(proposal["voting_end_time"]))
-    proposal = cli.query_proposal(proposal_id)
-    assert proposal["status"] == status, proposal
+def derive_new_account(n=1):
+    # derive a new address
+    account_path = f"m/44'/60'/0'/0/{n}"
+    mnemonic = os.getenv("COMMUNITY_MNEMONIC")
+    return Account.from_mnemonic(mnemonic, account_path=account_path)

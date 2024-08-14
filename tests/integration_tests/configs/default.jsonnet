@@ -1,14 +1,8 @@
 {
-  dotenv: '../../../scripts/.env',
+  dotenv: '../../../scripts/env',
   'ethermint_9000-1': {
     cmd: 'ethermintd',
     'start-flags': '--trace',
-    config: {
-      mempool: {
-        // use v1 mempool to enable tx prioritization
-        version: 'v1',
-      },
-    },
     'app-config': {
       'minimum-gas-prices': '0aphoton',
       'index-events': ['ethereum_tx.ethereumTxHash'],
@@ -19,6 +13,7 @@
         'feehistory-cap': 100,
         'block-range-cap': 10000,
         'logs-cap': 10000,
+        'fix-revert-gas-refund-height': 1,
       },
     },
     validators: [{
@@ -44,10 +39,12 @@
       mnemonic: '${SIGNER2_MNEMONIC}',
     }],
     genesis: {
-      consensus_params: {
-        block: {
-          max_bytes: '1048576',
-          max_gas: '81500000',
+      consensus: {
+        params: {
+          block: {
+            max_bytes: '1048576',
+            max_gas: '81500000',
+          },
         },
       },
       app_state: {
@@ -57,16 +54,18 @@
           },
         },
         gov: {
-          params: {
+          voting_params: {
             voting_period: '10s',
+          },
+          deposit_params: {
             max_deposit_period: '10s',
             min_deposit: [
               {
-                denom: "aphoton",
-                amount: "1"
-              }
+                denom: 'aphoton',
+                amount: '1',
+              },
             ],
-          }
+          },
         },
         transfer: {
           params: {

@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	evmkeeper "github.com/evmos/ethermint/x/evm/keeper"
@@ -135,9 +136,10 @@ func (suite *ImporterTestSuite) TestImportBlocks() {
 		tmheader := suite.ctx.BlockHeader()
 		// fix due to that begin block can't have height 0
 		tmheader.Height = int64(block.NumberU64()) + 1
-		suite.app.BeginBlock(types.RequestBeginBlock{
-			Header: tmheader,
+		_, err = suite.app.FinalizeBlock(&types.RequestFinalizeBlock{
+			Height: tmheader.Height,
 		})
+		suite.Require().NoError(err)
 		ctx := suite.app.NewContextLegacy(false, tmheader)
 		ctx = ctx.WithBlockHeight(tmheader.Height)
 		vmdb := statedb.New(ctx, suite.app.EvmKeeper, statedb.NewEmptyTxConfig(common.BytesToHash(ctx.HeaderHash())))
@@ -159,8 +161,9 @@ func (suite *ImporterTestSuite) TestImportBlocks() {
 		accumulateRewards(chainConfig, vmdb, header, block.Uncles())
 
 		// simulate BaseApp EndBlocker commitment
-		endBR := types.RequestEndBlock{Height: tmheader.Height}
-		suite.app.EndBlocker(ctx, endBR)
+		suite.app.FinalizeBlock(&types.RequestFinalizeBlock{
+			Height: tmheader.Height,
+		})
 		suite.app.Commit()
 
 		// block debugging output

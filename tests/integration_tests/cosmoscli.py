@@ -130,10 +130,10 @@ class CosmosCLI:
         return json.loads(self.raw("status", node=self.node_rpc))
 
     def block_height(self):
-        return int(self.status()["SyncInfo"]["latest_block_height"])
+        return int(self.status()["sync_info"]["latest_block_height"])
 
     def block_time(self):
-        return isoparse(self.status()["SyncInfo"]["latest_block_time"])
+        return isoparse(self.status()["sync_info"]["latest_block_time"])
 
     def balances(self, addr):
         return json.loads(
@@ -519,7 +519,7 @@ class CosmosCLI:
         return r.decode("utf-8")
 
     def broadcast_tx(self, tx_file, **kwargs):
-        kwargs.setdefault("broadcast_mode", "block")
+        kwargs.setdefault("broadcast_mode", "sync")
         kwargs.setdefault("output", "json")
         return json.loads(
             self.raw("tx", "broadcast", tx_file, node=self.node_rpc, **kwargs)
@@ -637,9 +637,8 @@ class CosmosCLI:
         )
 
     def gov_propose(self, proposer, kind, proposal, **kwargs):
-        method = "submit-legacy-proposal"
+        method = "submit-proposal"
         kwargs.setdefault("gas_prices", DEFAULT_GAS_PRICE)
-        kwargs.setdefault("gas", DEFAULT_GAS)
         if kind == "software-upgrade":
             return json.loads(
                 self.raw(
@@ -649,7 +648,6 @@ class CosmosCLI:
                     kind,
                     proposal["name"],
                     "-y",
-                    "--no-validate",
                     from_=proposer,
                     # content
                     title=proposal.get("title"),
@@ -702,7 +700,6 @@ class CosmosCLI:
 
     def gov_vote(self, voter, proposal_id, option, **kwargs):
         kwargs.setdefault("gas_prices", DEFAULT_GAS_PRICE)
-        kwargs.setdefault("broadcast_mode", "sync")
         return json.loads(
             self.raw(
                 "tx",
