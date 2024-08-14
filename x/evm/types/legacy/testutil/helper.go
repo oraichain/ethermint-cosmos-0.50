@@ -6,8 +6,8 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	storetypes "cosmossdk.io/store/types"
-	dbm "github.com/cometbft/cometbft-db"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/evmos/ethermint/x/evm/types"
 	legacytypes "github.com/evmos/ethermint/x/evm/types/legacy"
@@ -17,7 +17,8 @@ import (
 // NewDefaultContext with multile mounted stores
 func NewDBContext(keys []storetypes.StoreKey, tkeys []storetypes.StoreKey) sdk.Context {
 	db := dbm.NewMemDB()
-	cms := store.NewCommitMultiStore(db)
+	logger := log.NewNopLogger()
+	cms := store.NewCommitMultiStore(db, logger, nil)
 
 	for _, key := range keys {
 		cms.MountStoreWithDB(key, storetypes.StoreTypeIAVL, db)
@@ -32,7 +33,7 @@ func NewDBContext(keys []storetypes.StoreKey, tkeys []storetypes.StoreKey) sdk.C
 		panic(err)
 	}
 
-	return sdk.NewContext(cms, tmproto.Header{}, false, log.NewNopLogger())
+	return sdk.NewContext(cms, tmproto.Header{}, false, logger)
 }
 
 func AssertParamsEqual(t *testing.T, legacyParams legacytypes.LegacyParams, params types.Params) {

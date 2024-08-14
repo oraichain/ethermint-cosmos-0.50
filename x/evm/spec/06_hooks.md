@@ -12,7 +12,7 @@ This supports EVM contracts to call native cosmos modules by
 2. recognizing those logs in the native tx processing code, and
 3. converting them to native module calls.
 
-To do this, the interface includes a  `PostTxProcessing` hook that registers custom `Tx` hooks in the `EvmKeeper`. These  `Tx` hooks are processed after the EVM state transition is finalized and doesn't fail. Note that there are no default hooks implemented in the EVM module.
+To do this, the interface includes a `PostTxProcessing` hook that registers custom `Tx` hooks in the `EvmKeeper`. These `Tx` hooks are processed after the EVM state transition is finalized and doesn't fail. Note that there are no default hooks implemented in the EVM module.
 
 ```go
 type EvmHooks interface {
@@ -23,7 +23,7 @@ type EvmHooks interface {
 
 ## `PostTxProcessing`
 
- `PostTxProcessing` is only called after a EVM transaction finished successfully and delegates the call to underlying hooks.  If no hook has been registered, this function returns with a `nil` error.
+`PostTxProcessing` is only called after a EVM transaction finished successfully and delegates the call to underlying hooks. If no hook has been registered, this function returns with a `nil` error.
 
 ```go
 func (k *Keeper) PostTxProcessing(ctx sdk.Context, msg core.Message, receipt *ethtypes.Receipt) error {
@@ -149,7 +149,7 @@ func (k Keeper) PostTxProcessing(
   // NOTE: assume that if they are burning the token that has been registered as a pair, they want to mint a Cosmos coin
 
   // create the corresponding sdk.Coin that is paired with ERC20
-  coins := sdk.Coins{{Denom: pair.Denom, Amount: sdk.NewIntFromBigInt(tokens)}}
+  coins := sdk.Coins{{Denom: pair.Denom, Amount: sdkmath.NewIntFromBigInt(tokens)}}
 
   // Mint the coin only if ERC20 is external
   switch pair.ContractOwner {

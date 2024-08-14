@@ -63,7 +63,7 @@ var _ = Describe("Feemarket", func() {
 				})
 			})
 
-			Context("during DeliverTx", func() {
+			Context("during FinalizeEthBlock", func() {
 				It("should reject transactions with gasPrice < MinGasPrices", func() {
 					gasPrice := sdkmath.NewInt(2)
 					res := finalizeBlock(privKey, &gasPrice, &msg)
@@ -105,7 +105,7 @@ var _ = Describe("Feemarket", func() {
 				})
 			})
 
-			Context("during DeliverTx", func() {
+			Context("during FinalizeEthBlock", func() {
 				It("should reject transactions with gasPrice < MinGasPrices", func() {
 					gasPrice := sdkmath.NewInt(2)
 					res := finalizeBlock(privKey, &gasPrice, &msg)
@@ -156,7 +156,7 @@ var _ = Describe("Feemarket", func() {
 				})
 			})
 
-			Context("during DeliverTx", func() {
+			Context("during FinalizeEthBlock", func() {
 				It("should reject transactions with gasPrice < MinGasPrices", func() {
 					gasPrice := sdkmath.NewInt(2)
 					res := finalizeBlock(privKey, &gasPrice, &msg)
@@ -259,7 +259,7 @@ var _ = Describe("Feemarket", func() {
 				)
 			})
 
-			Context("during DeliverTx", func() {
+			Context("during FinalizeEthBlock", func() {
 				DescribeTable("should reject transactions with gasPrice < MinGasPrices",
 					func(malleate getprices) {
 						p := malleate()
@@ -380,7 +380,7 @@ var _ = Describe("Feemarket", func() {
 				)
 			})
 
-			Context("during DeliverTx", func() {
+			Context("during FinalizeEthBlock", func() {
 				DescribeTable("should reject transactions with gasPrice < MinGasPrices",
 					func(malleate getprices) {
 						p := malleate()

@@ -158,7 +158,7 @@ func RegisterEstimateGas(queryClient *mocks.EVMQueryClient, args evmtypes.Transa
 }
 
 // BaseFee
-func RegisterBaseFee(queryClient *mocks.EVMQueryClient, baseFee sdk.Int) {
+func RegisterBaseFee(queryClient *mocks.EVMQueryClient, baseFee sdkmath.Int) {
 	queryClient.On("BaseFee", rpc.ContextWithHeight(1), &evmtypes.QueryBaseFeeRequest{}).
 		Return(&evmtypes.QueryBaseFeeResponse{BaseFee: &baseFee}, nil)
 }

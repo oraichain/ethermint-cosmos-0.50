@@ -42,8 +42,12 @@ func (k Keeper) GetCoinbaseAddress(ctx sdk.Context, proposerAddress sdk.ConsAddr
 			proposerAddress.String(),
 		)
 	}
+	valAddr, err := sdk.ValAddressFromBech32(validator.GetOperator())
+	if err != nil {
+		return common.Address{}, err
+	}
 
-	coinbase := common.BytesToAddress(validator.GetOperator())
+	coinbase := common.BytesToAddress(valAddr.Bytes())
 	return coinbase, nil
 }
 

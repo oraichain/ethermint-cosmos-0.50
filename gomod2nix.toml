@@ -65,7 +65,7 @@ schema = 3
   [mod."github.com/VictoriaMetrics/fastcache"]
     version = "v1.6.0"
     hash = "sha256-u1dkRJ2Y5+hnYlkyMPm14HxKkAv999bjN622nZDjaBo="
-  [mod."github.com/armon/go-metrics"]
+  [mod."github.com/hashicorp/go-metrics"]
     version = "v0.4.1"
     hash = "sha256-usxTUHA0QQMdM6sHi2z51nmnEKMbA0qUilxJFpWHlYE="
   [mod."github.com/aws/aws-sdk-go"]

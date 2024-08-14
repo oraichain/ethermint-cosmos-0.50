@@ -100,14 +100,6 @@ func InitGenesis(
 			)
 		}
 
-		if ethAcct.GetSequence() == 0 {
-			panic(fmt.Errorf("account %s must have a positive nonce", account.Address))
-		}
-
-		if ethAcct.GetPubKey() != nil {
-			panic(fmt.Errorf("account %s must not have a public key set", account.Address))
-		}
-
 		code := common.Hex2Bytes(account.Code)
 		codeHash := crypto.Keccak256Hash(code)
 

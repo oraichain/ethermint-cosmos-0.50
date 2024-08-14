@@ -34,7 +34,7 @@ import (
 )
 
 func (suite AnteTestSuite) TestAnteHandler() {
-	var acc authtypes.AccountI
+	var acc sdk.AccountI
 	addr, privKey := tests.NewAddrKey()
 	to := tests.GenerateAddress()
 
@@ -185,7 +185,7 @@ func (suite AnteTestSuite) TestAnteHandler() {
 			false, true, true,
 		},
 		{
-			"success - DeliverTx",
+			"success - FinalizeEthBlock",
 			func() sdk.Tx {
 				signedTx := evmtypes.NewTx(
 					suite.app.EvmKeeper.ChainID(),
@@ -936,7 +936,7 @@ func (suite AnteTestSuite) TestAnteHandlerWithDynamicTxFee() {
 			false, true, true,
 		},
 		{
-			"success - DeliverTx",
+			"success - FinalizeEthBlock",
 			func() sdk.Tx {
 				signedTx := evmtypes.NewTx(
 					suite.app.EvmKeeper.ChainID(),

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	storetypes "cosmossdk.io/store/types"
 	"github.com/evmos/ethermint/x/evm/keeper"
 
 	sdkmath "cosmossdk.io/math"
@@ -52,7 +53,7 @@ type EvmTestSuite struct {
 	suite.Suite
 
 	ctx     sdk.Context
-	handler sdk.Handler
+	handler evm.Handler
 	app     *app.EthermintApp
 	codec   codec.Codec
 	chainID *big.Int
@@ -115,7 +116,7 @@ func (suite *EvmTestSuite) DoSetupTest(t require.TestingT) {
 
 	// Initialize the chain
 	suite.app.InitChain(
-		abci.RequestInitChain{
+		&abci.RequestInitChain{
 			ChainId:         "ethermint_9000-1",
 			Validators:      []abci.ValidatorUpdate{},
 			ConsensusParams: app.DefaultConsensusParams,
@@ -123,7 +124,7 @@ func (suite *EvmTestSuite) DoSetupTest(t require.TestingT) {
 		},
 	)
 
-	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
+	suite.ctx = suite.app.BaseApp.NewContextLegacy(checkTx, tmproto.Header{
 		Height:          1,
 		ChainID:         "ethermint_9000-1",
 		Time:            time.Now().UTC(),
@@ -158,7 +159,7 @@ func (suite *EvmTestSuite) DoSetupTest(t require.TestingT) {
 	suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 
 	valAddr := sdk.ValAddress(address.Bytes())
-	validator, err := stakingtypes.NewValidator(valAddr, priv.PubKey(), stakingtypes.Description{})
+	validator, err := stakingtypes.NewValidator(valAddr.String(), priv.PubKey(), stakingtypes.Description{})
 	require.NoError(t, err)
 
 	err = suite.app.StakingKeeper.SetValidatorByConsAddr(suite.ctx, validator)
@@ -182,7 +183,7 @@ func (suite *EvmTestSuite) SignTx(tx *types.MsgEthereumTx) {
 }
 
 func (suite *EvmTestSuite) StateDB() *statedb.StateDB {
-	return statedb.New(suite.ctx, suite.app.EvmKeeper, statedb.NewEmptyTxConfig(common.BytesToHash(suite.ctx.HeaderHash().Bytes())))
+	return statedb.New(suite.ctx, suite.app.EvmKeeper, statedb.NewEmptyTxConfig(common.BytesToHash(suite.ctx.HeaderHash())))
 }
 
 func TestEvmTestSuite(t *testing.T) {

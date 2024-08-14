@@ -64,7 +64,7 @@ func (suite *ImporterTestSuite) DoSetupTest(t require.TestingT) {
 	priv, err := ethsecp256k1.GenerateKey()
 	require.NoError(t, err)
 	consAddress := sdk.ConsAddress(priv.PubKey().Address())
-	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
+	suite.ctx = suite.app.BaseApp.NewContextLegacy(checkTx, tmproto.Header{
 		Height:          1,
 		ChainID:         "ethermint_9000-1",
 		Time:            time.Now().UTC(),
@@ -138,9 +138,9 @@ func (suite *ImporterTestSuite) TestImportBlocks() {
 		suite.app.BeginBlock(types.RequestBeginBlock{
 			Header: tmheader,
 		})
-		ctx := suite.app.NewContext(false, tmheader)
+		ctx := suite.app.NewContextLegacy(false, tmheader)
 		ctx = ctx.WithBlockHeight(tmheader.Height)
-		vmdb := statedb.New(ctx, suite.app.EvmKeeper, statedb.NewEmptyTxConfig(common.BytesToHash(ctx.HeaderHash().Bytes())))
+		vmdb := statedb.New(ctx, suite.app.EvmKeeper, statedb.NewEmptyTxConfig(common.BytesToHash(ctx.HeaderHash())))
 
 		if chainConfig.DAOForkSupport && chainConfig.DAOForkBlock != nil && chainConfig.DAOForkBlock.Cmp(block.Number()) == 0 {
 			applyDAOHardFork(vmdb)

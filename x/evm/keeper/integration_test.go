@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"math/big"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	simutils "github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -20,6 +18,8 @@ import (
 	"github.com/evmos/ethermint/tests"
 	"github.com/evmos/ethermint/testutil"
 	"github.com/evmos/ethermint/x/feemarket/types"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"cosmossdk.io/log"
 	dbm "github.com/cometbft/cometbft-db"
@@ -91,14 +91,14 @@ var _ = Describe("Feemarket", func() {
 				)
 			})
 
-			Context("during DeliverTx", func() {
+			Context("during FinalizeEthBlock", func() {
 				DescribeTable("should accept transactions with gas Limit > 0",
 					func(malleate getprices) {
 						p := malleate()
 						to := tests.GenerateAddress()
 						msgEthereumTx := buildEthTx(privKey, &to, p.gasLimit, p.gasPrice, p.gasFeeCap, p.gasTipCap, p.accesses)
 						res := finalizeEthBlock(privKey, msgEthereumTx)
-						Expect(res.IsOK()).To(Equal(true), "transaction should have succeeded", res.GetLog())
+						Expect(res.TxResults[0].IsOK()).To(Equal(true), "transaction should have succeeded", res.TxResults[0].GetLog())
 					},
 					Entry("legacy tx", func() txParams {
 						return txParams{100000, big.NewInt(baseFee), nil, nil, nil}
@@ -129,7 +129,7 @@ var _ = Describe("Feemarket", func() {
 
 // setupTestWithContext sets up a test chain with an example Cosmos send msg,
 // given a local (validator config) and a gloabl (feemarket param) minGasPrice
-func setupTestWithContext(valMinGasPrice string, minGasPrice sdkmath.LegacyDec, baseFee sdk.Int) (*ethsecp256k1.PrivKey, banktypes.MsgSend) {
+func setupTestWithContext(valMinGasPrice string, minGasPrice sdkmath.LegacyDec, baseFee sdkmath.Int) (*ethsecp256k1.PrivKey, banktypes.MsgSend) {
 	privKey, msg := setupTest(valMinGasPrice + s.denom)
 	params := types.DefaultParams()
 	params.MinGasPrice = minGasPrice
@@ -144,7 +144,7 @@ func setupTest(localMinGasPrices string) (*ethsecp256k1.PrivKey, banktypes.MsgSe
 	setupChain(localMinGasPrices)
 
 	privKey, address := generateKey()
-	amount, ok := sdk.NewIntFromString("10000000000000000000")
+	amount, ok := sdkmath.NewIntFromString("10000000000000000000")
 	s.Require().True(ok)
 	initBalance := sdk.Coins{sdk.Coin{
 		Denom:  s.denom,
@@ -190,7 +190,7 @@ func setupChain(localMinGasPricesStr string) {
 
 	// Initialize the chain
 	newapp.InitChain(
-		abci.RequestInitChain{
+		&abci.RequestInitChain{
 			ChainId:         "ethermint_9000-1",
 			Validators:      []abci.ValidatorUpdate{},
 			AppStateBytes:   stateBytes,
@@ -265,7 +265,7 @@ func prepareEthTx(priv *ethsecp256k1.PrivKey, msgEthereumTx *evmtypes.MsgEthereu
 	s.Require().NoError(err)
 
 	evmDenom := s.app.EvmKeeper.GetParams(s.ctx).EvmDenom
-	fees := sdk.Coins{{Denom: evmDenom, Amount: sdk.NewIntFromBigInt(txData.Fee())}}
+	fees := sdk.Coins{{Denom: evmDenom, Amount: sdkmath.NewIntFromBigInt(txData.Fee())}}
 	builder.SetFeeAmount(fees)
 	builder.SetGasLimit(msgEthereumTx.GetGas())
 
@@ -276,16 +276,20 @@ func prepareEthTx(priv *ethsecp256k1.PrivKey, msgEthereumTx *evmtypes.MsgEthereu
 	return bz
 }
 
-func checkEthTx(priv *ethsecp256k1.PrivKey, msgEthereumTx *evmtypes.MsgEthereumTx) abci.ResponseCheckTx {
+func checkEthTx(priv *ethsecp256k1.PrivKey, msgEthereumTx *evmtypes.MsgEthereumTx) *abci.ResponseCheckTx {
 	bz := prepareEthTx(priv, msgEthereumTx)
 	req := abci.RequestCheckTx{Tx: bz}
-	res := s.app.BaseApp.CheckTx(req)
+	res, _ := s.app.BaseApp.CheckTx(&req)
 	return res
 }
 
-func finalizeEthBlock(priv *ethsecp256k1.PrivKey, msgEthereumTx *evmtypes.MsgEthereumTx) abci.ExecTxResult {
+func finalizeEthBlock(priv *ethsecp256k1.PrivKey, msgEthereumTx *evmtypes.MsgEthereumTx) *abci.ResponseFinalizeBlock {
 	bz := prepareEthTx(priv, msgEthereumTx)
-	req := abci.RequestDeliverTx{Tx: bz}
-	res := s.app.BaseApp.DeliverTx(req)
+	req := abci.RequestFinalizeBlock{
+		Height:          s.app.LastBlockHeight() + 1,
+		Txs:             [][]byte{bz},
+		ProposerAddress: s.ctx.BlockHeader().ProposerAddress,
+	}
+	res, _ := s.app.BaseApp.FinalizeBlock(&req)
 	return res
 }
