@@ -66,9 +66,9 @@ A general EVM state transition is performed by calling the ethereum `vm.EVM` `Cr
 
 In the case of the `x/evm` module, it currently uses a modified version of Geth's `TransitionDB`, that wraps these two `vm.EVM` methods. The reason for using this modified function, is due to several reasons:
 
-  1. The use of `sdk.Msg` (`MsgEthereumTx`) instead of the ethereum `core.Message` type for the `vm.EVM` functions, preventing the direct use of the `core.ApplyMessage`.
-  2. The use of custom gas accounting through the transaction `GasMeter` available on the `sdk.Context` to consume the same amount of gas as on Ethereum.
-  3. Simulate logic via ABCI `CheckTx`, that prevents the state from being finalized.
+1. The use of `sdk.Msg` (`MsgEthereumTx`) instead of the ethereum `core.Message` type for the `vm.EVM` functions, preventing the direct use of the `core.ApplyMessage`.
+2. The use of custom gas accounting through the transaction `GasMeter` available on the `sdk.Context` to consume the same amount of gas as on Ethereum.
+3. Simulate logic via ABCI `CheckTx`, that prevents the state from being finalized.
 
 ## Decision
 
@@ -83,7 +83,7 @@ concrete implementation.
 // Keeper now fully implements the StateDB interface
 var _ vm.StateDB = (*Keeper)(nil)
 
-// Keeper defines the EVM module state keeper for CRUD operations. 
+// Keeper defines the EVM module state keeper for CRUD operations.
 // It also implements the go-ethereum vm.StateDB interface. Instead of using
 // a trie and database for querying and persistence, the Keeper uses KVStores
 // and external Keepers to facilitate state transitions for accounts and balance
@@ -114,7 +114,7 @@ func (k Keeper) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.Valid
   // updating the state.
 
   // Gas costs are handled within msg handler so costs should be ignored
-  infCtx := ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+  infCtx := ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
   k.WithContext(ctx)
 
   // get the block bloom bytes from the transient store and set it to the persistent storage
@@ -131,7 +131,7 @@ func (k Keeper) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.Valid
 }
 ```
 
-The new `StateDB` (`Keeper`) will adopt the use of the  [`TransientStore`](https://docs.cosmos.network/master/core/store.html#transient-store) that discards the existing values of the store when the block is committed.
+The new `StateDB` (`Keeper`) will adopt the use of the [`TransientStore`](https://docs.cosmos.network/master/core/store.html#transient-store) that discards the existing values of the store when the block is committed.
 
 The fields that have been modified to use the `TransientStore` are:
 
@@ -211,7 +211,7 @@ func (k *Keeper) ApplyMessage(evm *vm.EVM, msg core.Message, cfg *params.ChainCo
   // NOTE: Since CRUD operations on the SDK store consume gas we need to set up an infinite gas meter so that we only consume
   // the gas used by the Ethereum message execution.
   // Not setting the infinite gas meter here would mean that we are incurring in additional gas costs
-  k.WithContext(k.ctx.WithGasMeter(sdk.NewInfiniteGasMeter()))
+  k.WithContext(k.ctx.WithGasMeter(storetypes.NewInfiniteGasMeter()))
 
   // NOTE: gas limit is the GasLimit defined in the message minus the Intrinsic Gas that has already been
   // consumed on the AnteHandler.

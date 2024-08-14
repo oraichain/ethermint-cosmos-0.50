@@ -20,6 +20,7 @@ import (
 	"runtime/debug"
 
 	tmlog "cosmossdk.io/log"
+	storetypes "cosmossdk.io/store/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
