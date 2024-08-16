@@ -81,6 +81,12 @@ func (EVM) ActivePrecompiles(rules params.Rules) []common.Address {
 	return vm.ActivePrecompiles(rules)
 }
 
+// ActivePrecompiles returns a list of all the active precompiled contract addresses
+// for the current chain configuration.
+func (e *EVM) Call(caller vm.ContractRef, addr common.Address, input []byte, gas uint64, value *big.Int) (ret []byte, leftOverGas uint64, err error) {
+	return e.EVM.Call(caller, addr, input, gas, value)
+}
+
 // RunPrecompiledContract runs a stateless precompiled contract and ignores the address and
 // value arguments. It uses the RunPrecompiledContract function from the geth vm package
 func (EVM) RunPrecompiledContract(

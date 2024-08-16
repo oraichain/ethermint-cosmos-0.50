@@ -151,7 +151,9 @@ func (s *StateDB) GetNonce(addr common.Address) uint64 {
 
 // GetCode returns the code of account, nil if not exists.
 func (s *StateDB) GetCode(addr common.Address) []byte {
+
 	stateObject := s.getStateObject(addr)
+
 	if stateObject != nil {
 		return stateObject.Code()
 	}
@@ -223,6 +225,7 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 	}
 	// If no live objects are available, load it from keeper
 	account := s.keeper.GetAccount(s.ctx, addr)
+
 	if account == nil {
 		return nil
 	}

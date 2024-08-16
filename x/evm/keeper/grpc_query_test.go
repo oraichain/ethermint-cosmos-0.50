@@ -434,7 +434,7 @@ func (suite *KeeperTestSuite) TestQueryValidatorAccount() {
 				expAccount = &types.QueryValidatorAccountResponse{
 					AccountAddress: sdk.AccAddress(suite.address.Bytes()).String(),
 					Sequence:       0,
-					AccountNumber:  7,
+					AccountNumber:  8,
 				}
 				req = &types.QueryValidatorAccountRequest{
 					ConsAddress: suite.consAddress.String(),
