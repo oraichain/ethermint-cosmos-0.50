@@ -150,7 +150,7 @@ type TLSConfig struct {
 
 // AppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
-func AppConfig(denom string) (string, interface{}) {
+func AppConfig(denom string) (string, Config) {
 	// Optionally allow the chain developer to overwrite the SDK's default
 	// server config.
 	srvCfg := config.DefaultConfig()
@@ -371,15 +371,15 @@ func ParseConfig(v *viper.Viper) (*Config, error) {
 // ValidateBasic returns an error any of the application configuration fields are invalid
 func (c Config) ValidateBasic() error {
 	if err := c.EVM.Validate(); err != nil {
-		return errorsmod.Wrapf(errortypes.ErrAppConfig, "invalid evm config value: %s", err.Error())
+		return errorsmod.Wrapf(errortypes.ErrAppConfig, "invalid ethermint evm config value: %s", err.Error())
 	}
 
 	if err := c.JSONRPC.Validate(); err != nil {
-		return errorsmod.Wrapf(errortypes.ErrAppConfig, "invalid json-rpc config value: %s", err.Error())
+		return errorsmod.Wrapf(errortypes.ErrAppConfig, "invalid ethermint json-rpc config value: %s", err.Error())
 	}
 
 	if err := c.TLS.Validate(); err != nil {
-		return errorsmod.Wrapf(errortypes.ErrAppConfig, "invalid tls config value: %s", err.Error())
+		return errorsmod.Wrapf(errortypes.ErrAppConfig, "invalid ethermint tls config value: %s", err.Error())
 	}
 
 	return c.Config.ValidateBasic()

@@ -22,7 +22,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime/pprof"
+	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -547,17 +549,42 @@ func startCmtNode(
 }
 
 func getAndValidateConfig(svrCtx *server.Context) (config.Config, error) {
-	config, err := config.GetConfig(svrCtx.Viper)
+	appConfig, err := config.GetConfig(svrCtx.Viper)
 	if err != nil {
 		svrCtx.Logger.Error("failed to get server config", "error", err.Error())
-		return config, err
+		return appConfig, err
 	}
 
-	if err := config.ValidateBasic(); err != nil {
-		svrCtx.Logger.Error("invalid server config", "error", err.Error())
-		return config, err
+	if err := appConfig.ValidateBasic(); err != nil {
+		if strings.Contains(err.Error(), "set min gas price in app.toml or flag or env variable") {
+			svrCtx.Logger.Error(
+				"WARNING: The minimum-gas-prices config in app.toml is set to the empty string. " +
+					"This defaults to 0 in the current version, but will error in the next version " +
+					"(SDK v0.44). Please explicitly put the desired minimum-gas-prices in your app.toml.",
+			)
+		} else if strings.Contains(err.Error(), "invalid ethermint") {
+			home := svrCtx.Viper.GetString(flags.FlagHome)
+			appConfigPath := filepath.Join(home, "config/app.toml")
+			svrCtx.Logger.Info(
+				"This node does not have ethermint configurations. Applying the default values to " + appConfigPath,
+			)
+
+			appConfigTemplate, defaultAppConfig := config.AppConfig("")
+			appConfig.EVM = defaultAppConfig.EVM
+			appConfig.JSONRPC = defaultAppConfig.JSONRPC
+			appConfig.TLS = defaultAppConfig.TLS
+			// overwrite the config file with new values
+			serverconfig.SetConfigTemplate(appConfigTemplate)
+			serverconfig.WriteConfigFile(appConfigPath, appConfig)
+		} else {
+
+			svrCtx.Logger.Error("invalid server config", "error", err.Error())
+		}
+
+		return appConfig, err
 	}
-	return config, err
+
+	return appConfig, err
 }
 
 // returns a function which returns the genesis doc from the genesis file.
