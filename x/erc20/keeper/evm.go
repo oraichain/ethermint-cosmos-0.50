@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/evmos/ethermint/contracts"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
 
 	"github.com/evmos/ethermint/x/erc20/types"
@@ -28,7 +29,7 @@ func (k Keeper) DeployERC20Contract(
 		decimalsIdx := len(coinMetadata.DenomUnits) - 1
 		decimals = uint8(coinMetadata.DenomUnits[decimalsIdx].Exponent)
 	}
-	ctorArgs, err := evmtypes.ERC20Contract.ABI.Pack(
+	ctorArgs, err := contracts.ERC20MinterBurnerDecimalsContract.ABI.Pack(
 		"",
 		coinMetadata.Name,
 		coinMetadata.Symbol,
