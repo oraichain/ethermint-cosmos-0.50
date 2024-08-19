@@ -16,6 +16,8 @@
 package types
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -49,6 +51,8 @@ const (
 	prefixTransientTxIndex
 	prefixTransientLogSize
 	prefixTransientGasUsed
+	prefixEvmAddressMappingStoreKey
+	prefixCosmosAddressMappingStoreKey
 )
 
 // KVStore key prefixes
@@ -66,6 +70,12 @@ var (
 	KeyPrefixTransientGasUsed = []byte{prefixTransientGasUsed}
 )
 
+// evm mapping key prefixes
+var (
+	EvmAddressMappingStoreKeyPrefix    = []byte{prefixEvmAddressMappingStoreKey}
+	CosmosAddressMappingStoreKeyPrefix = []byte{prefixCosmosAddressMappingStoreKey}
+)
+
 // AddressStoragePrefix returns a prefix to iterate over a given account storage.
 func AddressStoragePrefix(address common.Address) []byte {
 	return append(KeyPrefixStorage, address.Bytes()...)
@@ -74,4 +84,14 @@ func AddressStoragePrefix(address common.Address) []byte {
 // StateKey defines the full key under which an account state is stored.
 func StateKey(address common.Address, key []byte) []byte {
 	return append(AddressStoragePrefix(address), key...)
+}
+
+// AccountStoreKey turns an address to a key used to get the account from the store
+func EvmAddressMappingStoreKey(cosmosAddress sdk.AccAddress) []byte {
+	return append(EvmAddressMappingStoreKeyPrefix, address.MustLengthPrefix(cosmosAddress)...)
+}
+
+// AccountStoreKey turns an address to a key used to get the account from the store
+func CosmosAddressMappingStoreKey(evmAddress common.Address) []byte {
+	return append(CosmosAddressMappingStoreKeyPrefix, address.MustLengthPrefix(evmAddress.Bytes())...)
 }

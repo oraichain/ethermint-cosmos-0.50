@@ -408,6 +408,12 @@ protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(pro
 #
 proto-all: proto-format proto-lint proto-gen
 
+proto-gen-new:
+	@echo "Generating go proto files"
+	@buf generate --template proto/buf.gen.gogo.yaml proto
+	@cp -r out/github.com/evmos/ethermint/* ./
+	@rm -rf out/github.com
+
 proto-gen:
 	@echo "Generating Protobuf files"
 	$(protoImage) sh ./scripts/protocgen.sh

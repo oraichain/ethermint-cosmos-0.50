@@ -23,6 +23,12 @@ service Msg {
   // UpdateParams defined a governance operation for updating the x/evm module parameters.
   // The authority is hard-coded to the Cosmos SDK x/gov module account
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // SetMappingEvmAddress defines a method for mapping an evm address to a cosmos address
+  rpc SetMappingEvmAddress(MsgSetMappingEvmAddress) returns (MsgSetMappingEvmAddressResponse);
+
+  // DeleteMappingEvmAddress defines a method for deleting the cosmos address for a given evm address
+  rpc DeleteMappingEvmAddress(MsgDeleteMappingEvmAddress) returns (MsgDeleteMappingEvmAddressResponse);
 }
 
 // MsgEthereumTx encapsulates an Ethereum transaction as an SDK message.
@@ -194,3 +200,23 @@ message MsgUpdateParams {
 // MsgUpdateParamsResponse defines the response structure for executing a
 // MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
+
+// MsgSetMappingEvmAddress defines a mapping from cosmos address to evm address.
+message MsgSetMappingEvmAddress {
+  // signer cosmos address
+  string signer = 1;
+  // public key that we will use to map cosmos to evm.
+  string pubkey = 2;
+}
+
+// MsgSetMappingEvmAddressResponse defines the response value from Msg/SetMappingEvmAddress.
+message MsgSetMappingEvmAddressResponse {}
+
+// MsgDeleteMappingEvmAddress deletes mapping from cosmos address to evm address.
+message MsgDeleteMappingEvmAddress {
+  // signer cosmos address
+  string signer = 1;
+}
+
+// MsgDeleteMappingEvmAddressResponse defines the response value from Msg/DeleteMappingEvmAddress.
+message MsgDeleteMappingEvmAddressResponse {}

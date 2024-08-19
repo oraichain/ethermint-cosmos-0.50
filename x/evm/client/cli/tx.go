@@ -23,6 +23,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -40,7 +42,11 @@ func GetTxCmd() *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	cmd.AddCommand(NewRawTxCmd())
+	cmd.AddCommand(
+		NewRawTxCmd(),
+		getCmdSetMappingEvmAddress(),
+		getCmdDeleteMappingEvmAddress(),
+	)
 	return cmd
 }
 
@@ -121,6 +127,63 @@ func NewRawTxCmd() *cobra.Command {
 		},
 	}
 
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func getCmdSetMappingEvmAddress() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-mapping-evm [EVM address]",
+		Short: "Set a mapping EVM address for the sender cosmos address",
+		Example: fmt.Sprintf(`
+%[1]s tx %[2]s set-mapping-evm AvSl0d9JrHCW4mdEyHvZu076WxLgH0bBVLigUcFm4UjV --from <key> --gas 1000000
+`, version.AppName, types.ModuleName,
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			signer := clientCtx.GetFromAddress()
+			fmt.Println("pubkey: ", args[0])
+			msg := types.NewMsgSetMappingEvmAddress(signer.String(), args[0])
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func getCmdDeleteMappingEvmAddress() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delete-mapping-evm",
+		Short: "Delete a mapping EVM address for the sender cosmos address",
+		Example: fmt.Sprintf(`
+%[1]s tx %[2]s delete-mapping-evm --from <key> --gas 1000000
+`, version.AppName, types.ModuleName,
+		),
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			signer := clientCtx.GetFromAddress()
+			msg := types.NewMsgDeleteMappingEvmAddress(signer.String())
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

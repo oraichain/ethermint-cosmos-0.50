@@ -168,3 +168,66 @@ func (k *Keeper) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams)
 
 	return &types.MsgUpdateParamsResponse{}, nil
 }
+
+func (k *Keeper) SetMappingEvmAddress(
+	goCtx context.Context,
+	msg *types.MsgSetMappingEvmAddress,
+) (*types.MsgSetMappingEvmAddressResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	signer, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		return nil, fmt.Errorf("invalid signer address: %w", err)
+	}
+
+	evmAddress, err := types.PubkeyToEVMAddress(msg.Pubkey)
+	if err != nil {
+		return nil, err
+	}
+
+	k.SetAddressMapping(ctx, signer, *evmAddress)
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeSetMappingEvmAddress,
+		sdk.NewAttribute(types.AttributeKeyCosmosAddress, msg.Signer),
+		sdk.NewAttribute(types.AttributeKeyEvmAddress, evmAddress.Hex()),
+		sdk.NewAttribute(types.AttributeKeyPubkey, msg.Pubkey),
+	))
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Signer),
+		),
+	)
+
+	return &types.MsgSetMappingEvmAddressResponse{}, nil
+}
+
+func (k *Keeper) DeleteMappingEvmAddress(
+	goCtx context.Context,
+	msg *types.MsgDeleteMappingEvmAddress,
+) (*types.MsgDeleteMappingEvmAddressResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	signer, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		return nil, fmt.Errorf("invalid signer address: %w", err)
+	}
+	k.DeleteAddressMapping(ctx, signer)
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeDeleteMappingEvmAddress,
+		sdk.NewAttribute(types.AttributeKeyCosmosAddress, msg.Signer),
+	))
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Signer),
+		),
+	)
+
+	return &types.MsgDeleteMappingEvmAddressResponse{}, nil
+}

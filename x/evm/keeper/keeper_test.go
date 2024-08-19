@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/big"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 
@@ -75,6 +76,34 @@ type KeeperTestSuite struct {
 }
 
 var s *KeeperTestSuite
+
+func (suite *KeeperTestSuite) EventsContains(events sdk.Events, expectedEvent sdk.Event) {
+	foundMatch := false
+	for _, event := range events {
+		if event.Type == expectedEvent.Type {
+			if reflect.DeepEqual(attrsToMap(expectedEvent.Attributes), attrsToMap(event.Attributes)) {
+				foundMatch = true
+			}
+		}
+	}
+
+	suite.Truef(foundMatch, "event of type %s not found or did not match", expectedEvent.Type)
+}
+
+func attrsToMap(attrs []abci.EventAttribute) []sdk.Attribute {
+	out := []sdk.Attribute{}
+
+	for _, attr := range attrs {
+		out = append(out, sdk.NewAttribute(string(attr.Key), string(attr.Value)))
+	}
+
+	return out
+}
+
+// GetEvents returns emitted events on the sdk context
+func (suite *KeeperTestSuite) GetEvents() sdk.Events {
+	return suite.ctx.EventManager().Events()
+}
 
 func TestKeeperTestSuite(t *testing.T) {
 	if os.Getenv("benchmark") != "" {
@@ -531,6 +560,156 @@ func (suite *KeeperTestSuite) TestGetAccountOrEmpty() {
 				suite.Require().Equal(empty, res)
 			} else {
 				suite.Require().NotEqual(empty, res)
+			}
+		})
+	}
+}
+
+func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount("orai", "oraipub")
+	signer := "orai1knzg7jdc49ghnc2pkqg6vks8ccsk6efzfgv6gv"
+	pubkey := "AvSl0d9JrHCW4mdEyHvZu076WxLgH0bBVLigUcFm4UjV"
+	expectedEvmAddress, _ := types.PubkeyToEVMAddress(pubkey)
+
+	type errArgs struct {
+		expectPass bool
+		contains   string
+	}
+
+	tests := []struct {
+		name    string
+		msg     types.MsgSetMappingEvmAddress
+		errArgs errArgs
+	}{
+		{
+			"valid",
+			types.NewMsgSetMappingEvmAddress(
+				signer,
+				pubkey,
+			),
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"invalid - invalid signer",
+			types.NewMsgSetMappingEvmAddress(
+				"foobar",
+				pubkey,
+			),
+			errArgs{
+				expectPass: false,
+				contains:   "invalid signer address",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			_, err := suite.app.EvmKeeper.SetMappingEvmAddress(sdk.WrapSDKContext(suite.ctx), &tc.msg)
+
+			if tc.errArgs.expectPass {
+				suite.Require().NoError(err)
+
+				// validate user coin balance
+				cosmosAccAddress := sdk.MustAccAddressFromBech32(signer)
+				actualEvmAddress, _ := suite.app.EvmKeeper.GetEvmAddressMapping(suite.ctx, cosmosAccAddress)
+				suite.Require().Equal(expectedEvmAddress.Hex(), actualEvmAddress.Hex(), "evm addresses dont match")
+
+				// msg server event
+				suite.EventsContains(suite.GetEvents(),
+					sdk.NewEvent(
+						sdk.EventTypeMessage,
+						sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+						sdk.NewAttribute(sdk.AttributeKeySender, signer),
+					))
+
+				// keeper event
+				suite.EventsContains(suite.GetEvents(),
+					sdk.NewEvent(
+						types.EventTypeSetMappingEvmAddress,
+						sdk.NewAttribute(types.AttributeKeyCosmosAddress, signer),
+						sdk.NewAttribute(types.AttributeKeyEvmAddress, actualEvmAddress.Hex()),
+						sdk.NewAttribute(types.AttributeKeyPubkey, pubkey),
+					))
+			} else {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errArgs.contains)
+			}
+		})
+	}
+}
+
+func (suite *KeeperTestSuite) TestMsgDeleteMappingEvmAddress() {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount("orai", "oraipub")
+	signer := "orai1knzg7jdc49ghnc2pkqg6vks8ccsk6efzfgv6gv"
+	pubkey := "AvSl0d9JrHCW4mdEyHvZu076WxLgH0bBVLigUcFm4UjV"
+
+	msg := types.NewMsgSetMappingEvmAddress(signer, pubkey)
+	suite.app.EvmKeeper.SetMappingEvmAddress(sdk.WrapSDKContext(suite.ctx), &msg)
+
+	type errArgs struct {
+		expectPass bool
+		contains   string
+	}
+
+	tests := []struct {
+		name    string
+		msg     types.MsgDeleteMappingEvmAddress
+		errArgs errArgs
+	}{
+		{
+			"invalid - invalid signer",
+			types.NewMsgDeleteMappingEvmAddress(
+				"foobar",
+			),
+			errArgs{
+				expectPass: false,
+				contains:   "invalid signer address",
+			},
+		},
+		{
+			"valid",
+			types.NewMsgDeleteMappingEvmAddress(
+				signer,
+			),
+			errArgs{
+				expectPass: true,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			_, err := suite.app.EvmKeeper.DeleteMappingEvmAddress(sdk.WrapSDKContext(suite.ctx), &tc.msg)
+
+			if tc.errArgs.expectPass {
+				suite.Require().NoError(err)
+
+				// validate user coin balance
+				cosmosAccAddress := sdk.MustAccAddressFromBech32(signer)
+				actualEvmAddress, _ := suite.app.EvmKeeper.GetEvmAddressMapping(suite.ctx, cosmosAccAddress)
+				suite.Require().Nil(actualEvmAddress)
+
+				// msg server event
+				suite.EventsContains(suite.GetEvents(),
+					sdk.NewEvent(
+						sdk.EventTypeMessage,
+						sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+						sdk.NewAttribute(sdk.AttributeKeySender, signer),
+					))
+
+				// keeper event
+				suite.EventsContains(suite.GetEvents(),
+					sdk.NewEvent(
+						types.EventTypeDeleteMappingEvmAddress,
+						sdk.NewAttribute(types.AttributeKeyCosmosAddress, signer),
+					))
+			} else {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errArgs.contains)
 			}
 		})
 	}
