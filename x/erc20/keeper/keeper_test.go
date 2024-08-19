@@ -45,6 +45,12 @@ import (
 	"github.com/cometbft/cometbft/version"
 )
 
+const (
+	contractMinterBurner = iota + 1
+	contractDirectBalanceManipulation
+	contractMaliciousDelayed
+)
+
 type KeeperTestSuite struct {
 	suite.Suite
 
