@@ -21,6 +21,8 @@ import (
 	"regexp"
 	"strings"
 
+	"crypto/sha256"
+
 	errorsmod "cosmossdk.io/errors"
 )
 
@@ -38,13 +40,27 @@ var (
 		regexEpoch))
 )
 
+func hashChainIdToInt(chainID string) *big.Int {
+	// Calculate the SHA256 hash of "Oraichain"
+	hash := sha256.Sum256([]byte(chainID))
+
+	// Convert the first 4 bytes to a big integer
+	firstFourBytes := hash[:4]
+	bigInt := new(big.Int).SetBytes(firstFourBytes)
+
+	return bigInt
+}
+
 // IsValidChainID returns false if the given chain identifier is incorrectly formatted.
 func IsValidChainID(chainID string) bool {
-	if len(chainID) > 48 {
+	chainID = strings.TrimSpace(chainID)
+	if len(chainID) > 48 || len(chainID) == 0 {
 		return false
 	}
 
-	return ethermintChainID.MatchString(chainID)
+	// now we also support other types of chain ids by hashing and collecting the first 4 bytes
+	// return ethermintChainID.MatchString(chainID)
+	return true
 }
 
 // ParseChainID parses a string chain identifier's epoch to an Ethereum-compatible
@@ -54,10 +70,15 @@ func ParseChainID(chainID string) (*big.Int, error) {
 	if len(chainID) > 48 {
 		return nil, errorsmod.Wrapf(ErrInvalidChainID, "chain-id '%s' cannot exceed 48 chars", chainID)
 	}
+	if len(chainID) == 0 {
+		return nil, errorsmod.Wrapf(ErrInvalidChainID, "chain-id '%s' cannot be empty", chainID)
+	}
 
 	matches := ethermintChainID.FindStringSubmatch(chainID)
 	if matches == nil || len(matches) != 4 || matches[1] == "" {
-		return nil, errorsmod.Wrapf(ErrInvalidChainID, "%s: %v", chainID, matches)
+		chainIDInt := hashChainIdToInt(chainID)
+
+		return chainIDInt, nil
 	}
 
 	// verify that the chain-id entered is a base 10 integer
