@@ -39,9 +39,9 @@ func (k Keeper) DeployERC20Contract(
 		return common.Address{}, errorsmod.Wrapf(types.ErrABIPack, "coin metadata is invalid %s: %s", coinMetadata.Name, err.Error())
 	}
 
-	data := make([]byte, len(evmtypes.ERC20Contract.Bin)+len(ctorArgs))
-	copy(data[:len(evmtypes.ERC20Contract.Bin)], evmtypes.ERC20Contract.Bin)
-	copy(data[len(evmtypes.ERC20Contract.Bin):], ctorArgs)
+	data := make([]byte, len(contracts.ERC20MinterBurnerDecimalsContract.Bin)+len(ctorArgs))
+	copy(data[:len(contracts.ERC20MinterBurnerDecimalsContract.Bin)], contracts.ERC20MinterBurnerDecimalsContract.Bin)
+	copy(data[len(contracts.ERC20MinterBurnerDecimalsContract.Bin):], ctorArgs)
 
 	nonce, err := k.accountKeeper.GetSequence(ctx, types.ModuleAddress.Bytes())
 	if err != nil {
@@ -68,7 +68,7 @@ func (k Keeper) QueryERC20(
 		decimalRes types.ERC20Uint8Response
 	)
 
-	erc20 := evmtypes.ERC20Contract.ABI
+	erc20 := contracts.ERC20MinterBurnerDecimalsContract.ABI
 
 	// Name
 	res, err := k.evmKeeper.CallEVM(ctx, erc20, types.ModuleAddress, contract, false, "name")

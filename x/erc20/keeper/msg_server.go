@@ -17,8 +17,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/hashicorp/go-metrics"
 
+	"github.com/evmos/ethermint/contracts"
 	"github.com/evmos/ethermint/x/erc20/types"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 var _ types.MsgServer = &Keeper{}
@@ -77,7 +77,7 @@ func (k Keeper) convertERC20IntoCoinsForNativeToken(
 	receiver sdk.AccAddress,
 	sender common.Address,
 ) (*types.MsgConvertERC20Response, error) {
-	erc20 := evmtypes.ERC20Contract.ABI
+	erc20 := contracts.ERC20MinterBurnerDecimalsContract.ABI
 	contract := pair.GetERC20Contract()
 	balanceCoin := k.bankKeeper.GetBalance(ctx, receiver, pair.Denom)
 	balanceToken := k.BalanceOf(ctx, erc20, contract, types.ModuleAddress)
@@ -206,7 +206,7 @@ func (k Keeper) ConvertCoinNativeERC20(
 		return nil
 	}
 
-	erc20 := evmtypes.ERC20Contract.ABI
+	erc20 := contracts.ERC20MinterBurnerDecimalsContract.ABI
 	contract := pair.GetERC20Contract()
 
 	balanceToken := k.BalanceOf(ctx, erc20, contract, receiver)

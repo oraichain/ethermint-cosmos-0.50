@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	_ "embed"
-	"math/big"
 	"os"
 	"testing"
 	"time"
@@ -24,9 +23,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/evmos/ethermint/contracts"
-	"github.com/evmos/ethermint/testutil"
-	"github.com/evmos/ethermint/testutil/tx"
 	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 
 	"github.com/evmos/ethermint/app"
@@ -52,12 +48,11 @@ import (
 type KeeperTestSuite struct {
 	suite.Suite
 
-	ctx            sdk.Context
-	app            *app.EthermintApp
-	queryClient    types.QueryClient
-	queryClientEvm evmtypes.QueryClient
-	address        common.Address
-	consAddress    sdk.ConsAddress
+	ctx         sdk.Context
+	app         *app.EthermintApp
+	queryClient types.QueryClient
+	address     common.Address
+	consAddress sdk.ConsAddress
 
 	// for generate test tx
 	clientCtx client.Context
@@ -190,8 +185,6 @@ func (suite *KeeperTestSuite) SetupAppWithT(checkTx bool, t require.TestingT) {
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, suite.app.Erc20Keeper)
 	suite.queryClient = types.NewQueryClient(queryHelper)
-	evmtypes.RegisterQueryServer(queryHelper, suite.app.EvmKeeper)
-	suite.queryClientEvm = evmtypes.NewQueryClient(queryHelper)
 
 	accNum := suite.app.AccountKeeper.NextAccountNumber(suite.ctx)
 	acc := &ethermint.EthAccount{
@@ -237,8 +230,6 @@ func (suite *KeeperTestSuite) Commit() {
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, suite.app.Erc20Keeper)
 	suite.queryClient = types.NewQueryClient(queryHelper)
-	evmtypes.RegisterQueryServer(queryHelper, suite.app.EvmKeeper)
-	suite.queryClientEvm = evmtypes.NewQueryClient(queryHelper)
 }
 
 func (suite *KeeperTestSuite) StateDB() *statedb.StateDB {
@@ -246,41 +237,10 @@ func (suite *KeeperTestSuite) StateDB() *statedb.StateDB {
 }
 
 func (suite *KeeperTestSuite) DeployContract(name, symbol string, decimals uint8) (common.Address, error) {
-	from, priv := tests.NewAddrKey()
-
-	chainID := suite.app.EvmKeeper.ChainID()
-
-	nonce := suite.app.EvmKeeper.GetNonce(suite.ctx, from)
-
-	ctorArgs, err := contracts.ERC20MinterBurnerDecimalsContract.ABI.Pack("", name, symbol, decimals)
-	if err != nil {
-		return common.Address{}, err
-	}
-
-	data := append(evmtypes.ERC20Contract.Bin, ctorArgs...) //nolint:gocritic
-	gas, err := tx.GasLimit(suite.ctx, from, data, suite.queryClientEvm)
-	if err != nil {
-		return common.Address{}, err
-	}
-
-	msgEthereumTx := evmtypes.NewTx(
-		chainID,
-		nonce,
-		nil,
-		nil,
-		gas,
-		big.NewInt(200_000),
-		suite.app.FeeMarketKeeper.GetBaseFee(suite.ctx),
-		big.NewInt(1),
-		data,
-		&ethtypes.AccessList{},
-	)
-	msgEthereumTx.From = from.String()
-
-	_, err = testutil.DeliverEthTx(suite.app, priv, msgEthereumTx)
-	if err != nil {
-		return common.Address{}, err
-	}
-
-	return crypto.CreateAddress(from, nonce), nil
+	return suite.app.Erc20Keeper.DeployERC20Contract(suite.ctx, banktypes.Metadata{Name: name, Symbol: symbol, DenomUnits: []*banktypes.DenomUnit{
+		{
+			Denom:    symbol,
+			Exponent: uint32(decimals),
+		},
+	}})
 }

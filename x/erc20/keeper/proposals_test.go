@@ -5,7 +5,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/runtime"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/evmos/ethermint/x/erc20/keeper"
@@ -25,42 +24,6 @@ const (
 	defaultExponent    = uint32(18)
 	zeroExponent       = uint32(0)
 	ibcBase            = "ibc/7B2A4F6E798182988D77B6B884919AF617A73503FDAC27C916CD7A69A69013CF"
-)
-
-var (
-	metadataCoin = banktypes.Metadata{
-		Description: "description of the token",
-		Base:        cosmosTokenBase,
-		// NOTE: Denom units MUST be increasing
-		DenomUnits: []*banktypes.DenomUnit{
-			{
-				Denom:    cosmosTokenBase,
-				Exponent: 0,
-			},
-			{
-				Denom:    cosmosTokenDisplay,
-				Exponent: defaultExponent,
-			},
-		},
-		Name:    cosmosTokenBase,
-		Symbol:  erc20Symbol,
-		Display: cosmosTokenBase,
-	}
-
-	metadataIbc = banktypes.Metadata{
-		Description: "ATOM IBC voucher (channel 14)",
-		Base:        ibcBase,
-		// NOTE: Denom units MUST be increasing
-		DenomUnits: []*banktypes.DenomUnit{
-			{
-				Denom:    ibcBase,
-				Exponent: 0,
-			},
-		},
-		Name:    "ATOM channel-14",
-		Symbol:  "ibcATOM-14",
-		Display: ibcBase,
-	}
 )
 
 func (suite *KeeperTestSuite) setupRegisterERC20Pair() common.Address {
@@ -146,6 +109,8 @@ func (suite KeeperTestSuite) TestRegisterERC20() { //nolint:govet // we can copy
 			pair = types.NewTokenPair(contractAddr, coinName, types.OWNER_EXTERNAL)
 
 			tc.malleate()
+
+			println("coin", contractAddr.String(), coinName)
 
 			_, err = suite.app.Erc20Keeper.RegisterERC20(suite.ctx, contractAddr)
 			metadata, found := suite.app.BankKeeper.GetDenomMetaData(suite.ctx, coinName)
