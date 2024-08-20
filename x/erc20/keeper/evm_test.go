@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/evmos/ethermint/contracts"
 	"github.com/evmos/ethermint/tests"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	"github.com/stretchr/testify/mock"
@@ -67,7 +68,7 @@ func (suite *KeeperTestSuite) TestBalanceOf() {
 
 		tc.malleate()
 
-		abi := evmtypes.ERC20Contract.ABI
+		abi := contracts.ERC20MinterBurnerDecimalsContract.ABI
 		balance := suite.app.Erc20Keeper.BalanceOf(suite.ctx, abi, contract, tests.GenerateAddress())
 		if tc.res {
 			suite.Require().Equal(balance.Int64(), tc.expBalance)

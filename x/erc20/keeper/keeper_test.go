@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	_ "embed"
 	"os"
 	"testing"
 	"time"

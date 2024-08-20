@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	_ "embed"
 	"encoding/json"
 	"math"
 	"math/big"
@@ -26,6 +25,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/evmos/ethermint/testutil"
 	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 
 	"github.com/evmos/ethermint/app"
@@ -264,12 +264,12 @@ func (suite *KeeperTestSuite) StateDB() *statedb.StateDB {
 func (suite *KeeperTestSuite) DeployTestContract(t require.TestingT, owner common.Address, supply *big.Int) common.Address {
 	chainID := suite.app.EvmKeeper.ChainID()
 
-	ctorArgs, err := types.ERC20Contract.ABI.Pack("", owner, supply)
+	ctorArgs, err := testutil.ERC20Contract.ABI.Pack("", owner, supply)
 	require.NoError(t, err)
 
 	nonce := suite.app.EvmKeeper.GetNonce(suite.ctx, suite.address)
 
-	data := append(types.ERC20Contract.Bin, ctorArgs...)
+	data := append(testutil.ERC20Contract.Bin, ctorArgs...)
 	args, err := json.Marshal(&types.TransactionArgs{
 		From: &suite.address,
 		Data: (*hexutil.Bytes)(&data),
@@ -320,7 +320,7 @@ func (suite *KeeperTestSuite) DeployTestContract(t require.TestingT, owner commo
 func (suite *KeeperTestSuite) TransferERC20Token(t require.TestingT, contractAddr, from, to common.Address, amount *big.Int) *types.MsgEthereumTx {
 	chainID := suite.app.EvmKeeper.ChainID()
 
-	transferData, err := types.ERC20Contract.ABI.Pack("transfer", to, amount)
+	transferData, err := testutil.ERC20Contract.ABI.Pack("transfer", to, amount)
 	require.NoError(t, err)
 	args, err := json.Marshal(&types.TransactionArgs{To: &contractAddr, From: &from, Data: (*hexutil.Bytes)(&transferData)})
 	require.NoError(t, err)
@@ -374,7 +374,7 @@ func (suite *KeeperTestSuite) TransferERC20Token(t require.TestingT, contractAdd
 func (suite *KeeperTestSuite) DeployTestMessageCall(t require.TestingT) common.Address {
 	chainID := suite.app.EvmKeeper.ChainID()
 
-	data := types.TestMessageCall.Bin
+	data := testutil.TestMessageCall.Bin
 	args, err := json.Marshal(&types.TransactionArgs{
 		From: &suite.address,
 		Data: (*hexutil.Bytes)(&data),
