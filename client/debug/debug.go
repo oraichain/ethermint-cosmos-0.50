@@ -79,7 +79,7 @@ func PubkeyCmd() *cobra.Command {
 				return err
 			}
 
-			cosmosAddress, err := types.PubkeyToAddress(pubkeyString)
+			cosmosAddress, err := types.PubkeyToCosmosAddress(pubkeyString)
 			if err != nil {
 				return err
 			}

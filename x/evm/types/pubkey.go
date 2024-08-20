@@ -27,11 +27,7 @@ func PubkeyToEVMAddress(pub string) (*common.Address, error) {
 	// Convert to uncompressed format
 	uncompressedPubKeyBytes := pubKey.SerializeUncompressed()
 	// Parse the public key
-	ethPubkey, err := crypto.UnmarshalPubkey(uncompressedPubKeyBytes)
-	if err != nil {
-		return nil, err
-	}
-	evmAddress := crypto.PubkeyToAddress(*ethPubkey)
+	evmAddress := common.BytesToAddress(crypto.Keccak256(uncompressedPubKeyBytes[1:])[12:])
 	return &evmAddress, nil
 }
 
@@ -40,22 +36,19 @@ func pubkeyBytesToPubkey(pub string) (*secp256k1.PubKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	pubKey, err := btcec.ParsePubKey(pubKeyBytes)
-	if err != nil {
-		return nil, err
-	}
-	return &secp256k1.PubKey{Key: pubKey.SerializeCompressed()}, nil
+
+	return &secp256k1.PubKey{Key: pubKeyBytes}, nil
 }
 
-func pubkeyToAddress(pub secp256k1.PubKey) sdk.AccAddress {
-	return sdk.AccAddress(pub.Address())
-}
-
-func PubkeyToAddress(pub string) (sdk.AccAddress, error) {
+func PubkeyToCosmosAddress(pub string) (sdk.AccAddress, error) {
 	pubkey, err := pubkeyBytesToPubkey(pub)
 	if err != nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidPubKey, "The pubkey is invalid")
 	}
-	cosmosAddress := pubkeyToAddress(*pubkey)
+
+	if len(pubkey.Key) != secp256k1.PubKeySize {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidPubKey, "length of pubkey is incorrect")
+	}
+	cosmosAddress := sdk.AccAddress(pubkey.Address())
 	return cosmosAddress, nil
 }

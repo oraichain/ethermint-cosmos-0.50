@@ -522,7 +522,7 @@ func (msg MsgSetMappingEvmAddress) ValidateBasic() error {
 		return errorsmod.Wrap(errortypes.ErrInvalidAddress, "signer is not a valid bech32 address")
 	}
 
-	cosmosAddress, err := PubkeyToAddress(msg.Pubkey)
+	cosmosAddress, err := PubkeyToCosmosAddress(msg.Pubkey)
 	if err != nil {
 		return err
 	}
