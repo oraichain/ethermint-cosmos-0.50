@@ -322,13 +322,16 @@ func (ctd CanTransferDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 
 // EthIncrementSenderSequenceDecorator increments the sequence of the signers.
 type EthIncrementSenderSequenceDecorator struct {
-	ak evmtypes.AccountKeeper
+	ak        evmtypes.AccountKeeper
+	evmKeeper EVMKeeper
+	// TODO: use evm keeper instead of ak
 }
 
 // NewEthIncrementSenderSequenceDecorator creates a new EthIncrementSenderSequenceDecorator.
-func NewEthIncrementSenderSequenceDecorator(ak evmtypes.AccountKeeper) EthIncrementSenderSequenceDecorator {
+func NewEthIncrementSenderSequenceDecorator(ak evmtypes.AccountKeeper, ek EVMKeeper) EthIncrementSenderSequenceDecorator {
 	return EthIncrementSenderSequenceDecorator{
-		ak: ak,
+		ak:        ak,
+		evmKeeper: ek,
 	}
 }
 
@@ -348,11 +351,13 @@ func (issd EthIncrementSenderSequenceDecorator) AnteHandle(ctx sdk.Context, tx s
 		}
 
 		// increase sequence of sender
-		acc := issd.ak.GetAccount(ctx, msgEthTx.GetFrom())
+		evmAddress := common.BytesToAddress(msgEthTx.GetFrom())
+		cosmosAddress := issd.evmKeeper.GetCosmosAddressMapping(ctx, evmAddress)
+		acc := issd.ak.GetAccount(ctx, cosmosAddress)
 		if acc == nil {
 			return ctx, errorsmod.Wrapf(
 				errortypes.ErrUnknownAddress,
-				"account %s is nil", common.BytesToAddress(msgEthTx.GetFrom().Bytes()),
+				"account %s is nil", cosmosAddress,
 			)
 		}
 		nonce := acc.GetSequence()

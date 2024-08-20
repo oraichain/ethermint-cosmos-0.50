@@ -73,20 +73,19 @@ func PubkeyCmd() *cobra.Command {
 				return err
 			}
 
-			pubkeyString := base64.StdEncoding.EncodeToString(pk.Bytes())
-			evmAddress, err := types.PubkeyToEVMAddress(pubkeyString)
+			evmAddress, err := types.PubkeyBytesToEVMAddress(pk.Bytes())
 			if err != nil {
 				return err
 			}
 
-			cosmosAddress, err := types.PubkeyToCosmosAddress(pubkeyString)
+			cosmosAddress, err := types.PubkeyBytesToCosmosAddress(pk.Bytes())
 			if err != nil {
 				return err
 			}
 
 			cmd.Printf("Address (EIP-55): %s\n", evmAddress.Hex())
 			cmd.Printf("Bech32 Acc: %s\n", cosmosAddress.String())
-			cmd.Println("PubKey base64:", pubkeyString)
+			cmd.Println("PubKey base64:", base64.StdEncoding.EncodeToString(pk.Bytes()))
 			return nil
 		},
 	}

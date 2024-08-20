@@ -45,7 +45,6 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		NewRawTxCmd(),
 		getCmdSetMappingEvmAddress(),
-		getCmdDeleteMappingEvmAddress(),
 	)
 	return cmd
 }
@@ -149,34 +148,6 @@ func getCmdSetMappingEvmAddress() *cobra.Command {
 			signer := clientCtx.GetFromAddress()
 			fmt.Println("pubkey: ", args[0])
 			msg := types.NewMsgSetMappingEvmAddress(signer.String(), args[0])
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
-		},
-	}
-	flags.AddTxFlagsToCmd(cmd)
-	return cmd
-}
-
-func getCmdDeleteMappingEvmAddress() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "delete-mapping-evm",
-		Short: "Delete a mapping EVM address for the sender cosmos address",
-		Example: fmt.Sprintf(`
-%[1]s tx %[2]s delete-mapping-evm --from <key> --gas 1000000
-`, version.AppName, types.ModuleName,
-		),
-		Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			signer := clientCtx.GetFromAddress()
-			msg := types.NewMsgDeleteMappingEvmAddress(signer.String())
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

@@ -19,10 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Msg_EthereumTx_FullMethodName              = "/ethermint.evm.v1.Msg/EthereumTx"
-	Msg_UpdateParams_FullMethodName            = "/ethermint.evm.v1.Msg/UpdateParams"
-	Msg_SetMappingEvmAddress_FullMethodName    = "/ethermint.evm.v1.Msg/SetMappingEvmAddress"
-	Msg_DeleteMappingEvmAddress_FullMethodName = "/ethermint.evm.v1.Msg/DeleteMappingEvmAddress"
+	Msg_EthereumTx_FullMethodName           = "/ethermint.evm.v1.Msg/EthereumTx"
+	Msg_UpdateParams_FullMethodName         = "/ethermint.evm.v1.Msg/UpdateParams"
+	Msg_SetMappingEvmAddress_FullMethodName = "/ethermint.evm.v1.Msg/SetMappingEvmAddress"
 )
 
 // MsgClient is the client API for Msg service.
@@ -36,8 +35,6 @@ type MsgClient interface {
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 	// SetMappingEvmAddress defines a method for mapping an evm address to a cosmos address
 	SetMappingEvmAddress(ctx context.Context, in *MsgSetMappingEvmAddress, opts ...grpc.CallOption) (*MsgSetMappingEvmAddressResponse, error)
-	// DeleteMappingEvmAddress defines a method for deleting the cosmos address for a given evm address
-	DeleteMappingEvmAddress(ctx context.Context, in *MsgDeleteMappingEvmAddress, opts ...grpc.CallOption) (*MsgDeleteMappingEvmAddressResponse, error)
 }
 
 type msgClient struct {
@@ -75,15 +72,6 @@ func (c *msgClient) SetMappingEvmAddress(ctx context.Context, in *MsgSetMappingE
 	return out, nil
 }
 
-func (c *msgClient) DeleteMappingEvmAddress(ctx context.Context, in *MsgDeleteMappingEvmAddress, opts ...grpc.CallOption) (*MsgDeleteMappingEvmAddressResponse, error) {
-	out := new(MsgDeleteMappingEvmAddressResponse)
-	err := c.cc.Invoke(ctx, Msg_DeleteMappingEvmAddress_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility
@@ -95,8 +83,6 @@ type MsgServer interface {
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 	// SetMappingEvmAddress defines a method for mapping an evm address to a cosmos address
 	SetMappingEvmAddress(context.Context, *MsgSetMappingEvmAddress) (*MsgSetMappingEvmAddressResponse, error)
-	// DeleteMappingEvmAddress defines a method for deleting the cosmos address for a given evm address
-	DeleteMappingEvmAddress(context.Context, *MsgDeleteMappingEvmAddress) (*MsgDeleteMappingEvmAddressResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -112,9 +98,6 @@ func (UnimplementedMsgServer) UpdateParams(context.Context, *MsgUpdateParams) (*
 }
 func (UnimplementedMsgServer) SetMappingEvmAddress(context.Context, *MsgSetMappingEvmAddress) (*MsgSetMappingEvmAddressResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetMappingEvmAddress not implemented")
-}
-func (UnimplementedMsgServer) DeleteMappingEvmAddress(context.Context, *MsgDeleteMappingEvmAddress) (*MsgDeleteMappingEvmAddressResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteMappingEvmAddress not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 
@@ -183,24 +166,6 @@ func _Msg_SetMappingEvmAddress_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_DeleteMappingEvmAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgDeleteMappingEvmAddress)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).DeleteMappingEvmAddress(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Msg_DeleteMappingEvmAddress_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).DeleteMappingEvmAddress(ctx, req.(*MsgDeleteMappingEvmAddress))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -219,10 +184,6 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetMappingEvmAddress",
 			Handler:    _Msg_SetMappingEvmAddress_Handler,
-		},
-		{
-			MethodName: "DeleteMappingEvmAddress",
-			Handler:    _Msg_DeleteMappingEvmAddress_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

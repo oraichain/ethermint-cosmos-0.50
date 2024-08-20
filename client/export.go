@@ -27,7 +27,9 @@ import (
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 	"github.com/evmos/ethermint/crypto/hd"
 )
@@ -96,6 +98,69 @@ func UnsafeExportEthKeyCommand() *cobra.Command {
 
 			fmt.Println(keyS)
 
+			return nil
+		},
+	}
+}
+
+// UnsafeExportEthKeyCommand exports a key with the given name as a private key in hex format.
+func UnsafeExportCosmosKeyCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "unsafe-export-cosmos-key [name]",
+		Short: "**UNSAFE** Export an Cosmos private key",
+		Long:  `**UNSAFE** Export an Cosmos private key unencrypted to use in dev tooling`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			kr := clientCtx.Keyring
+
+			keyringBackend, err := cmd.Flags().GetString(flags.FlagKeyringBackend)
+
+			if err != nil {
+				return err
+			}
+
+			decryptPassword := ""
+			conf := true
+
+			switch keyringBackend {
+			case keyring.BackendFile:
+				decryptPassword, err = input.GetPassword(
+					"**WARNING this is an unsafe way to export your unencrypted private key**\nEnter key password:",
+					inBuf)
+			case keyring.BackendOS:
+				conf, err = input.GetConfirmation(
+					"**WARNING** this is an unsafe way to export your unencrypted private key, are you sure?",
+					inBuf, cmd.ErrOrStderr())
+			}
+			if err != nil || !conf {
+				return err
+			}
+
+			// Exports private key from keybase using password
+			armor, err := kr.ExportPrivKeyArmor(args[0], decryptPassword)
+			if err != nil {
+				return err
+			}
+
+			privKey, algo, err := crypto.UnarmorDecryptPrivKey(armor, decryptPassword)
+			if err != nil {
+				return err
+			}
+
+			if algo != "secp256k1" {
+				return fmt.Errorf("invalid key algorithm, got %s, expected %s", algo, "secp256k1")
+			}
+
+			// Converts key to Ethermint secp256k1 implementation
+			privKey, ok := privKey.(*cosmossecp256k1.PrivKey)
+			if !ok {
+				return fmt.Errorf("invalid private key type %T, expected %T", privKey, &cosmossecp256k1.PrivKey{})
+			}
+
+			hex := strings.ToUpper(hexutil.Encode(privKey.Bytes())[2:])
+			fmt.Print(hex)
 			return nil
 		},
 	}

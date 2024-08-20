@@ -50,6 +50,7 @@ type EVMKeeper interface {
 	ResetTransientGasUsed(ctx sdk.Context)
 	GetTxIndexTransient(ctx sdk.Context) uint64
 	GetParams(ctx sdk.Context) evmtypes.Params
+	GetCosmosAddressMapping(ctx sdk.Context, evmAddress common.Address) sdk.AccAddress
 }
 
 type protoTxProvider interface {

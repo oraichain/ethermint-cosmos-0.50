@@ -63,9 +63,13 @@ func (s sortGasAndReward) Less(i, j int) bool {
 // Todo: include the ability to specify a blockNumber
 func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height int64, logger log.Logger) (uint64, error) {
 	queryClient := authtypes.NewQueryClient(b.clientCtx)
-	adr := sdk.AccAddress(accAddr.Bytes()).String()
-	ctx := types.ContextWithHeight(height)
-	res, err := queryClient.Account(ctx, &authtypes.QueryAccountRequest{Address: adr})
+	cosmosRequest := evmtypes.QueryMappedCosmosAddressRequest{EvmAddress: accAddr.Hex()}
+	cosmosAddress, err := b.queryClient.MappedCosmosAddress(b.ctx, &cosmosRequest)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := queryClient.Account(types.ContextWithHeight(height), &authtypes.QueryAccountRequest{Address: cosmosAddress.CosmosAddress})
 	if err != nil {
 		st, ok := status.FromError(err)
 		// treat as account doesn't exist yet

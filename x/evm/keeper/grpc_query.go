@@ -88,7 +88,7 @@ func (k Keeper) CosmosAccount(c context.Context, req *types.QueryCosmosAccountRe
 	ctx := sdk.UnwrapSDKContext(c)
 
 	ethAddr := common.HexToAddress(req.Address)
-	cosmosAddr := sdk.AccAddress(ethAddr.Bytes())
+	cosmosAddr := k.GetCosmosAddressMapping(ctx, ethAddr)
 
 	account := k.accountKeeper.GetAccount(ctx, cosmosAddr)
 	res := types.QueryCosmosAccountResponse{
@@ -663,4 +663,16 @@ func (k Keeper) MappedEvmAddress(stdCtx context.Context, req *types.QueryMappedE
 	}
 
 	return &types.QueryMappedEvmAddressResponse{EvmAddress: evmAddress.Hex()}, nil
+}
+
+// MappedCosmosAddress queries mapped cosmos address given an evm address
+func (k Keeper) MappedCosmosAddress(stdCtx context.Context, req *types.QueryMappedCosmosAddressRequest) (*types.QueryMappedCosmosAddressResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(stdCtx)
+	evmAddress := common.HexToAddress(req.EvmAddress)
+	cosmosAddress := k.GetCosmosAddressMapping(ctx, evmAddress)
+	return &types.QueryMappedCosmosAddressResponse{CosmosAddress: cosmosAddress.String()}, nil
 }

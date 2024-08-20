@@ -603,6 +603,17 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 				contains:   "invalid signer address",
 			},
 		},
+		{
+			"invalid - invalid pubkey",
+			types.NewMsgSetMappingEvmAddress(
+				signer,
+				"Avalv/HkKw5oBST0LP6Hb8v+kLX22/V97IndXM2O6GeZ",
+			),
+			errArgs{
+				expectPass: false,
+				contains:   "Signer does not match the given pubkey",
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -632,80 +643,6 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 						sdk.NewAttribute(types.AttributeKeyCosmosAddress, signer),
 						sdk.NewAttribute(types.AttributeKeyEvmAddress, actualEvmAddress.Hex()),
 						sdk.NewAttribute(types.AttributeKeyPubkey, pubkey),
-					))
-			} else {
-				suite.Require().Error(err)
-				suite.Require().Contains(err.Error(), tc.errArgs.contains)
-			}
-		})
-	}
-}
-
-func (suite *KeeperTestSuite) TestMsgDeleteMappingEvmAddress() {
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount("orai", "oraipub")
-	signer := "orai1knzg7jdc49ghnc2pkqg6vks8ccsk6efzfgv6gv"
-	pubkey := "AvSl0d9JrHCW4mdEyHvZu076WxLgH0bBVLigUcFm4UjV"
-
-	msg := types.NewMsgSetMappingEvmAddress(signer, pubkey)
-	suite.app.EvmKeeper.SetMappingEvmAddress(sdk.WrapSDKContext(suite.ctx), &msg)
-
-	type errArgs struct {
-		expectPass bool
-		contains   string
-	}
-
-	tests := []struct {
-		name    string
-		msg     types.MsgDeleteMappingEvmAddress
-		errArgs errArgs
-	}{
-		{
-			"invalid - invalid signer",
-			types.NewMsgDeleteMappingEvmAddress(
-				"foobar",
-			),
-			errArgs{
-				expectPass: false,
-				contains:   "invalid signer address",
-			},
-		},
-		{
-			"valid",
-			types.NewMsgDeleteMappingEvmAddress(
-				signer,
-			),
-			errArgs{
-				expectPass: true,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		suite.Run(tc.name, func() {
-			_, err := suite.app.EvmKeeper.DeleteMappingEvmAddress(sdk.WrapSDKContext(suite.ctx), &tc.msg)
-
-			if tc.errArgs.expectPass {
-				suite.Require().NoError(err)
-
-				// validate user coin balance
-				cosmosAccAddress := sdk.MustAccAddressFromBech32(signer)
-				actualEvmAddress, _ := suite.app.EvmKeeper.GetEvmAddressMapping(suite.ctx, cosmosAccAddress)
-				suite.Require().Nil(actualEvmAddress)
-
-				// msg server event
-				suite.EventsContains(suite.GetEvents(),
-					sdk.NewEvent(
-						sdk.EventTypeMessage,
-						sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-						sdk.NewAttribute(sdk.AttributeKeySender, signer),
-					))
-
-				// keeper event
-				suite.EventsContains(suite.GetEvents(),
-					sdk.NewEvent(
-						types.EventTypeDeleteMappingEvmAddress,
-						sdk.NewAttribute(types.AttributeKeyCosmosAddress, signer),
 					))
 			} else {
 				suite.Require().Error(err)

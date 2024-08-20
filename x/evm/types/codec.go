@@ -52,7 +52,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgEthereumTx{},
 		&MsgUpdateParams{},
 		&MsgSetMappingEvmAddress{},
-		&MsgDeleteMappingEvmAddress{},
+		// &MsgDeleteMappingEvmAddress{},
 	)
 	registry.RegisterInterface(
 		"ethermint.evm.v1.TxData",

@@ -30,6 +30,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/hashicorp/go-metrics"
 
 	"github.com/evmos/ethermint/x/evm/types"
@@ -177,7 +178,19 @@ func (k *Keeper) SetMappingEvmAddress(
 
 	signer, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
-		return nil, fmt.Errorf("invalid signer address: %w", err)
+		return nil, errorsmod.Wrap(sdkerrors.ErrorInvalidSigner, fmt.Sprintf("invalid signer address: %s", err.Error()))
+	}
+
+	// already checked at validateBasic, but double check here to make sure
+	cosmosAddress, err := types.PubkeyToCosmosAddress(msg.Pubkey)
+	if err != nil {
+		return nil, err
+	}
+	if msg.Signer != cosmosAddress.String() {
+		return nil, errorsmod.Wrap(
+			sdkerrors.ErrInvalidPubKey,
+			"Signer does not match the given pubkey",
+		)
 	}
 
 	evmAddress, err := types.PubkeyToEVMAddress(msg.Pubkey)
@@ -203,31 +216,4 @@ func (k *Keeper) SetMappingEvmAddress(
 	)
 
 	return &types.MsgSetMappingEvmAddressResponse{}, nil
-}
-
-func (k *Keeper) DeleteMappingEvmAddress(
-	goCtx context.Context,
-	msg *types.MsgDeleteMappingEvmAddress,
-) (*types.MsgDeleteMappingEvmAddressResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	signer, err := sdk.AccAddressFromBech32(msg.Signer)
-	if err != nil {
-		return nil, fmt.Errorf("invalid signer address: %w", err)
-	}
-	k.DeleteAddressMapping(ctx, signer)
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeDeleteMappingEvmAddress,
-		sdk.NewAttribute(types.AttributeKeyCosmosAddress, msg.Signer),
-	))
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Signer),
-		),
-	)
-
-	return &types.MsgDeleteMappingEvmAddressResponse{}, nil
 }
