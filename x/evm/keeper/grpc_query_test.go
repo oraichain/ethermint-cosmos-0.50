@@ -14,6 +14,7 @@ import (
 	ethlogger "github.com/ethereum/go-ethereum/eth/tracers/logger"
 	ethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/evmos/ethermint/tests"
+	"github.com/evmos/ethermint/testutil"
 	"github.com/evmos/ethermint/x/evm/statedb"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -560,9 +561,9 @@ func (suite *KeeperTestSuite) TestEstimateGas() {
 		{
 			"contract deployment",
 			func() {
-				ctorArgs, err := types.ERC20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
+				ctorArgs, err := testutil.ERC20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
 				suite.Require().NoError(err)
-				data := append(types.ERC20Contract.Bin, ctorArgs...)
+				data := append(testutil.ERC20Contract.Bin, ctorArgs...)
 				args = types.TransactionArgs{
 					From: &suite.address,
 					Data: (*hexutil.Bytes)(&data),
@@ -578,7 +579,7 @@ func (suite *KeeperTestSuite) TestEstimateGas() {
 			func() {
 				contractAddr := suite.DeployTestContract(suite.T(), suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
 				suite.Commit()
-				transferData, err := types.ERC20Contract.ABI.Pack("transfer", common.HexToAddress("0x378c50D9264C63F3F92B806d4ee56E9D86FfB3Ec"), big.NewInt(1000))
+				transferData, err := testutil.ERC20Contract.ABI.Pack("transfer", common.HexToAddress("0x378c50D9264C63F3F92B806d4ee56E9D86FfB3Ec"), big.NewInt(1000))
 				suite.Require().NoError(err)
 				args = types.TransactionArgs{To: &contractAddr, From: &suite.address, Data: (*hexutil.Bytes)(&transferData)}
 			},
@@ -636,9 +637,9 @@ func (suite *KeeperTestSuite) TestEstimateGas() {
 		{
 			"contract deployment w/ enableFeemarket",
 			func() {
-				ctorArgs, err := types.ERC20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
+				ctorArgs, err := testutil.ERC20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
 				suite.Require().NoError(err)
-				data := append(types.ERC20Contract.Bin, ctorArgs...)
+				data := append(testutil.ERC20Contract.Bin, ctorArgs...)
 				args = types.TransactionArgs{
 					From: &suite.address,
 					Data: (*hexutil.Bytes)(&data),
@@ -653,7 +654,7 @@ func (suite *KeeperTestSuite) TestEstimateGas() {
 			func() {
 				contractAddr := suite.DeployTestContract(suite.T(), suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
 				suite.Commit()
-				transferData, err := types.ERC20Contract.ABI.Pack("transfer", common.HexToAddress("0x378c50D9264C63F3F92B806d4ee56E9D86FfB3Ec"), big.NewInt(1000))
+				transferData, err := testutil.ERC20Contract.ABI.Pack("transfer", common.HexToAddress("0x378c50D9264C63F3F92B806d4ee56E9D86FfB3Ec"), big.NewInt(1000))
 				suite.Require().NoError(err)
 				args = types.TransactionArgs{To: &contractAddr, From: &suite.address, Data: (*hexutil.Bytes)(&transferData)}
 			},
@@ -664,9 +665,9 @@ func (suite *KeeperTestSuite) TestEstimateGas() {
 		{
 			"contract creation but 'create' param disabled",
 			func() {
-				ctorArgs, err := types.ERC20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
+				ctorArgs, err := testutil.ERC20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
 				suite.Require().NoError(err)
-				data := append(types.ERC20Contract.Bin, ctorArgs...)
+				data := append(testutil.ERC20Contract.Bin, ctorArgs...)
 				args = types.TransactionArgs{
 					From: &suite.address,
 					Data: (*hexutil.Bytes)(&data),
@@ -892,7 +893,7 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 
 				chainID := suite.app.EvmKeeper.ChainID()
 				nonce := suite.app.EvmKeeper.GetNonce(suite.ctx, suite.address)
-				data := types.ERC20Contract.Bin
+				data := testutil.ERC20Contract.Bin
 				contractTx := types.NewTxContract(
 					chainID,
 					nonce,
@@ -1154,10 +1155,10 @@ func (suite *KeeperTestSuite) TestNonceInQuery() {
 	_ = suite.DeployTestContract(suite.T(), address, supply)
 
 	// do an EthCall/EstimateGas with nonce 0
-	ctorArgs, err := types.ERC20Contract.ABI.Pack("", address, supply)
+	ctorArgs, err := testutil.ERC20Contract.ABI.Pack("", address, supply)
 	suite.Require().NoError(err)
 
-	data := append(types.ERC20Contract.Bin, ctorArgs...)
+	data := append(testutil.ERC20Contract.Bin, ctorArgs...)
 	args, err := json.Marshal(&types.TransactionArgs{
 		From: &address,
 		Data: (*hexutil.Bytes)(&data),
@@ -1260,10 +1261,10 @@ func (suite *KeeperTestSuite) TestEthCall() {
 	supply := sdkmath.NewIntWithDecimal(1000, 18).BigInt()
 
 	hexBigInt := hexutil.Big(*big.NewInt(1))
-	ctorArgs, err := types.ERC20Contract.ABI.Pack("", address, supply)
+	ctorArgs, err := testutil.ERC20Contract.ABI.Pack("", address, supply)
 	suite.Require().NoError(err)
 
-	data := append(types.ERC20Contract.Bin, ctorArgs...)
+	data := append(testutil.ERC20Contract.Bin, ctorArgs...)
 
 	testCases := []struct {
 		name     string

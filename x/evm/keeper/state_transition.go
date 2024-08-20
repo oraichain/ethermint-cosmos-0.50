@@ -379,10 +379,8 @@ func (k *Keeper) ApplyMessageWithConfig(ctx sdk.Context,
 		stateDB.SetNonce(sender.Address(), msg.Nonce())
 		ret, _, leftoverGas, vmErr = evm.Create(sender, msg.Data(), leftoverGas, msg.Value())
 		stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
-		println("set contract", ctx.MultiStore(), len(msg.Data()))
 	} else {
 		ret, leftoverGas, vmErr = evm.Call(sender, *msg.To(), msg.Data(), leftoverGas, msg.Value())
-		println("get contract", ctx.MultiStore(), len(stateDB.GetCode(*msg.To())))
 	}
 
 	refundQuotient := params.RefundQuotient

@@ -6,7 +6,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/evmos/ethermint/app"
 )
 

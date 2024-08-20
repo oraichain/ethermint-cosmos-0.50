@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	_ "embed"
 	"os"
 	"testing"
 	"time"
@@ -43,12 +42,6 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	"github.com/cometbft/cometbft/version"
-)
-
-const (
-	contractMinterBurner = iota + 1
-	contractDirectBalanceManipulation
-	contractMaliciousDelayed
 )
 
 type KeeperTestSuite struct {
@@ -240,4 +233,13 @@ func (suite *KeeperTestSuite) Commit() {
 
 func (suite *KeeperTestSuite) StateDB() *statedb.StateDB {
 	return statedb.New(suite.ctx, suite.app.EvmKeeper, statedb.NewEmptyTxConfig(common.BytesToHash(suite.ctx.HeaderHash())))
+}
+
+func (suite *KeeperTestSuite) DeployContract(name, symbol string, decimals uint8) (common.Address, error) {
+	return suite.app.Erc20Keeper.DeployERC20Contract(suite.ctx, banktypes.Metadata{Name: name, Symbol: symbol, DenomUnits: []*banktypes.DenomUnit{
+		{
+			Denom:    symbol,
+			Exponent: uint32(decimals),
+		},
+	}})
 }
