@@ -200,6 +200,15 @@ func (k *Keeper) SetMappingEvmAddress(
 
 	k.SetAddressMapping(ctx, signer, *evmAddress)
 
+	err = k.MigrateNonce(ctx, *evmAddress, cosmosAddress)
+	if err != nil {
+		return nil, err
+	}
+	err = k.MigrateBalance(ctx, *evmAddress, cosmosAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeSetMappingEvmAddress,
 		sdk.NewAttribute(types.AttributeKeyCosmosAddress, msg.Signer),

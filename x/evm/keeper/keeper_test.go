@@ -3,6 +3,7 @@ package keeper_test
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"math"
 	"math/big"
 	"os"
@@ -572,15 +573,35 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 	pubkey := "AvSl0d9JrHCW4mdEyHvZu076WxLgH0bBVLigUcFm4UjV"
 	expectedEvmAddress, _ := types.PubkeyToEVMAddress(pubkey)
 
+	castAddress := sdk.AccAddress(expectedEvmAddress[:])
+	acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, castAddress)
+	acc.SetSequence(0)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
+
+	// fixture for migrate nonce
+	signerAddress, _ := sdk.AccAddressFromBech32(signer)
+	signerAcc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, signerAddress)
+	signerAcc.SetSequence(1)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, signerAcc)
+
+	// fixture for migrate balance
+	mintCoins := sdk.NewCoins(sdk.NewCoin(suite.EvmDenom(), sdkmath.NewInt(50)))
+	suite.app.BankKeeper.MintCoins(suite.ctx, types.ModuleName, mintCoins)
+	sentCoins := sdk.NewCoins(sdk.NewCoin(suite.EvmDenom(), sdkmath.NewInt(5)))
+	moduleAcc := suite.app.AccountKeeper.GetModuleAccount(suite.ctx, types.ModuleName)
+	suite.app.BankKeeper.SendCoins(suite.ctx, moduleAcc.GetAddress(), castAddress, sentCoins)
+	suite.app.BankKeeper.SendCoins(suite.ctx, moduleAcc.GetAddress(), signerAddress, sentCoins)
+
 	type errArgs struct {
 		expectPass bool
 		contains   string
 	}
 
 	tests := []struct {
-		name    string
-		msg     types.MsgSetMappingEvmAddress
-		errArgs errArgs
+		name     string
+		msg      types.MsgSetMappingEvmAddress
+		errArgs  errArgs
+		malleate func()
 	}{
 		{
 			"valid",
@@ -591,6 +612,7 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 			errArgs{
 				expectPass: true,
 			},
+			func() {},
 		},
 		{
 			"invalid - invalid signer",
@@ -602,6 +624,7 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 				expectPass: false,
 				contains:   "invalid signer address",
 			},
+			func() {},
 		},
 		{
 			"invalid - invalid pubkey",
@@ -613,12 +636,42 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 				expectPass: false,
 				contains:   "Signer does not match the given pubkey",
 			},
+			func() {},
+		},
+		{
+			"valid with migrate nonce",
+			types.NewMsgSetMappingEvmAddress(
+				signer,
+				pubkey,
+			),
+			errArgs{
+				expectPass: true,
+			},
+			func() {
+				acc.SetSequence(10)
+				suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
+			},
+		},
+		{
+			"valid with migrate balance",
+			types.NewMsgSetMappingEvmAddress(
+				signer,
+				pubkey,
+			),
+			errArgs{
+				expectPass: true,
+			},
+			func() {
+				sentCoins := sdk.NewCoins(sdk.NewCoin(suite.EvmDenom(), sdkmath.NewInt(20)))
+				suite.app.BankKeeper.SendCoins(suite.ctx, moduleAcc.GetAddress(), castAddress, sentCoins)
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		suite.Run(tc.name, func() {
-			_, err := suite.app.EvmKeeper.SetMappingEvmAddress(sdk.WrapSDKContext(suite.ctx), &tc.msg)
+			tc.malleate()
+			_, err := suite.app.EvmKeeper.SetMappingEvmAddress(suite.ctx.Context(), &tc.msg)
 
 			if tc.errArgs.expectPass {
 				suite.Require().NoError(err)
@@ -627,6 +680,22 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 				cosmosAccAddress := sdk.MustAccAddressFromBech32(signer)
 				actualEvmAddress, _ := suite.app.EvmKeeper.GetEvmAddressMapping(suite.ctx, cosmosAccAddress)
 				suite.Require().Equal(expectedEvmAddress.Hex(), actualEvmAddress.Hex(), "evm addresses dont match")
+
+				// validate migrate nonce
+				acc := suite.app.AccountKeeper.GetAccount(suite.ctx, castAddress)
+				signerAcc := suite.app.AccountKeeper.GetAccount(suite.ctx, signerAddress)
+				nonce := acc.GetSequence()
+				signerNonce := signerAcc.GetSequence()
+				suite.Require().GreaterOrEqual(signerNonce, nonce)
+
+				// validate migrate balance
+				castBalance := suite.app.BankKeeper.GetBalance(suite.ctx, castAddress, suite.EvmDenom())
+				signerBalance := suite.app.BankKeeper.GetBalance(suite.ctx, signerAddress, suite.EvmDenom())
+				fmt.Println("signer balance: ", signerBalance)
+				suite.Require().GreaterOrEqual(signerBalance.Amount.Int64(), castBalance.Amount.Int64())
+				if signerBalance.Amount.GT(castBalance.Amount) {
+					suite.Require().Equal(castBalance.Amount.Int64(), int64(0))
+				}
 
 				// msg server event
 				suite.EventsContains(suite.GetEvents(),
