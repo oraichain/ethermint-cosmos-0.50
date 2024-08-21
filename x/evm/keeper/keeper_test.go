@@ -720,6 +720,7 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 				suite.Require().Error(err)
 				suite.Require().Contains(err.Error(), tc.errArgs.contains)
 			}
+			suite.app.EvmKeeper.DeleteAddressMapping(suite.ctx, signerAddress, *expectedEvmAddress)
 		})
 	}
 }
