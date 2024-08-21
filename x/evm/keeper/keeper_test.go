@@ -125,6 +125,8 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (suite *KeeperTestSuite) SetupTest() {
 	checkTx := false
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount("orai", "oraipub")
 	suite.app = app.Setup(checkTx, nil)
 	suite.SetupApp(checkTx)
 }
@@ -570,8 +572,6 @@ func (suite *KeeperTestSuite) TestGetAccountOrEmpty() {
 }
 
 func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount("orai", "oraipub")
 	signer := "orai1knzg7jdc49ghnc2pkqg6vks8ccsk6efzfgv6gv"
 	pubkey := "AvSl0d9JrHCW4mdEyHvZu076WxLgH0bBVLigUcFm4UjV"
 	expectedEvmAddress, _ := types.PubkeyToEVMAddress(pubkey)
@@ -726,8 +726,6 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 }
 
 func (suite *KeeperTestSuite) TestGetAccAddressBytesFromPubkey() {
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount("orai", "oraipub")
 	pubkeyString := "Ah4NweWyFaVG5xcOwY5I7Tm4mmfPgLtS+Qn3jvXLX0VP"
 	compressedPubkeyBytes, _ := base64.StdEncoding.DecodeString(pubkeyString)
 	ethPubkey := ethsecp256k1.PubKey{Key: compressedPubkeyBytes}
@@ -797,8 +795,6 @@ func (suite *KeeperTestSuite) TestGetAccAddressBytesFromPubkey() {
 }
 
 func (suite *KeeperTestSuite) TestValidateSignerEIP712Ante() {
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount("orai", "oraipub")
 	pubkeyString := "Ah4NweWyFaVG5xcOwY5I7Tm4mmfPgLtS+Qn3jvXLX0VP"
 	compressedPubkeyBytes, _ := base64.StdEncoding.DecodeString(pubkeyString)
 	ethPubkey := ethsecp256k1.PubKey{Key: compressedPubkeyBytes}

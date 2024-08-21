@@ -46,6 +46,8 @@ func TestMsgsTestSuite(t *testing.T) {
 }
 
 func (suite *MsgsTestSuite) SetupTest() {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount("orai", "oraipub")
 	from, privFrom := tests.NewAddrKey()
 
 	suite.signer = tests.NewSigner(privFrom)
@@ -794,9 +796,6 @@ func assertEqual(orig *ethtypes.Transaction, cpy *ethtypes.Transaction) error {
 }
 
 func TestMsgSetMappingEvmAddress(t *testing.T) {
-
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount("orai", "oraipub")
 	signer := "orai1knzg7jdc49ghnc2pkqg6vks8ccsk6efzfgv6gv"
 	pubkey := "AvSl0d9JrHCW4mdEyHvZu076WxLgH0bBVLigUcFm4UjV"
 
