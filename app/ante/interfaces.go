@@ -52,7 +52,7 @@ type EVMKeeper interface {
 	GetTxIndexTransient(ctx sdk.Context) uint64
 	GetParams(ctx sdk.Context) evmtypes.Params
 	GetCosmosAddressMapping(ctx sdk.Context, evmAddress common.Address) sdk.AccAddress
-	ValidateSignerEIP712Ante(ctx sdk.Context, pk cryptotypes.PubKey, signer sdk.AccAddress) error
+	ValidateSignerAnte(ctx sdk.Context, pk cryptotypes.PubKey, signer sdk.AccAddress) error
 }
 
 type protoTxProvider interface {
