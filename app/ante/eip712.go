@@ -43,7 +43,6 @@ import (
 	"github.com/evmos/ethermint/ethereum/eip712"
 	ethermint "github.com/evmos/ethermint/types"
 
-	"github.com/evmos/ethermint/x/evm/types"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
@@ -165,16 +164,9 @@ func (svd LegacyEip712SigVerificationDecorator) AnteHandle(ctx sdk.Context,
 	// EIP712 has just one signature, avoid looping here and only read index 0
 	i := 0
 	sig := sigs[i]
-	accAddressFromPubkey, err := GetAccAddressBytesFromPubkey(ctx, svd.evmKeeper, sig.PubKey)
+	err = svd.evmKeeper.ValidateSignerEIP712Ante(ctx, sig.PubKey, signerAddrs[i])
 	if err != nil {
 		return ctx, err
-	}
-	evmAddressFromSigner := common.BytesToAddress(signerAddrs[i])
-	signerFromEvmAddressSigner := svd.evmKeeper.GetCosmosAddressMapping(ctx, evmAddressFromSigner)
-
-	if !bytes.Equal(accAddressFromPubkey, signerFromEvmAddressSigner) {
-		return ctx, errorsmod.Wrapf(errortypes.ErrorInvalidSigner,
-			"sig verification failed. Signer from pubkey %s does not match signer from GetSigners %s", sdk.AccAddress(accAddressFromPubkey).String(), signerFromEvmAddressSigner.String())
 	}
 
 	acc, err := authante.GetSignerAcc(ctx, svd.ak, signerAddrs[i])
@@ -261,16 +253,10 @@ func (spkd SetPubKeyDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate b
 			}
 			pk = simSecp256k1Pubkey
 		}
-		accAddressFromPubkey, err := GetAccAddressBytesFromPubkey(ctx, spkd.evmKeeper, pk)
-		if err != nil {
+
+		err := spkd.evmKeeper.ValidateSignerEIP712Ante(ctx, pk, signers[i])
+		if !simulate && err != nil {
 			return ctx, err
-		}
-		evmAddressFromSigner := common.BytesToAddress(signers[i])
-		signerFromEvmAddressSigner := spkd.evmKeeper.GetCosmosAddressMapping(ctx, evmAddressFromSigner)
-		// Only make check if simulate=false
-		if !simulate && !bytes.Equal(accAddressFromPubkey, signerFromEvmAddressSigner) {
-			return ctx, errorsmod.Wrapf(errortypes.ErrInvalidPubKey,
-				"pubKey in ante handle 712 does not match signer from pubkey %s with signer from evm address signer: %s", sdk.AccAddress(accAddressFromPubkey).String(), signerFromEvmAddressSigner)
 		}
 
 		acc := spkd.ak.GetAccount(ctx, signers[i])
@@ -491,25 +477,5 @@ func signatureDataToBz(data signing.SignatureData) ([][]byte, error) {
 		return sigs, nil
 	default:
 		return nil, errortypes.ErrInvalidType.Wrapf("unexpected signature data type %T", data)
-	}
-}
-
-func GetAccAddressBytesFromPubkey(ctx sdk.Context, evmKeeper EVMKeeper, pk cryptotypes.PubKey) ([]byte, error) {
-	var addressFromPubkey []byte
-	if pk.Type() == "secp256k1" {
-		addressFromPubkey = pk.Address().Bytes()
-		return addressFromPubkey, nil
-	} else if pk.Type() == ethsecp256k1.KeyType {
-		evmAddressFromPubkey, err := types.PubkeyBytesToEVMAddress(pk.Bytes())
-		if err != nil {
-			return nil, errorsmod.Wrapf(errortypes.ErrInvalidPubKey,
-				"Pubkey is invalid to convert to evm address: %s", pk.String())
-		}
-		signerFromPubkey := evmKeeper.GetCosmosAddressMapping(ctx, *evmAddressFromPubkey)
-		addressFromPubkey = signerFromPubkey.Bytes()
-		return addressFromPubkey, nil
-	} else {
-		return nil, errorsmod.Wrapf(errortypes.ErrInvalidPubKey,
-			"Invalid pubkey type: %s", pk.Type())
 	}
 }

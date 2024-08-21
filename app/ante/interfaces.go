@@ -18,6 +18,7 @@ package ante
 import (
 	"math/big"
 
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tx "github.com/cosmos/cosmos-sdk/types/tx"
 
@@ -51,6 +52,7 @@ type EVMKeeper interface {
 	GetTxIndexTransient(ctx sdk.Context) uint64
 	GetParams(ctx sdk.Context) evmtypes.Params
 	GetCosmosAddressMapping(ctx sdk.Context, evmAddress common.Address) sdk.AccAddress
+	ValidateSignerEIP712Ante(ctx sdk.Context, pk cryptotypes.PubKey, signer sdk.AccAddress) error
 }
 
 type protoTxProvider interface {

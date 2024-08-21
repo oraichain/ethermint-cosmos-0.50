@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -24,6 +25,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -713,6 +716,158 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 						sdk.NewAttribute(types.AttributeKeyEvmAddress, actualEvmAddress.Hex()),
 						sdk.NewAttribute(types.AttributeKeyPubkey, pubkey),
 					))
+			} else {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errArgs.contains)
+			}
+		})
+	}
+}
+
+func (suite *KeeperTestSuite) TestGetAccAddressBytesFromPubkey() {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount("orai", "oraipub")
+	pubkeyString := "Ah4NweWyFaVG5xcOwY5I7Tm4mmfPgLtS+Qn3jvXLX0VP"
+	compressedPubkeyBytes, _ := base64.StdEncoding.DecodeString(pubkeyString)
+	ethPubkey := ethsecp256k1.PubKey{Key: compressedPubkeyBytes}
+	cosmosPubkey := secp256k1.PubKey{Key: compressedPubkeyBytes}
+	cosmosAddress := sdk.AccAddress(cosmosPubkey.Address().Bytes())
+	cosmosAddressFromEvm := sdk.AccAddress(ethPubkey.Address().Bytes())
+	evmAddress := common.BytesToAddress(ethPubkey.Address().Bytes())
+
+	type errArgs struct {
+		expectPass bool
+		contains   string
+	}
+
+	tests := []struct {
+		name               string
+		errArgs            errArgs
+		pubkey             cryptotypes.PubKey
+		expectedAccAddress string
+		malleate           func()
+	}{
+		{
+			"secp256k1 pubkey valid",
+			errArgs{
+				expectPass: true,
+			},
+			&cosmosPubkey,
+			cosmosAddress.String(),
+			func() {},
+		},
+		{
+			"eth_secp256k1 pubkey valid with no address mapping",
+			errArgs{
+				expectPass: true,
+			},
+			&ethPubkey,
+			cosmosAddressFromEvm.String(),
+			func() {},
+		},
+		{
+			"eth_secp256k1 pubkey valid with addess mapping",
+			errArgs{
+				expectPass: true,
+			},
+			&ethPubkey,
+			cosmosAddress.String(),
+			func() {
+				suite.app.EvmKeeper.SetAddressMapping(suite.ctx, cosmosAddress, evmAddress)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.malleate()
+			accAddress, err := suite.app.EvmKeeper.GetAccAddressBytesFromPubkey(suite.ctx, tc.pubkey)
+
+			if tc.errArgs.expectPass {
+				suite.Require().NoError(err)
+				suite.Require().Equal(tc.expectedAccAddress, sdk.AccAddress(accAddress).String())
+			} else {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errArgs.contains)
+			}
+		})
+	}
+}
+
+func (suite *KeeperTestSuite) TestValidateSignerEIP712Ante() {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount("orai", "oraipub")
+	pubkeyString := "Ah4NweWyFaVG5xcOwY5I7Tm4mmfPgLtS+Qn3jvXLX0VP"
+	compressedPubkeyBytes, _ := base64.StdEncoding.DecodeString(pubkeyString)
+	ethPubkey := ethsecp256k1.PubKey{Key: compressedPubkeyBytes}
+	cosmosPubkey := secp256k1.PubKey{Key: compressedPubkeyBytes}
+	cosmosAddress := sdk.AccAddress(cosmosPubkey.Address().Bytes())
+	cosmosAddressFromEvm := sdk.AccAddress(ethPubkey.Address().Bytes())
+	evmAddress := common.BytesToAddress(ethPubkey.Address().Bytes())
+
+	type errArgs struct {
+		expectPass bool
+		contains   string
+	}
+
+	tests := []struct {
+		name     string
+		errArgs  errArgs
+		pubkey   cryptotypes.PubKey
+		signer   sdk.AccAddress
+		malleate func()
+	}{
+		{
+			"secp256k1 pubkey valid",
+			errArgs{
+				expectPass: true,
+			},
+			&cosmosPubkey,
+			cosmosAddress,
+			func() {},
+		},
+		{
+			"eth_secp256k1 pubkey valid with no address mapping",
+			errArgs{
+				expectPass: true,
+			},
+			&ethPubkey,
+			cosmosAddressFromEvm,
+			func() {},
+		},
+		{
+			"eth_secp256k1 pubkey valid with addess mapping",
+			errArgs{
+				expectPass: true,
+			},
+			&ethPubkey,
+			cosmosAddress,
+			func() {
+				suite.app.EvmKeeper.SetAddressMapping(suite.ctx, cosmosAddress, evmAddress)
+			},
+		},
+		{
+			"secp256k1 pubkey invalid signer don't match",
+			errArgs{
+				expectPass: false,
+				contains:   "does not match signer",
+			},
+			&cosmosPubkey,
+			cosmosAddressFromEvm,
+			func() {
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.malleate()
+			err := suite.app.EvmKeeper.ValidateSignerEIP712Ante(suite.ctx, tc.pubkey, tc.signer)
+
+			if tc.errArgs.expectPass {
+				suite.Require().NoError(err)
 			} else {
 				suite.Require().Error(err)
 				suite.Require().Contains(err.Error(), tc.errArgs.contains)
