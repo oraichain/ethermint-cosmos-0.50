@@ -145,7 +145,7 @@ func (suite AnteTestSuite) TestEthNonceVerificationDecorator() {
 			"success",
 			tx,
 			func() {
-				acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, cosmosAddress)
+				acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx.Context(), cosmosAddress)
 				suite.Require().NoError(acc.SetSequence(1))
 				suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 			},
@@ -469,7 +469,7 @@ func (suite AnteTestSuite) TestEthIncrementSenderSequenceDecorator() {
 			"success - create contract",
 			contract,
 			func() {
-				acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, cosmosAddress)
+				acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx.Context(), cosmosAddress)
 				suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 			},
 			true, false,

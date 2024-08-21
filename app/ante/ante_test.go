@@ -67,7 +67,7 @@ func (suite AnteTestSuite) TestAnteHandler() {
 		suite.enableFeemarket = false
 		suite.SetupTest() // reset
 
-		goCtx := suite.ctx
+		goCtx := suite.ctx.Context()
 		pubKey := base64.StdEncoding.EncodeToString(privKey.PubKey().Bytes())
 		cosmosAddress, _ := evmtypes.PubkeyBytesToCosmosAddress(privKey.PubKey().Bytes())
 		msg := evmtypes.NewMsgSetMappingEvmAddress(cosmosAddress.String(), pubKey)
