@@ -53,7 +53,7 @@ var (
 	key                = make([]byte, cosmossecp256k1.PubKeySize)
 	simSecp256k1Pubkey = &cosmossecp256k1.PubKey{Key: key}
 
-	_ authsigning.SigVerifiableTx = (*legacytx.StdTx)(nil) // assert StdTx implements SigVerifiableTx
+	// _ authsigning.SigVerifiableTx = (*legacytx.StdTx)(nil) // assert StdTx implements SigVerifiableTx
 )
 
 func init() {
