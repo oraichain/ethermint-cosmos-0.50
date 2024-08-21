@@ -108,7 +108,7 @@ func (suite AnteTestSuite) TestNewEthAccountVerificationDecorator() {
 
 func (suite AnteTestSuite) TestEthNonceVerificationDecorator() {
 	suite.SetupTest()
-	goCtx := suite.ctx
+	goCtx := suite.ctx.Context()
 
 	addr, privKey := tests.NewAddrKey()
 	pubKey := base64.StdEncoding.EncodeToString(privKey.PubKey().Bytes())
@@ -416,7 +416,7 @@ func (suite AnteTestSuite) TestCanTransferDecorator() {
 
 func (suite AnteTestSuite) TestEthIncrementSenderSequenceDecorator() {
 	addr, privKey := tests.NewAddrKey()
-	goCtx := suite.ctx
+	goCtx := suite.ctx.Context()
 
 	pubKey := base64.StdEncoding.EncodeToString(privKey.PubKey().Bytes())
 	cosmosAddress, _ := evmtypes.PubkeyToCosmosAddress(pubKey)
