@@ -404,7 +404,7 @@ func (k Keeper) AddTransientGasUsed(ctx sdk.Context, gasUsed uint64) (uint64, er
 
 // GetEvmAddressMapping returns the account for a given address.
 func (k Keeper) GetEvmAddressMapping(ctx sdk.Context, addr sdk.AccAddress) (*common.Address, error) {
-	store := k.storeService.OpenKVStore(ctx.Context())
+	store := k.storeService.OpenKVStore(ctx)
 	bz, _ := store.Get(types.EvmAddressMappingStoreKey(addr))
 	if bz == nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrNotFound, fmt.Sprintf("There is no evm address mapped to %s.", addr.String()))
@@ -415,7 +415,7 @@ func (k Keeper) GetEvmAddressMapping(ctx sdk.Context, addr sdk.AccAddress) (*com
 
 // getCosmosAddressMapping returns the account for a given address.
 func (k Keeper) getCosmosAddressMapping(ctx sdk.Context, evmAddress common.Address) (*sdk.AccAddress, error) {
-	store := k.storeService.OpenKVStore(ctx.Context())
+	store := k.storeService.OpenKVStore(ctx)
 	bz, _ := store.Get(types.CosmosAddressMappingStoreKey(evmAddress))
 	if bz == nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrNotFound, fmt.Sprintf("There is no cosmos address mapped to %s.", evmAddress.String()))
@@ -426,7 +426,7 @@ func (k Keeper) getCosmosAddressMapping(ctx sdk.Context, evmAddress common.Addre
 
 // for testing only!
 func (k Keeper) DeleteAddressMapping(ctx sdk.Context, cosmosAddress sdk.AccAddress, evmAddress common.Address) {
-	store := k.storeService.OpenKVStore(ctx.Context())
+	store := k.storeService.OpenKVStore(ctx)
 	evmMappingKey := types.EvmAddressMappingStoreKey(cosmosAddress)
 	cosmosMappingKey := types.CosmosAddressMappingStoreKey(evmAddress)
 	store.Delete(evmMappingKey)
@@ -435,7 +435,7 @@ func (k Keeper) DeleteAddressMapping(ctx sdk.Context, cosmosAddress sdk.AccAddre
 
 // SetAddressMapping sets the a mapping of an evm address for a given cosmos address.
 func (k Keeper) SetAddressMapping(ctx sdk.Context, cosmosAddress sdk.AccAddress, evmAddress common.Address) {
-	store := k.storeService.OpenKVStore(ctx.Context())
+	store := k.storeService.OpenKVStore(ctx)
 	evmMappingKey := types.EvmAddressMappingStoreKey(cosmosAddress)
 	cosmosMappingKey := types.CosmosAddressMappingStoreKey(evmAddress)
 	store.Set(evmMappingKey, evmAddress.Bytes())

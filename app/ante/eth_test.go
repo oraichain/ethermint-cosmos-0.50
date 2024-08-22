@@ -108,7 +108,7 @@ func (suite AnteTestSuite) TestNewEthAccountVerificationDecorator() {
 
 func (suite AnteTestSuite) TestEthNonceVerificationDecorator() {
 	suite.SetupTest()
-	goCtx := suite.ctx.Context()
+	goCtx := suite.ctx
 
 	addr, privKey := tests.NewAddrKey()
 	pubKey := base64.StdEncoding.EncodeToString(privKey.PubKey().Bytes())
@@ -145,7 +145,7 @@ func (suite AnteTestSuite) TestEthNonceVerificationDecorator() {
 			"success",
 			tx,
 			func() {
-				acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx.Context(), cosmosAddress)
+				acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, cosmosAddress)
 				suite.Require().NoError(acc.SetSequence(1))
 				suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 			},
@@ -416,7 +416,7 @@ func (suite AnteTestSuite) TestCanTransferDecorator() {
 
 func (suite AnteTestSuite) TestEthIncrementSenderSequenceDecorator() {
 	addr, privKey := tests.NewAddrKey()
-	goCtx := suite.ctx.Context()
+	goCtx := suite.ctx
 
 	pubKey := base64.StdEncoding.EncodeToString(privKey.PubKey().Bytes())
 	cosmosAddress, _ := evmtypes.PubkeyToCosmosAddress(pubKey)
@@ -469,7 +469,7 @@ func (suite AnteTestSuite) TestEthIncrementSenderSequenceDecorator() {
 			"success - create contract",
 			contract,
 			func() {
-				acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx.Context(), cosmosAddress)
+				acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, cosmosAddress)
 				suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 			},
 			true, false,

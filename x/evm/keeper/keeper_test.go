@@ -675,7 +675,7 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 	for _, tc := range tests {
 		suite.Run(tc.name, func() {
 			tc.malleate()
-			_, err := suite.app.EvmKeeper.SetMappingEvmAddress(suite.ctx.Context(), &tc.msg)
+			_, err := suite.app.EvmKeeper.SetMappingEvmAddress(suite.ctx, &tc.msg)
 
 			if tc.errArgs.expectPass {
 				suite.Require().NoError(err)
