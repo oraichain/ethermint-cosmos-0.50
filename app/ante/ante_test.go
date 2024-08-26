@@ -60,6 +60,7 @@ func TestAnteTestSuite(t *testing.T) {
 
 func (suite AnteTestSuite) TestAnteHandler() {
 	var acc sdk.AccountI
+	var cosmosAddr sdk.AccAddress
 	addr, privKey := tests.NewAddrKey()
 	to := tests.GenerateAddress()
 
@@ -70,11 +71,9 @@ func (suite AnteTestSuite) TestAnteHandler() {
 		goCtx := suite.ctx
 		pubKey := base64.StdEncoding.EncodeToString(privKey.PubKey().Bytes())
 		cosmosAddress, _ := evmtypes.PubkeyBytesToCosmosAddress(privKey.PubKey().Bytes())
+		cosmosAddr = cosmosAddress
 		msg := evmtypes.NewMsgSetMappingEvmAddress(cosmosAddress.String(), pubKey)
 		suite.app.EvmKeeper.SetMappingEvmAddress(goCtx, &msg)
-
-		fmt.Println("pubkey setup: ", pubKey)
-		fmt.Println("cosmos addr: ", cosmosAddress)
 
 		acc = suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, cosmosAddress)
 		suite.Require().NoError(acc.SetSequence(1))
@@ -612,7 +611,8 @@ func (suite AnteTestSuite) TestAnteHandler() {
 			"passes - Single-signer EIP-712",
 			func() sdk.Tx {
 				msg := banktypes.NewMsgSend(
-					sdk.AccAddress(privKey.PubKey().Address()),
+					// sdk.AccAddress(privKey.PubKey().Address()),
+					cosmosAddr,
 					addr[:],
 					sdk.NewCoins(
 						sdk.NewCoin(

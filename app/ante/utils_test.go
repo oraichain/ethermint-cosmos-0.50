@@ -572,15 +572,17 @@ func (suite *AnteTestSuite) generateMultikeySignatures(signMode signing.SignMode
 
 // RegisterAccount creates an account with the keeper and populates the initial balance
 func (suite *AnteTestSuite) RegisterAccount(pubKey cryptotypes.PubKey, balance *big.Int) {
-	acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, sdk.AccAddress(pubKey.Address()))
+	cosmosAddress, _ := evmtypes.PubkeyBytesToCosmosAddress(pubKey.Bytes())
+	acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, cosmosAddress)
 	suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 
-	suite.app.EvmKeeper.SetBalance(suite.ctx, common.BytesToAddress(pubKey.Address()), balance)
+	suite.app.EvmKeeper.SetBalance(suite.ctx, common.Address(cosmosAddress), balance)
 }
 
 // createSignerBytes generates sign doc bytes using the given parameters
 func (suite *AnteTestSuite) createSignerBytes(chainId string, signMode signing.SignMode, pubKey cryptotypes.PubKey, txBuilder client.TxBuilder) []byte {
-	acc, err := sdkante.GetSignerAcc(suite.ctx, suite.app.AccountKeeper, sdk.AccAddress(pubKey.Address()))
+	cosmosAddress, _ := evmtypes.PubkeyBytesToCosmosAddress(pubKey.Bytes())
+	acc, err := sdkante.GetSignerAcc(suite.ctx, suite.app.AccountKeeper, cosmosAddress)
 	suite.Require().NoError(err)
 
 	anyPk, err := codectypes.NewAnyWithValue(pubKey)
