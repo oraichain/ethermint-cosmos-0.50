@@ -77,7 +77,7 @@ func NewLegacyCosmosAnteHandlerEip712(options HandlerOptions) sdk.AnteHandler {
 		authante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
 		// SetPubKeyDecorator must be called before all signature verification decorators
-		authante.NewSetPubKeyDecorator(options.AccountKeeper),
+		NewSetPubKeyDecorator(options.AccountKeeper, options.EvmKeeper),
 		authante.NewValidateSigCountDecorator(options.AccountKeeper),
 		authante.NewSigGasConsumeDecorator(options.AccountKeeper, options.SigGasConsumer),
 		// Note: signature verification uses EIP instead of the cosmos signature validator

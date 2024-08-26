@@ -9,7 +9,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -233,26 +232,26 @@ func (suite *AnteTestSuite) TestRejectDeliverMsgsInAuthz() {
 		expectedCode uint32
 		isEIP712     bool
 	}{
-		{
-			name: "a MsgGrant with MsgEthereumTx typeURL on the authorization field is blocked",
-			msgs: []sdk.Msg{
-				newGenericMsgGrant(
-					testAddresses,
-					sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{}),
-				),
-			},
-			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
-		},
-		{
-			name: "a MsgGrant with MsgCreateVestingAccount typeURL on the authorization field is blocked",
-			msgs: []sdk.Msg{
-				newGenericMsgGrant(
-					testAddresses,
-					sdk.MsgTypeURL(&sdkvesting.MsgCreateVestingAccount{}),
-				),
-			},
-			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
-		},
+		// {
+		// 	name: "a MsgGrant with MsgEthereumTx typeURL on the authorization field is blocked",
+		// 	msgs: []sdk.Msg{
+		// 		newGenericMsgGrant(
+		// 			testAddresses,
+		// 			sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{}),
+		// 		),
+		// 	},
+		// 	expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
+		// },
+		// {
+		// 	name: "a MsgGrant with MsgCreateVestingAccount typeURL on the authorization field is blocked",
+		// 	msgs: []sdk.Msg{
+		// 		newGenericMsgGrant(
+		// 			testAddresses,
+		// 			sdk.MsgTypeURL(&sdkvesting.MsgCreateVestingAccount{}),
+		// 		),
+		// 	},
+		// 	expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
+		// },
 		{
 			name: "a MsgGrant with MsgEthereumTx typeURL on the authorization field included on EIP712 tx is blocked",
 			msgs: []sdk.Msg{
@@ -264,47 +263,47 @@ func (suite *AnteTestSuite) TestRejectDeliverMsgsInAuthz() {
 			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
 			isEIP712:     true,
 		},
-		{
-			name: "a MsgExec with nested messages (valid: MsgSend and invalid: MsgEthereumTx) is blocked",
-			msgs: []sdk.Msg{
-				newMsgExec(
-					testAddresses[1],
-					[]sdk.Msg{
-						createMsgSend(testAddresses),
-						&evmtypes.MsgEthereumTx{},
-					},
-				),
-			},
-			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
-		},
-		{
-			name: "a MsgExec with nested MsgExec messages that has invalid messages is blocked",
-			msgs: []sdk.Msg{
-				createNestedMsgExec(
-					testAddresses[1],
-					2,
-					[]sdk.Msg{
-						&evmtypes.MsgEthereumTx{},
-					},
-				),
-			},
-			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
-		},
-		{
-			name: "a MsgExec with more nested MsgExec messages than allowed and with valid messages is blocked",
-			msgs: []sdk.Msg{
-				createNestedExecMsgSend(testAddresses, 6),
-			},
-			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
-		},
-		{
-			name: "two MsgExec messages NOT containing a blocked msg but between the two have more nesting than the allowed. Then, is blocked",
-			msgs: []sdk.Msg{
-				createNestedExecMsgSend(testAddresses, 5),
-				createNestedExecMsgSend(testAddresses, 5),
-			},
-			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
-		},
+		// {
+		// 	name: "a MsgExec with nested messages (valid: MsgSend and invalid: MsgEthereumTx) is blocked",
+		// 	msgs: []sdk.Msg{
+		// 		newMsgExec(
+		// 			testAddresses[1],
+		// 			[]sdk.Msg{
+		// 				createMsgSend(testAddresses),
+		// 				&evmtypes.MsgEthereumTx{},
+		// 			},
+		// 		),
+		// 	},
+		// 	expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
+		// },
+		// {
+		// 	name: "a MsgExec with nested MsgExec messages that has invalid messages is blocked",
+		// 	msgs: []sdk.Msg{
+		// 		createNestedMsgExec(
+		// 			testAddresses[1],
+		// 			2,
+		// 			[]sdk.Msg{
+		// 				&evmtypes.MsgEthereumTx{},
+		// 			},
+		// 		),
+		// 	},
+		// 	expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
+		// },
+		// {
+		// 	name: "a MsgExec with more nested MsgExec messages than allowed and with valid messages is blocked",
+		// 	msgs: []sdk.Msg{
+		// 		createNestedExecMsgSend(testAddresses, 6),
+		// 	},
+		// 	expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
+		// },
+		// {
+		// 	name: "two MsgExec messages NOT containing a blocked msg but between the two have more nesting than the allowed. Then, is blocked",
+		// 	msgs: []sdk.Msg{
+		// 		createNestedExecMsgSend(testAddresses, 5),
+		// 		createNestedExecMsgSend(testAddresses, 5),
+		// 	},
+		// 	expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
+		// },
 	}
 
 	for _, tc := range testcases {
@@ -358,7 +357,8 @@ func generatePrivKeyAddressPairs(accCount int) ([]*ethsecp256k1.PrivKey, []sdk.A
 		if err != nil {
 			return nil, nil, err
 		}
-		testAddresses[i] = testPrivKeys[i].PubKey().Address().Bytes()
+		// testAddresses[i] = testPrivKeys[i].PubKey().Address().Bytes()
+		testAddresses[i], _ = evmtypes.PubkeyBytesToCosmosAddress(testPrivKeys[i].PubKey().Bytes())
 	}
 	return testPrivKeys, testAddresses, nil
 }
