@@ -31,6 +31,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/evmos/ethermint/ethereum/eip712"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
@@ -98,8 +99,13 @@ func PrepareEIP712CosmosTx(
 	chainIDNum := pc.Uint64()
 
 	fmt.Println("args ", txArgs.Priv)
-	from := sdk.AccAddress(txArgs.Priv.PubKey().Address().Bytes())
+	// from := sdk.AccAddress(txArgs.Priv.PubKey().Address().Bytes())
+	from, err := evmtypes.PubkeyBytesToCosmosAddress(txArgs.Priv.PubKey().Bytes())
+	if err != nil {
+		return nil, err
+	}
 	fmt.Println("from ", from)
+
 	acc := appEthermint.AccountKeeper.GetAccount(ctx, from)
 
 	fmt.Println("acc: ", acc)
@@ -187,7 +193,11 @@ func signCosmosEIP712Tx(
 ) (client.TxBuilder, error) {
 	priv := args.CosmosTxArgs.Priv
 
-	from := sdk.AccAddress(priv.PubKey().Address().Bytes())
+	from, err := evmtypes.PubkeyBytesToCosmosAddress(priv.PubKey().Bytes())
+	if err != nil {
+		return nil, err
+	}
+
 	nonce, err := appEvmos.AccountKeeper.GetSequence(ctx, from)
 	if err != nil {
 		return nil, err
@@ -200,6 +210,7 @@ func signCosmosEIP712Tx(
 
 	keyringSigner := NewSigner(priv)
 	signature, pubKey, err := keyringSigner.SignByAddress(from, sigHash, signing.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
+
 	if err != nil {
 		return nil, err
 	}

@@ -2,8 +2,9 @@ package ante_test
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
+
+	"errors"
 	"math/big"
 	"strings"
 	"testing"
@@ -26,16 +27,15 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	amino "github.com/cosmos/cosmos-sdk/codec"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/ethereum/go-ethereum/core/types"
 	ethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/evmos/ethermint/app/ante"
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 	"github.com/evmos/ethermint/tests"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
-
-	amino "github.com/cosmos/cosmos-sdk/codec"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 func TestAnteTestSuite(t *testing.T) {
@@ -73,7 +73,10 @@ func (suite AnteTestSuite) TestAnteHandler() {
 		msg := evmtypes.NewMsgSetMappingEvmAddress(cosmosAddress.String(), pubKey)
 		suite.app.EvmKeeper.SetMappingEvmAddress(goCtx, &msg)
 
-		acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, cosmosAddress)
+		fmt.Println("pubkey setup: ", pubKey)
+		fmt.Println("cosmos addr: ", cosmosAddress)
+
+		acc = suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, cosmosAddress)
 		suite.Require().NoError(acc.SetSequence(1))
 		suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 
@@ -354,6 +357,7 @@ func (suite AnteTestSuite) TestAnteHandler() {
 				gas := uint64(200000)
 				amount := sdk.NewCoins(sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(100*int64(gas))))
 				txBuilder := suite.CreateTestEIP712TxBuilderMsgSend(from, privKey, "ethermint_9000-1", gas, amount)
+
 				return txBuilder.GetTx()
 			}, false, false, true,
 		},
