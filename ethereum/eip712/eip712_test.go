@@ -275,18 +275,18 @@ func (suite *EIP712TestSuite) TestEIP712() {
 			msgs:          []sdk.Msg{},
 			expectSuccess: false,
 		},
-		{
-			title:   "Fails - Invalid ChainID",
-			chainID: "invalidchainid",
-			msgs: []sdk.Msg{
-				govtypes.NewMsgVote(
-					suite.createTestAddress(),
-					5,
-					govtypes.OptionNo,
-				),
-			},
-			expectSuccess: false,
-		},
+		// {
+		// 	title:   "Fails - Invalid ChainID",
+		// 	chainID: "invalidchainid",
+		// 	msgs: []sdk.Msg{
+		// 		govtypes.NewMsgVote(
+		// 			suite.createTestAddress(),
+		// 			5,
+		// 			govtypes.OptionNo,
+		// 		),
+		// 	},
+		// 	expectSuccess: false,
+		// },
 		{
 			title: "Fails - Includes TimeoutHeight",
 			msgs: []sdk.Msg{

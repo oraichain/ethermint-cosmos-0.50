@@ -357,8 +357,8 @@ func generatePrivKeyAddressPairs(accCount int) ([]*ethsecp256k1.PrivKey, []sdk.A
 		if err != nil {
 			return nil, nil, err
 		}
-		// testAddresses[i] = testPrivKeys[i].PubKey().Address().Bytes()
-		testAddresses[i], _ = evmtypes.PubkeyBytesToCosmosAddress(testPrivKeys[i].PubKey().Bytes())
+		testAddresses[i] = testPrivKeys[i].PubKey().Address().Bytes()
+		// testAddresses[i], _ = evmtypes.PubkeyBytesToCosmosAddress(testPrivKeys[i].PubKey().Bytes())
 	}
 	return testPrivKeys, testAddresses, nil
 }
@@ -437,7 +437,10 @@ func (suite *AnteTestSuite) createEIP712Tx(priv cryptotypes.PrivKey, msgs ...sdk
 		Msgs:    msgs,
 	}
 
+	from := sdk.AccAddress(priv.PubKey().Address().Bytes())
+
 	return utiltx.CreateEIP712CosmosTx(
+		from,
 		suite.ctx,
 		suite.app,
 		utiltx.EIP712TxArgs{

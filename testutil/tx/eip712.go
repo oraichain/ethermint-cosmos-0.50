@@ -31,7 +31,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/evmos/ethermint/ethereum/eip712"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
 
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
@@ -70,11 +69,13 @@ type signatureV2Args struct {
 // Also, signs the tx with the provided messages and private key.
 // It returns the signed transaction and an error
 func CreateEIP712CosmosTx(
+	from sdk.AccAddress,
 	ctx sdk.Context,
 	appEthermint *app.EthermintApp,
 	args EIP712TxArgs,
 ) (sdk.Tx, error) {
 	builder, err := PrepareEIP712CosmosTx(
+		from,
 		ctx,
 		appEthermint,
 		args,
@@ -86,6 +87,7 @@ func CreateEIP712CosmosTx(
 // Also, signs the tx with the provided messages and private key.
 // It returns the tx builder with the signed transaction and an error
 func PrepareEIP712CosmosTx(
+	from sdk.AccAddress,
 	ctx sdk.Context,
 	appEthermint *app.EthermintApp,
 	args EIP712TxArgs,
@@ -100,10 +102,10 @@ func PrepareEIP712CosmosTx(
 
 	fmt.Println("args ", txArgs.Priv)
 	// from := sdk.AccAddress(txArgs.Priv.PubKey().Address().Bytes())
-	from, err := evmtypes.PubkeyBytesToCosmosAddress(txArgs.Priv.PubKey().Bytes())
-	if err != nil {
-		return nil, err
-	}
+	// from, err := evmtypes.PubkeyBytesToCosmosAddress(txArgs.Priv.PubKey().Bytes())
+	// if err != nil {
+	// 	return nil, err
+	// }
 	fmt.Println("from ", from)
 
 	acc := appEthermint.AccountKeeper.GetAccount(ctx, from)
@@ -148,6 +150,7 @@ func PrepareEIP712CosmosTx(
 	}
 
 	return signCosmosEIP712Tx(
+		from,
 		ctx,
 		appEthermint,
 		args,
@@ -184,6 +187,7 @@ func createTypedData(args typedDataArgs, useLegacy bool) (apitypes.TypedData, er
 // signCosmosEIP712Tx signs the cosmos transaction on the txBuilder provided using
 // the provided private key and the typed data
 func signCosmosEIP712Tx(
+	from sdk.AccAddress,
 	ctx sdk.Context,
 	appEvmos *app.EthermintApp,
 	args EIP712TxArgs,
@@ -193,10 +197,10 @@ func signCosmosEIP712Tx(
 ) (client.TxBuilder, error) {
 	priv := args.CosmosTxArgs.Priv
 
-	from, err := evmtypes.PubkeyBytesToCosmosAddress(priv.PubKey().Bytes())
-	if err != nil {
-		return nil, err
-	}
+	// from, err := evmtypes.PubkeyBytesToCosmosAddress(priv.PubKey().Bytes())
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	nonce, err := appEvmos.AccountKeeper.GetSequence(ctx, from)
 	if err != nil {
