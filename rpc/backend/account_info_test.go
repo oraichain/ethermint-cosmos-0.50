@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"google.golang.org/grpc/metadata"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/evmos/ethermint/rpc/backend/mocks"
 	rpctypes "github.com/evmos/ethermint/rpc/types"
 	"github.com/evmos/ethermint/tests"
@@ -361,8 +362,10 @@ func (suite *BackendTestSuite) TestGetTransactionCount() {
 			rpctypes.NewBlockNumber(big.NewInt(1)),
 			func(addr common.Address, bn rpctypes.BlockNumber) {
 				var header metadata.MD
+
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterParams(queryClient, &header, 1)
+				RegisterMappedCosmosAddress(queryClient, addr, 1)
 			},
 			true,
 			hexutil.Uint64(0),
@@ -380,26 +383,26 @@ func (suite *BackendTestSuite) TestGetTransactionCount() {
 			hexutil.Uint64(0),
 		},
 		// TODO: Error mocking the GetAccount call - problem with Any type
-		//{
-		//	"pass - returns the number of transactions at the given address up to the given block number",
-		//	true,
-		//	rpctypes.NewBlockNumber(big.NewInt(1)),
-		//	func(addr common.Address, bn rpctypes.BlockNumber) {
-		//		client := suite.backend.clientCtx.Client.(*mocks.Client)
-		//		account, err := suite.backend.clientCtx.AccountRetriever.GetAccount(suite.backend.clientCtx, suite.acc)
-		//		suite.Require().NoError(err)
-		//		request := &authtypes.QueryAccountRequest{Address: sdk.AccAddress(suite.acc.Bytes()).String()}
-		//		requestMarshal, _ := request.Marshal()
-		//		RegisterABCIQueryAccount(
-		//			client,
-		//			requestMarshal,
-		//			tmrpcclient.ABCIQueryOptions{Height: int64(1), Prove: false},
-		//			account,
-		//		)
-		//	},
-		//	true,
-		//	hexutil.Uint64(0),
-		//},
+		// {
+		// 	"pass - returns the number of transactions at the given address up to the given block number",
+		// 	true,
+		// 	rpctypes.NewBlockNumber(big.NewInt(1)),
+		// 	func(addr common.Address, bn rpctypes.BlockNumber) {
+		// 		client := suite.backend.clientCtx.Client.(*mocks.Client)
+		// 		account, err := suite.backend.clientCtx.AccountRetriever.GetAccount(suite.backend.clientCtx, suite.acc)
+		// 		suite.Require().NoError(err)
+		// 		request := &authtypes.QueryAccountRequest{Address: sdk.AccAddress(suite.acc.Bytes()).String()}
+		// 		requestMarshal, _ := request.Marshal()
+		// 		RegisterABCIQueryAccount(
+		// 			client,
+		// 			requestMarshal,
+		// 			tmrpcclient.ABCIQueryOptions{Height: int64(1), Prove: false},
+		// 			account,
+		// 		)
+		// 	},
+		// 	true,
+		// 	hexutil.Uint64(0),
+		// },
 	}
 	for _, tc := range testCases {
 		suite.Run(fmt.Sprintf("Case %s", tc.name), func() {
@@ -410,9 +413,13 @@ func (suite *BackendTestSuite) TestGetTransactionCount() {
 				addr = common.BytesToAddress(suite.acc.Bytes())
 			}
 
+			// set prefix orai
+			config := sdk.GetConfig()
+			config.SetBech32PrefixForAccount("orai", "oraipub")
 			tc.registerMock(addr, tc.blockNum)
 
 			txCount, err := suite.backend.GetTransactionCount(addr, tc.blockNum)
+
 			if tc.expPass {
 				suite.Require().NoError(err)
 				suite.Require().Equal(tc.expTxCount, *txCount)

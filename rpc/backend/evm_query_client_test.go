@@ -274,3 +274,10 @@ func RegisterBalanceError(queryClient *mocks.EVMQueryClient, addr common.Address
 	queryClient.On("Balance", rpc.ContextWithHeight(height), &evmtypes.QueryBalanceRequest{Address: addr.String()}).
 		Return(nil, errortypes.ErrInvalidRequest)
 }
+
+// MappedCosmosAddress
+// hard code an orai address for mapping
+func RegisterMappedCosmosAddress(queryClient *mocks.EVMQueryClient, addr common.Address, height int64) {
+	queryClient.On("MappedCosmosAddress", rpc.ContextWithHeight(height), &evmtypes.QueryMappedCosmosAddressRequest{EvmAddress: addr.Hex()}).
+		Return(&evmtypes.QueryMappedCosmosAddressResponse{CosmosAddress: "orai1knzg7jdc49ghnc2pkqg6vks8ccsk6efzfgv6gv"}, nil)
+}

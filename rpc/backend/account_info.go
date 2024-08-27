@@ -206,6 +206,7 @@ func (b *Backend) GetTransactionCount(address common.Address, blockNum rpctypes.
 	// Get nonce (sequence) from account
 	cosmosRequest := evmtypes.QueryMappedCosmosAddressRequest{EvmAddress: address.Hex()}
 	res, err := b.queryClient.MappedCosmosAddress(b.ctx, &cosmosRequest)
+
 	if err != nil {
 		return nil, err
 	}
