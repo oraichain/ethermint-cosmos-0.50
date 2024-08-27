@@ -10,8 +10,6 @@ import (
 	tmtypes "github.com/cometbft/cometbft/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/crypto"
-	"github.com/ethereum/go-ethereum/common"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 	"github.com/evmos/ethermint/indexer"
 	"github.com/evmos/ethermint/rpc/backend/mocks"
@@ -26,24 +24,24 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 	txHash2 := msgEthereumTx2.AsTransaction().Hash()
 
 	priv, _ := ethsecp256k1.GenerateKey()
-	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
+	// from := common.BytesToAddress(priv.PubKey().Address().Bytes())
 
-	queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-	RegisterParamsWithoutHeader(queryClient, 1)
+	// queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
+	// RegisterParamsWithoutHeader(queryClient, 1)
 
 	armor := crypto.EncryptArmorPrivKey(priv, "", "eth_secp256k1")
 	suite.backend.clientCtx.Keyring.ImportPrivKey("test_key", armor, "")
-	ethSigner := ethtypes.LatestSigner(suite.backend.ChainConfig())
+	// ethSigner := ethtypes.LatestSigner(suite.backend.ChainConfig())
 
 	txEncoder := suite.backend.clientCtx.TxConfig.TxEncoder()
 
-	msgEthereumTx.From = from.String()
-	msgEthereumTx.Sign(ethSigner, suite.signer)
+	// msgEthereumTx.From = from.String()
+	// msgEthereumTx.Sign(ethSigner, suite.signer)
 	tx, _ := msgEthereumTx.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), "aphoton")
 	txBz, _ := txEncoder(tx)
 
-	msgEthereumTx2.From = from.String()
-	msgEthereumTx2.Sign(ethSigner, suite.signer)
+	// msgEthereumTx2.From = from.String()
+	// msgEthereumTx2.Sign(ethSigner, suite.signer)
 	tx2, _ := msgEthereumTx.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), "aphoton")
 	txBz2, _ := txEncoder(tx2)
 
@@ -186,10 +184,15 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 			tc.registerMock()
 
 			db := dbm.NewMemDB()
+
 			suite.backend.indexer = indexer.NewKVIndexer(db, log.NewNopLogger(), suite.backend.clientCtx)
 
 			err := suite.backend.indexer.IndexBlock(tc.block, tc.responseBlock)
 			suite.Require().NoError(err)
+
+			trans, _ := suite.backend.GetTxByEthHash(txHash)
+			fmt.Println("trans tracing_test: ", trans)
+
 			txResult, err := suite.backend.TraceTransaction(txHash, nil)
 
 			if tc.expPass {

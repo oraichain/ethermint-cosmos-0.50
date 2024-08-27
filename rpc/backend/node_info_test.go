@@ -5,9 +5,7 @@ import (
 	"math/big"
 
 	sdkmath "cosmossdk.io/math"
-	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
@@ -260,14 +258,16 @@ func (suite *BackendTestSuite) TestSetEtherbase() {
 				delAddr, _ := suite.backend.GetCoinbase()
 				// account, _ := suite.backend.clientCtx.AccountRetriever.GetAccount(suite.backend.clientCtx, delAddr)
 				delCommonAddr := common.BytesToAddress(delAddr.Bytes())
-				request := &authtypes.QueryAccountRequest{Address: sdk.AccAddress(delCommonAddr.Bytes()).String()}
-				requestMarshal, _ := request.Marshal()
-				RegisterABCIQueryWithOptionsError(
-					client,
-					"/cosmos.auth.v1beta1.Query/Account",
-					requestMarshal,
-					tmrpcclient.ABCIQueryOptions{Height: int64(1), Prove: false},
-				)
+				RegisterMappedCosmosAddress(queryClient, delCommonAddr, 1)
+
+				// request := &authtypes.QueryAccountRequest{Address: sdk.AccAddress(delCommonAddr.Bytes()).String()}
+				// requestMarshal, _ := request.Marshal()
+				// RegisterABCIQueryWithOptionsError(
+				// 	client,
+				// 	"/cosmos.auth.v1beta1.Query/Account",
+				// 	requestMarshal,
+				// 	tmrpcclient.ABCIQueryOptions{Height: int64(1), Prove: false},
+				// )
 			},
 			common.Address{},
 			false,
