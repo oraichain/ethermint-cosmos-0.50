@@ -266,11 +266,13 @@ func (k *Keeper) ApplyTransaction(ctx sdk.Context, msgEth *types.MsgEthereumTx) 
 // ApplyMessage calls ApplyMessageWithConfig with an empty TxConfig.
 func (k *Keeper) ApplyMessage(ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool) (*types.MsgEthereumTxResponse, error) {
 	cfg, err := k.EVMConfig(ctx, sdk.ConsAddress(ctx.BlockHeader().ProposerAddress), k.eip155ChainID)
+
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "failed to load evm config")
 	}
 
 	txConfig := statedb.NewEmptyTxConfig(common.BytesToHash(ctx.HeaderHash()))
+
 	return k.ApplyMessageWithConfig(ctx, msg, tracer, commit, cfg, txConfig)
 }
 
@@ -332,6 +334,7 @@ func (k *Keeper) ApplyMessageWithConfig(ctx sdk.Context,
 	}
 
 	stateDB := statedb.New(ctx, k, txConfig)
+
 	evm := k.NewEVM(ctx, msg, cfg, tracer, stateDB)
 
 	leftoverGas := msg.Gas()
@@ -369,6 +372,7 @@ func (k *Keeper) ApplyMessageWithConfig(ctx sdk.Context,
 	}
 
 	if contractCreation {
+
 		// take over the nonce management from evm:
 		// - reset sender's nonce to msg.Nonce() before calling evm.
 		// - increase sender's nonce by one no matter the result.

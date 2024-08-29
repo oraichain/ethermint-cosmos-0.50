@@ -145,6 +145,10 @@ import (
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 
+	"github.com/evmos/ethermint/x/erc20"
+	erc20keeper "github.com/evmos/ethermint/x/erc20/keeper"
+	erc20types "github.com/evmos/ethermint/x/erc20/types"
+
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
@@ -166,6 +170,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner}, // used for secure addition and subtraction of balance using module account
+		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner},
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -218,6 +223,7 @@ type EthermintApp struct {
 	// Ethermint keepers
 	EvmKeeper       *evmkeeper.Keeper
 	FeeMarketKeeper feemarketkeeper.Keeper
+	Erc20Keeper     erc20keeper.Keeper
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -315,7 +321,7 @@ func NewEthermintApp(
 		// ibc keys
 		ibcexported.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		// ethermint keys
-		evmtypes.StoreKey, feemarkettypes.StoreKey,
+		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey,
 	)
 
 	// register streaming services
@@ -472,7 +478,8 @@ func NewEthermintApp(
 	// register the proposal types
 	govRouter := govv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
-		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
+		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
+		AddRoute(erc20types.RouterKey, erc20.NewErc20ProposalHandler(&app.Erc20Keeper))
 	govConfig := govtypes.DefaultConfig()
 	/*
 		Example of setting gov params:
@@ -571,6 +578,12 @@ func NewEthermintApp(
 		nil, geth.NewEVM, tracer, evmSs,
 	)
 
+	app.Erc20Keeper = erc20keeper.NewKeeper(
+		runtime.NewKVStoreService(keys[erc20types.StoreKey]), appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.EvmKeeper, app.StakingKeeper,
+		app.AuthzKeeper,
+	)
+
 	/****  Module Options ****/
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
@@ -617,6 +630,8 @@ func NewEthermintApp(
 		// Ethermint app modules
 		feemarket.NewAppModule(app.FeeMarketKeeper, feeMarketSs),
 		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, evmSs),
+		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper,
+			app.GetSubspace(erc20types.ModuleName)),
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -669,6 +684,7 @@ func NewEthermintApp(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		crisistypes.ModuleName,
+		erc20types.ModuleName,
 	)
 
 	// NOTE: fee market module must go last in order to retrieve the block gas used.
@@ -695,6 +711,7 @@ func NewEthermintApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		erc20types.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -730,6 +747,7 @@ func NewEthermintApp(
 		consensusparamtypes.ModuleName,
 		// NOTE: crisis module must go at the end to check for invariants on each module
 		crisistypes.ModuleName,
+		erc20types.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -1090,5 +1108,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// ethermint subspaces
 	paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(evmtypes.ParamKeyTable()) //nolint:staticcheck
 	paramsKeeper.Subspace(feemarkettypes.ModuleName).WithKeyTable(feemarkettypes.ParamKeyTable())
+	paramsKeeper.Subspace(erc20types.ModuleName)
 	return paramsKeeper
 }

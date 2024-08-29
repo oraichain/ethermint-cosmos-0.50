@@ -33,6 +33,7 @@ require (
 	github.com/cosmos/rosetta v0.0.0-20231205133638-3bc76705a1c6
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/ethereum/go-ethereum v1.10.26
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.1
@@ -54,6 +55,7 @@ require (
 	github.com/tidwall/gjson v1.14.4
 	github.com/tidwall/sjson v1.2.5
 	github.com/tyler-smith/go-bip39 v1.1.0
+	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0
 	golang.org/x/net v0.24.0
 	golang.org/x/sync v0.7.0
 	golang.org/x/text v0.14.0
@@ -134,7 +136,6 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -229,7 +230,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.22.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
-	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/term v0.19.0 // indirect

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/evmos/ethermint/testutil"
 	"github.com/evmos/ethermint/x/evm/keeper"
 
 	sdkmath "cosmossdk.io/math"
@@ -515,7 +516,7 @@ func (suite *EvmTestSuite) TestErrorWhenDeployContract() {
 func (suite *EvmTestSuite) deployERC20Contract() common.Address {
 	k := suite.app.EvmKeeper
 	nonce := k.GetNonce(suite.ctx, suite.from)
-	ctorArgs, err := types.ERC20Contract.ABI.Pack("", suite.from, big.NewInt(10000000000))
+	ctorArgs, err := testutil.ERC20Contract.ABI.Pack("", suite.from, big.NewInt(10000000000))
 	suite.Require().NoError(err)
 	msg := ethtypes.NewMessage(
 		suite.from,
@@ -526,7 +527,7 @@ func (suite *EvmTestSuite) deployERC20Contract() common.Address {
 		big.NewInt(1),
 		nil,
 		nil,
-		append(types.ERC20Contract.Bin, ctorArgs...),
+		append(testutil.ERC20Contract.Bin, ctorArgs...),
 		nil,
 		true,
 	)
@@ -579,7 +580,7 @@ func (suite *EvmTestSuite) TestERC20TransferReverted() {
 
 			contract := suite.deployERC20Contract()
 
-			data, err := types.ERC20Contract.ABI.Pack("transfer", suite.from, big.NewInt(10))
+			data, err := testutil.ERC20Contract.ABI.Pack("transfer", suite.from, big.NewInt(10))
 			suite.Require().NoError(err)
 
 			gasPrice := big.NewInt(1000000000) // must be bigger than or equal to baseFee
@@ -664,7 +665,7 @@ func (suite *EvmTestSuite) TestContractDeploymentRevert() {
 			k.SetHooks(tc.hooks)
 
 			nonce := k.GetNonce(suite.ctx, suite.from)
-			ctorArgs, err := types.ERC20Contract.ABI.Pack("", suite.from, big.NewInt(0))
+			ctorArgs, err := testutil.ERC20Contract.ABI.Pack("", suite.from, big.NewInt(0))
 			suite.Require().NoError(err)
 
 			tx := types.NewTx(
@@ -674,7 +675,7 @@ func (suite *EvmTestSuite) TestContractDeploymentRevert() {
 				nil, // amount
 				tc.gasLimit,
 				nil, nil, nil,
-				append(types.ERC20Contract.Bin, ctorArgs...),
+				append(testutil.ERC20Contract.Bin, ctorArgs...),
 				nil,
 			)
 			suite.SignTx(tx)
