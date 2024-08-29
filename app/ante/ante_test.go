@@ -40,9 +40,9 @@ import (
 )
 
 func TestAnteTestSuite(t *testing.T) {
-	// suite.Run(t, &AnteTestSuite{
-	// 	enableLondonHF: true,
-	// })
+	suite.Run(t, &AnteTestSuite{
+		enableLondonHF: true,
+	})
 
 	// Re-run the tests with EIP-712 Legacy encodings to ensure backwards compatibility.
 	// LegacyEIP712Extension should not be run with current TypedData encodings, since they are not compatible.
@@ -52,11 +52,11 @@ func TestAnteTestSuite(t *testing.T) {
 		useLegacyEIP712TypedData: true,
 	})
 
-	// suite.Run(t, &AnteTestSuite{
-	// 	enableLondonHF:           true,
-	// 	useLegacyEIP712Extension: false,
-	// 	useLegacyEIP712TypedData: true,
-	// })
+	suite.Run(t, &AnteTestSuite{
+		enableLondonHF:           true,
+		useLegacyEIP712Extension: false,
+		useLegacyEIP712TypedData: true,
+	})
 }
 
 func (suite AnteTestSuite) TestAnteHandler() {
