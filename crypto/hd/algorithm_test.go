@@ -1,6 +1,8 @@
 package hd
 
 import (
+	"fmt"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -127,4 +129,50 @@ func TestDerivation(t *testing.T) {
 	// Inequality of wrong derivation path of Eth and Ethermint implementation
 	require.NotEqual(t, common.BytesToAddress(privkey.PubKey().Address()).String(), badAccount.Address.String())
 	require.NotEqual(t, common.BytesToAddress(badPrivKey.PubKey().Address()).String(), account.Address.Hex())
+}
+
+func TestArmorUnarmorPubKey(t *testing.T) {
+	// Select the encryption and storage for your cryptostore
+
+	tests := []struct {
+		name              string
+		uid               string
+		backend           string
+		userInput         io.Reader
+		encryptPassphrase string
+		importUID         string
+		importPassphrase  string
+	}{
+		{
+			name:              "export import",
+			uid:               "testOne",
+			backend:           keyring.BackendTest,
+			userInput:         nil,
+			encryptPassphrase: "apassphrase",
+			importUID:         "importedKey",
+			importPassphrase:  "apassphrase",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kb, err := keyring.New("TestExport", tt.backend, t.TempDir(), tt.userInput, TestCodec, EthSecp256k1Option())
+			require.NoError(t, err)
+			k, _, err := kb.NewMnemonic(tt.uid, keyring.English, ethermint.BIP44HDPath, keyring.DefaultBIP39Passphrase, EthSecp256k1)
+			require.NoError(t, err)
+			require.NotNil(t, k)
+			require.Equal(t, k.Name, tt.uid)
+
+			record, err := kb.Key(tt.uid)
+			require.NoError(t, err)
+			require.Equal(t, record.Name, tt.uid)
+			key, err := k.GetPubKey()
+			require.NoError(t, err)
+			fmt.Println("key: ", key)
+
+			// will fail if codec not register ethsecp256k1 interface: enccodec.RegisterInterfaces(interfaceRegistry)
+			armor, err := kb.ExportPrivKeyArmor(tt.uid, tt.encryptPassphrase)
+			require.NoError(t, err)
+			fmt.Println("armor: ", armor)
+		})
+	}
 }
