@@ -200,6 +200,8 @@ message MsgUpdateParamsResponse {}
 
 // MsgSetMappingEvmAddress defines a mapping from cosmos address to evm address.
 message MsgSetMappingEvmAddress {
+  option (cosmos.msg.v1.signer) = "signer";
+  
   // signer cosmos address
   string signer = 1;
   // public key that we will use to map cosmos to evm.
