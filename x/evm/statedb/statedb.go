@@ -279,6 +279,10 @@ func (s *StateDB) CreateAccount(addr common.Address) {
 	}
 }
 
+func (s *StateDB) Ctx() sdk.Context {
+	return s.ctx
+}
+
 // ForEachStorage iterate the contract storage, the iteration order is not defined.
 func (s *StateDB) ForEachStorage(addr common.Address, cb func(key, value common.Hash) bool) error {
 	so := s.getStateObject(addr)
