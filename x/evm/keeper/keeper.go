@@ -16,6 +16,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	"cosmossdk.io/core/store"
@@ -26,6 +27,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -395,4 +397,53 @@ func (k Keeper) AddTransientGasUsed(ctx sdk.Context, gasUsed uint64) (uint64, er
 	}
 	k.SetTransientGasUsed(ctx, result)
 	return result, nil
+}
+
+// GetEvmAddressMapping returns the account for a given address.
+func (k Keeper) GetEvmAddressMapping(ctx sdk.Context, addr sdk.AccAddress) (*common.Address, error) {
+	store := k.storeService.OpenKVStore(ctx)
+	bz, err := store.Get(types.EvmAddressMappingStoreKey(addr))
+	if err != nil {
+		return nil, errorsmod.Wrap(sdkerrors.ErrNotFound, fmt.Sprintf("There is no evm address mapped to %s.", addr.String()))
+	}
+	evmAddress := common.BytesToAddress(bz)
+	return &evmAddress, nil
+}
+
+// getCosmosAddressMapping returns the account for a given address.
+func (k Keeper) getCosmosAddressMapping(ctx sdk.Context, evmAddress common.Address) (*sdk.AccAddress, error) {
+	store := k.storeService.OpenKVStore(ctx)
+	bz, err := store.Get(types.CosmosAddressMappingStoreKey(evmAddress))
+	if err != nil {
+		return nil, errorsmod.Wrap(sdkerrors.ErrNotFound, fmt.Sprintf("There is no cosmos address mapped to %s.", evmAddress.String()))
+	}
+	cosmosAddress := sdk.AccAddress(bz)
+	return &cosmosAddress, nil
+}
+
+// SetAddressMapping sets the a mapping of an evm address for a given cosmos address.
+func (k Keeper) SetAddressMapping(ctx sdk.Context, cosmosAddress sdk.AccAddress, evmAddress common.Address) {
+	store := k.storeService.OpenKVStore(ctx)
+	evmMappingKey := types.EvmAddressMappingStoreKey(cosmosAddress)
+	cosmosMappingKey := types.CosmosAddressMappingStoreKey(evmAddress)
+	store.Set(evmMappingKey, evmAddress.Bytes())
+	store.Set(cosmosMappingKey, cosmosAddress.Bytes())
+}
+
+// for testing only!
+func (k Keeper) DeleteAddressMapping(ctx sdk.Context, cosmosAddress sdk.AccAddress, evmAddress common.Address) {
+	store := k.storeService.OpenKVStore(ctx)
+	evmMappingKey := types.EvmAddressMappingStoreKey(cosmosAddress)
+	cosmosMappingKey := types.CosmosAddressMappingStoreKey(evmAddress)
+	store.Delete(evmMappingKey)
+	store.Delete(cosmosMappingKey)
+}
+
+func (k Keeper) GetCosmosAddressMapping(ctx sdk.Context, evmAddress common.Address) sdk.AccAddress {
+	cosmosAddress := sdk.AccAddress(evmAddress.Bytes())
+	cosmosAddr, err := k.getCosmosAddressMapping(ctx, evmAddress)
+	if err == nil {
+		cosmosAddress = *cosmosAddr
+	}
+	return cosmosAddress
 }
