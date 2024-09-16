@@ -21,6 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/ethereum/go-ethereum/precompile/contract"
 
 	evm "github.com/evmos/ethermint/x/evm/vm"
 )
@@ -69,7 +70,7 @@ func (e EVM) Config() vm.Config {
 // Precompile returns the precompiled contract associated with the given address
 // and the current chain configuration. If the contract cannot be found it returns
 // nil.
-func (e EVM) Precompile(addr common.Address) (p vm.PrecompiledContract, found bool) {
+func (e EVM) Precompile(addr common.Address) (p contract.StatefulPrecompiledContract, found bool) {
 	precompiles := GetPrecompiles(e.ChainConfig(), e.EVM.Context.BlockNumber)
 	p, found = precompiles[addr]
 	return p, found
