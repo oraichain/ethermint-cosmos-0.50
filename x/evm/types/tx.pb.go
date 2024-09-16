@@ -441,6 +441,335 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
+// MsgSetMappingEvmAddress defines a mapping from cosmos address to evm address.
+type MsgSetMappingEvmAddress struct {
+	// signer cosmos address
+	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
+	// public key that we will use to map cosmos to evm.
+	Pubkey string `protobuf:"bytes,2,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
+}
+
+func (m *MsgSetMappingEvmAddress) Reset()         { *m = MsgSetMappingEvmAddress{} }
+func (m *MsgSetMappingEvmAddress) String() string { return proto.CompactTextString(m) }
+func (*MsgSetMappingEvmAddress) ProtoMessage()    {}
+func (*MsgSetMappingEvmAddress) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f75ac0a12d075f21, []int{6}
+}
+func (m *MsgSetMappingEvmAddress) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+
+func (m *MsgSetMappingEvmAddress) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Pubkey) > 0 {
+		i -= len(m.Pubkey)
+		copy(dAtA[i:], m.Pubkey)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Pubkey)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Signer) > 0 {
+		i -= len(m.Signer)
+		copy(dAtA[i:], m.Signer)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Signer)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgSetMappingEvmAddress) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSetMappingEvmAddress.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSetMappingEvmAddress) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSetMappingEvmAddress.Merge(m, src)
+}
+func (m *MsgSetMappingEvmAddress) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSetMappingEvmAddress) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSetMappingEvmAddress.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSetMappingEvmAddress proto.InternalMessageInfo
+
+func (m *MsgSetMappingEvmAddress) GetSigner() string {
+	if m != nil {
+		return m.Signer
+	}
+	return ""
+}
+
+func (m *MsgSetMappingEvmAddress) GetPubkey() string {
+	if m != nil {
+		return m.Pubkey
+	}
+	return ""
+}
+
+// MsgSetMappingEvmAddressResponse defines the response value from Msg/SetMappingEvmAddress.
+type MsgSetMappingEvmAddressResponse struct {
+}
+
+func (m *MsgSetMappingEvmAddress) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSetMappingEvmAddress: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSetMappingEvmAddress: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pubkey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Pubkey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgSetMappingEvmAddressResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSetMappingEvmAddressResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSetMappingEvmAddressResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *MsgSetMappingEvmAddress) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Signer)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Pubkey)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgSetMappingEvmAddressResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgSetMappingEvmAddressResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSetMappingEvmAddressResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSetMappingEvmAddressResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgSetMappingEvmAddressResponse) Reset()         { *m = MsgSetMappingEvmAddressResponse{} }
+func (m *MsgSetMappingEvmAddressResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSetMappingEvmAddressResponse) ProtoMessage()    {}
+func (*MsgSetMappingEvmAddressResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f75ac0a12d075f21, []int{7}
+}
+func (m *MsgSetMappingEvmAddressResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSetMappingEvmAddressResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSetMappingEvmAddressResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSetMappingEvmAddressResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSetMappingEvmAddressResponse.Merge(m, src)
+}
+func (m *MsgSetMappingEvmAddressResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSetMappingEvmAddressResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSetMappingEvmAddressResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSetMappingEvmAddressResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgEthereumTx)(nil), "ethermint.evm.v1.MsgEthereumTx")
 	proto.RegisterType((*LegacyTx)(nil), "ethermint.evm.v1.LegacyTx")
@@ -450,6 +779,8 @@ func init() {
 	proto.RegisterType((*MsgEthereumTxResponse)(nil), "ethermint.evm.v1.MsgEthereumTxResponse")
 	proto.RegisterType((*MsgUpdateParams)(nil), "ethermint.evm.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "ethermint.evm.v1.MsgUpdateParamsResponse")
+	proto.RegisterType((*MsgSetMappingEvmAddress)(nil), "ethermint.evm.v1.MsgSetMappingEvmAddress")
+	proto.RegisterType((*MsgSetMappingEvmAddressResponse)(nil), "ethermint.evm.v1.MsgSetMappingEvmAddressResponse")
 }
 
 func init() { proto.RegisterFile("ethermint/evm/v1/tx.proto", fileDescriptor_f75ac0a12d075f21) }

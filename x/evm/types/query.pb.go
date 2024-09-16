@@ -1285,6 +1285,635 @@ func (m *QueryBaseFeeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryBaseFeeResponse proto.InternalMessageInfo
 
+// QueryParamsRequest defines the request type for querying x/evmutil parameters.
+type QueryMappedEvmAddressRequest struct {
+	CosmosAddress string `protobuf:"bytes,1,opt,name=cosmosAddress,proto3" json:"cosmosAddress,omitempty"`
+}
+
+func (m *QueryMappedEvmAddressRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryMappedEvmAddressRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryMappedEvmAddressRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.CosmosAddress) > 0 {
+		i -= len(m.CosmosAddress)
+		copy(dAtA[i:], m.CosmosAddress)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.CosmosAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryMappedEvmAddressResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryMappedEvmAddressResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryMappedEvmAddressResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.EvmAddress) > 0 {
+		i -= len(m.EvmAddress)
+		copy(dAtA[i:], m.EvmAddress)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.EvmAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryMappedCosmosAddressRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryMappedCosmosAddressRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryMappedCosmosAddressRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.EvmAddress) > 0 {
+		i -= len(m.EvmAddress)
+		copy(dAtA[i:], m.EvmAddress)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.EvmAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryMappedCosmosAddressResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryMappedCosmosAddressResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryMappedCosmosAddressResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.CosmosAddress) > 0 {
+		i -= len(m.CosmosAddress)
+		copy(dAtA[i:], m.CosmosAddress)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.CosmosAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryMappedEvmAddressRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryMappedEvmAddressRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryMappedEvmAddressRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CosmosAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CosmosAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryMappedEvmAddressResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryMappedEvmAddressResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryMappedEvmAddressResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EvmAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EvmAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryMappedCosmosAddressRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryMappedCosmosAddressRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryMappedCosmosAddressRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EvmAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EvmAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryMappedCosmosAddressResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryMappedCosmosAddressResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryMappedCosmosAddressResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CosmosAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CosmosAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *QueryMappedEvmAddressRequest) Reset()         { *m = QueryMappedEvmAddressRequest{} }
+func (m *QueryMappedEvmAddressRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryMappedEvmAddressRequest) ProtoMessage()    {}
+func (*QueryMappedEvmAddressRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e15a877459347994, []int{22}
+}
+func (m *QueryMappedEvmAddressRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryMappedEvmAddressRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryMappedEvmAddressRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryMappedEvmAddressRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryMappedEvmAddressRequest.Merge(m, src)
+}
+func (m *QueryMappedEvmAddressRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryMappedEvmAddressRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryMappedEvmAddressRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryMappedEvmAddressRequest proto.InternalMessageInfo
+
+func (m *QueryMappedEvmAddressRequest) GetCosmosAddress() string {
+	if m != nil {
+		return m.CosmosAddress
+	}
+	return ""
+}
+
+// QueryParamsResponse defines the response type for querying x/evmutil parameters.
+type QueryMappedEvmAddressResponse struct {
+	EvmAddress string `protobuf:"bytes,1,opt,name=evm_address,json=evmAddress,proto3" json:"evm_address,omitempty"`
+}
+
+func (m *QueryMappedEvmAddressResponse) Reset()         { *m = QueryMappedEvmAddressResponse{} }
+func (m *QueryMappedEvmAddressResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryMappedEvmAddressResponse) ProtoMessage()    {}
+func (*QueryMappedEvmAddressResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e15a877459347994, []int{23}
+}
+func (m *QueryMappedEvmAddressResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryMappedEvmAddressResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryMappedEvmAddressResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryMappedEvmAddressResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryMappedEvmAddressResponse.Merge(m, src)
+}
+func (m *QueryMappedEvmAddressResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryMappedEvmAddressResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryMappedEvmAddressResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryMappedEvmAddressResponse proto.InternalMessageInfo
+
+func (m *QueryMappedEvmAddressResponse) GetEvmAddress() string {
+	if m != nil {
+		return m.EvmAddress
+	}
+	return ""
+}
+
+// QueryParamsRequest defines the request type for querying x/evmutil parameters.
+type QueryMappedCosmosAddressRequest struct {
+	EvmAddress string `protobuf:"bytes,1,opt,name=evmAddress,proto3" json:"evmAddress,omitempty"`
+}
+
+func (m *QueryMappedCosmosAddressRequest) Reset()         { *m = QueryMappedCosmosAddressRequest{} }
+func (m *QueryMappedCosmosAddressRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryMappedCosmosAddressRequest) ProtoMessage()    {}
+func (*QueryMappedCosmosAddressRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e15a877459347994, []int{24}
+}
+func (m *QueryMappedCosmosAddressRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryMappedCosmosAddressRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryMappedCosmosAddressRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryMappedCosmosAddressRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryMappedCosmosAddressRequest.Merge(m, src)
+}
+func (m *QueryMappedCosmosAddressRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryMappedCosmosAddressRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryMappedCosmosAddressRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryMappedCosmosAddressRequest proto.InternalMessageInfo
+
+func (m *QueryMappedCosmosAddressRequest) GetEvmAddress() string {
+	if m != nil {
+		return m.EvmAddress
+	}
+	return ""
+}
+
+// QueryParamsResponse defines the response type for querying x/evmutil parameters.
+type QueryMappedCosmosAddressResponse struct {
+	CosmosAddress string `protobuf:"bytes,1,opt,name=cosmos_address,json=cosmosAddress,proto3" json:"cosmos_address,omitempty"`
+}
+
+func (m *QueryMappedCosmosAddressResponse) Reset()         { *m = QueryMappedCosmosAddressResponse{} }
+func (m *QueryMappedCosmosAddressResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryMappedCosmosAddressResponse) ProtoMessage()    {}
+func (*QueryMappedCosmosAddressResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e15a877459347994, []int{25}
+}
+func (m *QueryMappedCosmosAddressResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryMappedCosmosAddressResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryMappedCosmosAddressResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryMappedCosmosAddressResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryMappedCosmosAddressResponse.Merge(m, src)
+}
+func (m *QueryMappedCosmosAddressResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryMappedCosmosAddressResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryMappedCosmosAddressResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryMappedCosmosAddressResponse proto.InternalMessageInfo
+
+func (m *QueryMappedCosmosAddressResponse) GetCosmosAddress() string {
+	if m != nil {
+		return m.CosmosAddress
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*QueryAccountRequest)(nil), "ethermint.evm.v1.QueryAccountRequest")
 	proto.RegisterType((*QueryAccountResponse)(nil), "ethermint.evm.v1.QueryAccountResponse")
@@ -1310,6 +1939,10 @@ func init() {
 	proto.RegisterType((*QueryTraceBlockResponse)(nil), "ethermint.evm.v1.QueryTraceBlockResponse")
 	proto.RegisterType((*QueryBaseFeeRequest)(nil), "ethermint.evm.v1.QueryBaseFeeRequest")
 	proto.RegisterType((*QueryBaseFeeResponse)(nil), "ethermint.evm.v1.QueryBaseFeeResponse")
+	proto.RegisterType((*QueryMappedEvmAddressRequest)(nil), "ethermint.evm.v1.QueryMappedEvmAddressRequest")
+	proto.RegisterType((*QueryMappedEvmAddressResponse)(nil), "ethermint.evm.v1.QueryMappedEvmAddressResponse")
+	proto.RegisterType((*QueryMappedCosmosAddressRequest)(nil), "ethermint.evm.v1.QueryMappedCosmosAddressRequest")
+	proto.RegisterType((*QueryMappedCosmosAddressResponse)(nil), "ethermint.evm.v1.QueryMappedCosmosAddressResponse")
 }
 
 func init() { proto.RegisterFile("ethermint/evm/v1/query.proto", fileDescriptor_e15a877459347994) }
@@ -2828,6 +3461,8 @@ func (m *QueryBaseFeeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -3226,6 +3861,58 @@ func (m *QueryBaseFeeResponse) Size() (n int) {
 	_ = l
 	if m.BaseFee != nil {
 		l = m.BaseFee.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryMappedEvmAddressRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.CosmosAddress)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryMappedEvmAddressResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.EvmAddress)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryMappedCosmosAddressRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.EvmAddress)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryMappedCosmosAddressResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.CosmosAddress)
+	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
@@ -5916,3 +6603,5 @@ var (
 	ErrIntOverflowQuery          = fmt.Errorf("proto: integer overflow")
 	ErrUnexpectedEndOfGroupQuery = fmt.Errorf("proto: unexpected end of group")
 )
+
+

@@ -50,7 +50,7 @@ func InitGenesis(
 
 	for _, account := range data.Accounts {
 		address := common.HexToAddress(account.Address)
-		accAddress := sdk.AccAddress(address.Bytes())
+		accAddress := k.GetCosmosAddressMapping(ctx, address)
 		// check that the EVM balance the matches the account balance
 		acc := accountKeeper.GetAccount(ctx, accAddress)
 		if acc == nil {

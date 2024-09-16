@@ -322,7 +322,8 @@ func (ctd CanTransferDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 
 // EthIncrementSenderSequenceDecorator increments the sequence of the signers.
 type EthIncrementSenderSequenceDecorator struct {
-	ak evmtypes.AccountKeeper
+	ak        evmtypes.AccountKeeper
+	evmKeeper EVMKeeper
 }
 
 // NewEthIncrementSenderSequenceDecorator creates a new EthIncrementSenderSequenceDecorator.
@@ -348,7 +349,9 @@ func (issd EthIncrementSenderSequenceDecorator) AnteHandle(ctx sdk.Context, tx s
 		}
 
 		// increase sequence of sender
-		acc := issd.ak.GetAccount(ctx, msgEthTx.GetFrom())
+		evmAddress := common.BytesToAddress(msgEthTx.GetFrom())
+		cosmosAddress := issd.evmKeeper.GetCosmosAddressMapping(ctx, evmAddress)
+		acc := issd.ak.GetAccount(ctx, cosmosAddress)
 		if acc == nil {
 			return ctx, errorsmod.Wrapf(
 				errortypes.ErrUnknownAddress,
