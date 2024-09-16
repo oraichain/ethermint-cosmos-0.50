@@ -727,6 +727,45 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 	}
 }
 
+func (suite *KeeperTestSuite) TestBankKeeperGetBalance() {
+	signer := "orai1knzg7jdc49ghnc2pkqg6vks8ccsk6efzfgv6gv"
+	pubkey := "AvSl0d9JrHCW4mdEyHvZu076WxLgH0bBVLigUcFm4UjV"
+	expectedEvmAddress, _ := types.PubkeyToEVMAddress(pubkey)
+
+	castAddress := sdk.AccAddress(expectedEvmAddress[:])
+	acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, castAddress)
+	acc.SetSequence(0)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
+
+	// fixture for migrate nonce
+	signerAddress, _ := sdk.AccAddressFromBech32(signer)
+	signerAcc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, signerAddress)
+	signerAcc.SetSequence(1)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, signerAcc)
+
+	// fixture for migrate balance
+	mintCoins := sdk.NewCoins(sdk.NewCoin(suite.EvmDenom(), sdkmath.NewInt(50)))
+	suite.app.BankKeeper.MintCoins(suite.ctx, types.ModuleName, mintCoins)
+	castCoins := sdk.NewCoins(sdk.NewCoin(suite.EvmDenom(), sdkmath.NewInt(5)))
+	signerCoins := sdk.NewCoins(sdk.NewCoin(suite.EvmDenom(), sdkmath.NewInt(10)))
+	moduleAcc := suite.app.AccountKeeper.GetModuleAccount(suite.ctx, types.ModuleName)
+	suite.app.BankKeeper.SendCoins(suite.ctx, moduleAcc.GetAddress(), castAddress, castCoins)
+	suite.app.BankKeeper.SendCoins(suite.ctx, moduleAcc.GetAddress(), signerAddress, signerCoins)
+
+	msg := types.NewMsgSetMappingEvmAddress(signer, pubkey)
+	_, err := suite.app.EvmKeeper.SetMappingEvmAddress(suite.ctx, &msg)
+	suite.Require().NoError(err)
+
+	// After set mapping evm -> combine balances of both addresses
+	// when querying balance of both evm & cosmos address -> should return the same value
+	expectedBalance := int64(15)
+	castBalance := suite.app.EvmKeeper.GetBalance(suite.ctx, *expectedEvmAddress)
+	suite.Require().Equal(castBalance.Int64(), expectedBalance)
+	signerBalance := suite.app.BankKeeper.GetBalance(suite.ctx, signerAddress, suite.denom)
+	suite.Require().Equal(signerBalance.Amount.Int64(), expectedBalance)
+	
+}
+
 func (suite *KeeperTestSuite) TestGetAccAddressBytesFromPubkey() {
 	pubkeyString := "Ah4NweWyFaVG5xcOwY5I7Tm4mmfPgLtS+Qn3jvXLX0VP"
 	compressedPubkeyBytes, _ := base64.StdEncoding.DecodeString(pubkeyString)

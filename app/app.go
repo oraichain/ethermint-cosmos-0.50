@@ -130,6 +130,7 @@ import (
 
 	evmv1 "github.com/evmos/ethermint/api/ethermint/evm/v1"
 	"github.com/evmos/ethermint/app/ante"
+	ethermintconfig "github.com/evmos/ethermint/cmd/config"
 	enccodec "github.com/evmos/ethermint/encoding/codec"
 	"github.com/evmos/ethermint/ethereum/eip712"
 	srvflags "github.com/evmos/ethermint/server/flags"
@@ -572,9 +573,11 @@ func NewEthermintApp(
 	// Set authority to x/gov module account to only expect the module account to update params
 	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
 	evmSs := app.GetSubspace(evmtypes.ModuleName)
+
+	evmBankKeeper := evmkeeper.NewEvmBankKeeperWithDenoms(app.BankKeeper, app.AccountKeeper, ethermint.AttoPhoton, ethermintconfig.DisplayDenom)
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, runtime.NewKVStoreService(keys[evmtypes.StoreKey]), tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
+		app.AccountKeeper, evmBankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
 		nil, geth.NewEVM, tracer, evmSs,
 	)
 
