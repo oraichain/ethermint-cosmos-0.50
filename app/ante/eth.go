@@ -219,7 +219,10 @@ func (egcd EthGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 	// NOTE: it's important here to use the gas wanted instead of the gas consumed
 	// from the tx gas pool. The later only has the value so far since the
 	// EthSetupContextDecorator so it will never exceed the block gas limit.
-	if gasWanted > blockGasLimit {
+
+	// Check blockGasLimit first, if 0 mean we not set BlockGasMeter in our app
+	// if larger than 0 then need to check if gasWanted must smaller than blockGasLimit
+	if blockGasLimit > 0 && gasWanted > blockGasLimit {
 		return ctx, errorsmod.Wrapf(
 			errortypes.ErrOutOfGas,
 			"tx gas (%d) exceeds block gas limit (%d)",
