@@ -1219,8 +1219,9 @@ func (suite AnteTestSuite) TestAnteHandlerWithDynamicTxFee() {
 			suite.ctx = suite.ctx.WithIsCheckTx(tc.checkTx).WithIsReCheckTx(tc.reCheckTx)
 			newAddrBalance := big.NewInt(0)
 			newAddrBalance.Mul(big.NewInt((ethparams.InitialBaseFee+10)*100000), big.NewInt(int64(evmkeeper.ConversionMultiplier.Uint64())))
-			suite.app.EvmKeeper.SetBalance(suite.ctx, addr, newAddrBalance)
-			_, err := suite.anteHandler(suite.ctx, tc.txFn(), false)
+			err := suite.app.EvmKeeper.SetBalance(suite.ctx, addr, newAddrBalance)
+			suite.Require().NoError(err)
+			_, err = suite.anteHandler(suite.ctx, tc.txFn(), false)
 			if tc.expPass {
 				suite.Require().NoError(err)
 			} else {
@@ -1350,8 +1351,10 @@ func (suite AnteTestSuite) TestAnteHandlerWithParams() {
 			suite.ctx = suite.ctx.WithIsCheckTx(true)
 			newAddrBalance := big.NewInt(0)
 			newAddrBalance.Mul(big.NewInt((ethparams.InitialBaseFee+10)*100000), big.NewInt(int64(evmkeeper.ConversionMultiplier.Uint64())))
-			suite.app.EvmKeeper.SetBalance(suite.ctx, addr, newAddrBalance)
-			_, err := suite.anteHandler(suite.ctx, tc.txFn(), false)
+			err := suite.app.EvmKeeper.SetBalance(suite.ctx, addr, newAddrBalance)
+			suite.app.EvmKeeper.GetBalance(suite.ctx, addr)
+			suite.Require().NoError(err)
+			_, err = suite.anteHandler(suite.ctx, tc.txFn(), false)
 			if tc.expErr == nil {
 				suite.Require().NoError(err)
 			} else {

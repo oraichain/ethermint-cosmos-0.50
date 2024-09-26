@@ -16,6 +16,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core"
@@ -58,7 +59,17 @@ func (k *Keeper) RefundGas(ctx sdk.Context, msg core.Message, leftoverGas uint64
 		// refund to sender from the fee collector module account, which is the escrow account in charge of collecting tx fees
 		recipientCosmosAddr := k.GetCosmosAddressMapping(ctx, msg.From())
 		// FIXME: can simply use the original bank keeper to send coins
-		err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, recipientCosmosAddr, refundedCoins)
+		acc := k.accountKeeper.GetModuleAddress(authtypes.FeeCollectorName)
+		balance := k.originalBankKeeper.GetBalance(ctx, acc, denom)
+		var err error
+		// if have enough evm coin to refund -> use it
+		// else, refund using cosmos coin + evm coin
+		if balance.Amount.GTE(refundedCoins.AmountOf(denom)) {
+			err = k.originalBankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, recipientCosmosAddr, refundedCoins)
+		} else {
+			fmt.Println("prepare to refund gas")
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, recipientCosmosAddr, refundedCoins)
+		}
 		if err != nil {
 			err = errorsmod.Wrapf(errortypes.ErrInsufficientFunds, "fee collector account failed to refund fees: %s", err.Error())
 			return errorsmod.Wrapf(err, "failed to refund %d leftover gas (%s)", leftoverGas, refundedCoins.String())

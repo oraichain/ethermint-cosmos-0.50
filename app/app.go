@@ -577,7 +577,7 @@ func NewEthermintApp(
 	evmBankKeeper := evmkeeper.NewEvmBankKeeperWithDenoms(app.BankKeeper, app.AccountKeeper, ethermint.AttoPhoton, ethermintconfig.DisplayDenom)
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, runtime.NewKVStoreService(keys[evmtypes.StoreKey]), tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper, evmBankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
+		app.AccountKeeper, evmBankKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
 		nil, geth.NewEVM, tracer, evmSs,
 	)
 
