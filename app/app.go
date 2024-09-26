@@ -1089,6 +1089,7 @@ func (app *EthermintApp) BlockedAddrs() map[string]bool {
 
 	// allow the following addresses to receive funds
 	delete(blockedAddrs, authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	delete(blockedAddrs, authtypes.NewModuleAddress(authtypes.FeeCollectorName).String())
 
 	return blockedAddrs
 }

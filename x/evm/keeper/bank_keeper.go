@@ -51,34 +51,6 @@ func (k EvmBankKeeper) GetBalance(ctx context.Context, addr sdk.AccAddress, deno
 	return sdk.NewCoin(k.EvmDenom, total)
 }
 
-// BurnCoins burns aorai coins by burning the equivalent orai coins and any remaining aorai coins.
-// It will panic if the module account does not exist or is unauthorized.
-func (ebk EvmBankKeeper) BurnCoins(ctx context.Context, moduleName string, amt sdk.Coins) error {
-	orai, aorai, err := SplitAoraiCoins(amt, ebk.EvmDenom, ebk.CosmosDenom)
-	if err != nil {
-		return err
-	}
-
-	if orai.IsPositive() {
-		if err := ebk.bk.BurnCoins(ctx, moduleName, sdk.NewCoins(orai)); err != nil {
-			return err
-		}
-	}
-
-	if aorai.IsPositive() {
-		if err := ebk.bk.BurnCoins(ctx, moduleName, sdk.NewCoins(sdk.NewCoin(ebk.EvmDenom, aorai))); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// IsSendEnabledCoins implements types.BankKeeper.
-func (e EvmBankKeeper) IsSendEnabledCoins(ctx context.Context, coins ...sdk.Coin) error {
-	return e.bk.IsSendEnabledCoins(ctx, coins...)
-}
-
 // MintCoins mints aorai coins by minting the equivalent ukava coins and any remaining aorai coins.
 // It will panic if the module account does not exist or is unauthorized.
 func (ebk EvmBankKeeper) MintCoins(ctx context.Context, moduleName string, amt sdk.Coins) error {
@@ -100,12 +72,69 @@ func (ebk EvmBankKeeper) MintCoins(ctx context.Context, moduleName string, amt s
 		}
 	}
 
+	recipientAddr := ebk.GetModuleAddress(moduleName)
+	return ebk.ConvertEvmCoinToCosmosCoin(ctx, recipientAddr)
+}
+
+// BurnCoins burns aorai coins by burning the equivalent orai coins and any remaining aorai coins.
+// It will panic if the module account does not exist or is unauthorized.
+func (ebk EvmBankKeeper) BurnCoins(ctx context.Context, moduleName string, amt sdk.Coins) error {
+	orai, aorai, err := SplitAoraiCoins(amt, ebk.EvmDenom, ebk.CosmosDenom)
+	if err != nil {
+		return err
+	}
+
+	if orai.IsPositive() {
+		if err := ebk.bk.BurnCoins(ctx, moduleName, sdk.NewCoins(orai)); err != nil {
+			return err
+		}
+	}
+
+	moduleAddr := ebk.GetModuleAddress(moduleName)
+	evmCoin := sdk.NewCoin(ebk.EvmDenom, aorai)
+	if aorai.IsPositive() {
+		// convert from cosmos to evm so we can transfer aorai balance to other places
+		// by default, we will use evm module as the middleman
+		if err := ebk.ConvertCosmosCoinToEvmCoin(ctx, moduleAddr, evmCoin); err != nil {
+			return err
+		}
+		if err := ebk.bk.BurnCoins(ctx, moduleName, sdk.NewCoins(evmCoin)); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-// SendCoins implements types.BankKeeper.
-func (e EvmBankKeeper) SendCoins(ctx context.Context, from sdk.AccAddress, to sdk.AccAddress, amt sdk.Coins) error {
-	return e.bk.SendCoins(ctx, from, to, amt)
+// SendCoinsFromModuleToAccount transfers aorai coins from a ModuleAccount to an AccAddress.
+// It will panic if the module account does not exist. An error is returned if the recipient
+// address is black-listed or if sending the tokens fails.
+func (ebk EvmBankKeeper) SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+	orai, aorai, err := SplitAoraiCoins(amt, ebk.EvmDenom, ebk.CosmosDenom)
+	if err != nil {
+		return err
+	}
+
+	if orai.Amount.IsPositive() {
+		if err := ebk.bk.SendCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, sdk.NewCoins(orai)); err != nil {
+			return err
+		}
+	}
+
+	senderAddr := ebk.GetModuleAddress(senderModule)
+	evmCoin := sdk.NewCoin(ebk.EvmDenom, aorai)
+	if evmCoin.Amount.IsPositive() {
+		// convert from cosmos to evm so we can transfer aorai balance to other places
+		// by default, we will use evm module as the middleman
+		if err := ebk.ConvertCosmosCoinToEvmCoin(ctx, senderAddr, evmCoin); err != nil {
+			return err
+		}
+		if err := ebk.bk.SendCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, sdk.NewCoins(evmCoin)); err != nil {
+			return err
+		}
+	}
+
+	return ebk.ConvertEvmCoinToCosmosCoin(ctx, recipientAddr)
 }
 
 // SendCoinsFromAccountToModule transfers aorai coins from an AccAddress to a ModuleAccount.
@@ -113,10 +142,6 @@ func (e EvmBankKeeper) SendCoins(ctx context.Context, from sdk.AccAddress, to sd
 func (ebk EvmBankKeeper) SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
 	orai, aorai, err := SplitAoraiCoins(amt, ebk.EvmDenom, ebk.CosmosDenom)
 	if err != nil {
-		return err
-	}
-
-	if err := ebk.ConvertEvmCoinToCosmosCoin(ctx, senderAddr, evmtypes.ModuleName, orai); err != nil {
 		return err
 	}
 
@@ -138,114 +163,91 @@ func (ebk EvmBankKeeper) SendCoinsFromAccountToModule(ctx context.Context, sende
 		}
 	}
 
-	// reset back to cosmos coin for visibility on both cosmos & evm wallets
-	return ebk.ConvertRemainingEvmCoinToCosmosCoin(ctx, senderAddr)
+	recipientAddr := ebk.GetModuleAddress(recipientModule)
+	return ebk.ConvertEvmCoinToCosmosCoin(ctx, recipientAddr)
 }
 
-// SendCoinsFromModuleToAccount transfers aorai coins from a ModuleAccount to an AccAddress.
-// It will panic if the module account does not exist. An error is returned if the recipient
-// address is black-listed or if sending the tokens fails.
-func (ebk EvmBankKeeper) SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
-	orai, aorai, err := SplitAoraiCoins(amt, ebk.EvmDenom, ebk.CosmosDenom)
-	if err != nil {
-		return err
-	}
+// IsSendEnabledCoins implements types.BankKeeper.
+func (e EvmBankKeeper) IsSendEnabledCoins(ctx context.Context, coins ...sdk.Coin) error {
+	return e.bk.IsSendEnabledCoins(ctx, coins...)
+}
 
-	if orai.Amount.IsPositive() {
-		if err := ebk.bk.SendCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, sdk.NewCoins(orai)); err != nil {
-			return err
-		}
-	}
-
-	senderAddr := ebk.ak.GetModuleAddress(senderModule)
-	evmCoin := sdk.NewCoin(ebk.EvmDenom, aorai)
-	if evmCoin.Amount.IsPositive() {
-		// convert from cosmos to evm so we can transfer aorai balance to other places
-		// by default, we will use evm module as the middleman
-		if err := ebk.ConvertCosmosCoinToEvmCoin(ctx, senderAddr, evmCoin); err != nil {
-			return err
-		}
-		if err := ebk.bk.SendCoins(ctx, senderAddr, recipientAddr, sdk.NewCoins(evmCoin)); err != nil {
-			return err
-		}
-	}
-
-	return ebk.ConvertRemainingEvmCoinToCosmosCoin(ctx, recipientAddr)
+// SendCoins implements types.BankKeeper.
+func (e EvmBankKeeper) SendCoins(ctx context.Context, from sdk.AccAddress, to sdk.AccAddress, amt sdk.Coins) error {
+	return e.bk.SendCoins(ctx, from, to, amt)
 }
 
 // ConvertRemainingEvmCoinToCosmosCoin converts all available evm coin to cosmos coin for a given AccAddress.
-func (ebk EvmBankKeeper) ConvertRemainingEvmCoinToCosmosCoin(ctx context.Context, addr sdk.AccAddress) error {
-	moduleName := evmtypes.ModuleName
+// func (ebk EvmBankKeeper) ConvertRemainingEvmCoinToCosmosCoin(ctx context.Context, addr sdk.AccAddress) error {
+// 	moduleName := evmtypes.ModuleName
+// 	totalEvmCoin := ebk.bk.GetBalance(ctx, addr, ebk.EvmDenom)
+// 	cosmosCoin, _, err := SplitAoraiCoins(sdk.NewCoins(totalEvmCoin), ebk.EvmDenom, ebk.CosmosDenom)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return ebk.ConvertEvmCoinToCosmosCoin(ctx, addr, moduleName, cosmosCoin)
+// }
+
+// ConvertEvmCoinToCosmosCoin converts all available evm coin to cosmos coin for a given AccAddress.
+func (ebk EvmBankKeeper) ConvertEvmCoinToCosmosCoin(ctx context.Context, addr sdk.AccAddress) error {
 	totalEvmCoin := ebk.bk.GetBalance(ctx, addr, ebk.EvmDenom)
 	cosmosCoin, _, err := SplitAoraiCoins(sdk.NewCoins(totalEvmCoin), ebk.EvmDenom, ebk.CosmosDenom)
 	if err != nil {
 		return err
 	}
-	return ebk.ConvertEvmCoinToCosmosCoin(ctx, addr, moduleName, cosmosCoin)
-}
 
-func (ebk EvmBankKeeper) ConvertEvmCoinToCosmosCoin(ctx context.Context, addr sdk.AccAddress, moduleName string, cosmosCoinNeeded sdk.Coin) error {
 	// do nothing if account does not have enough cosmos coin for a single evm coin
-	cosmosAmountToReceive := cosmosCoinNeeded.Amount
+	cosmosAmountToReceive := cosmosCoin.Amount
 	if !cosmosAmountToReceive.IsPositive() {
-		return nil
-	}
-
-	// no need to convert if we have enough cosmos coin
-	cosmosBalance := ebk.bk.GetBalance(ctx, addr, cosmosCoinNeeded.Denom)
-	if cosmosBalance.Amount.GTE(cosmosCoinNeeded.Amount) {
 		return nil
 	}
 
 	// remove evm coin used for converting to cosmos coin
 	evmAmountToBurn := cosmosAmountToReceive.Mul(ConversionMultiplier)
 	evmCoinToBurn := sdk.NewCoins(sdk.NewCoin(ebk.EvmDenom, evmAmountToBurn))
-	if err := ebk.bk.SendCoinsFromAccountToModule(ctx, addr, moduleName, evmCoinToBurn); err != nil {
+	if err := ebk.bk.SendCoinsFromAccountToModule(ctx, addr, evmtypes.ModuleName, evmCoinToBurn); err != nil {
 		return err
 	}
-
 	// burn evm coin
-	if err := ebk.bk.BurnCoins(ctx, moduleName, evmCoinToBurn); err != nil {
+	if err := ebk.bk.BurnCoins(ctx, evmtypes.ModuleName, evmCoinToBurn); err != nil {
 		return err
 	}
 
 	cosmosCoinToReceive := sdk.NewCoins(sdk.NewCoin(ebk.CosmosDenom, cosmosAmountToReceive))
-
 	// after burn, mint & send corresponding cosmos coin to addr
-	if err := ebk.bk.MintCoins(ctx, moduleName, cosmosCoinToReceive); err != nil {
+	if err := ebk.bk.MintCoins(ctx, evmtypes.ModuleName, cosmosCoinToReceive); err != nil {
 		return err
 	}
-	if err := ebk.bk.SendCoinsFromModuleToAccount(ctx, moduleName, addr, cosmosCoinToReceive); err != nil {
+	if err := ebk.bk.SendCoinsFromModuleToAccount(ctx, evmtypes.ModuleName, addr, cosmosCoinToReceive); err != nil {
 		return err
 	}
+
 	return nil
 }
 
+// ConvertCosmosCoinToEvmCoin converts 1 cosmos coin to evm coin for a given AccAddress.
 func (ebk EvmBankKeeper) ConvertCosmosCoinToEvmCoin(ctx context.Context, addr sdk.AccAddress, evmCoinNeeded sdk.Coin) error {
-
-	evmBalance := ebk.bk.GetBalance(ctx, addr, evmCoinNeeded.Denom)
+	evmBalance := ebk.bk.GetBalance(ctx, addr, ebk.EvmDenom)
 	if evmBalance.Amount.GTE(evmCoinNeeded.Amount) {
 		return nil
 	}
 
-	cosmosCoinNeeded := evmCoinNeeded.Amount.Quo(ConversionMultiplier)
-	cosmosCoinConverted := sdkmath.MaxInt(cosmosCoinNeeded, sdkmath.OneInt())
-
-	cosmosCoins := sdk.NewCoins(sdk.NewCoin(ebk.CosmosDenom, cosmosCoinConverted))
+	// because we convert all evm coin availabe to cosmos coin
+	// so we just need to convert 1 cosmos coin if need
+	cosmosCoinToStore := sdkmath.OneInt()
+	cosmosCoins := sdk.NewCoins(sdk.NewCoin(ebk.CosmosDenom, cosmosCoinToStore))
 	moduleName := evmtypes.ModuleName
 
 	// send cosmos balance to module account to burn
 	if err := ebk.bk.SendCoinsFromAccountToModule(ctx, addr, moduleName, cosmosCoins); err != nil {
 		return err
 	}
-
-	// burn cosmos coin
 	if err := ebk.bk.BurnCoins(ctx, moduleName, cosmosCoins); err != nil {
 		return err
 	}
 
 	// after burn, mint & send corresponding evm coin to addr
-	evmAmount := cosmosCoinConverted.Mul(ConversionMultiplier)
+	evmAmount := cosmosCoinToStore.Mul(ConversionMultiplier)
 	evmCoins := sdk.NewCoins(sdk.NewCoin(ebk.EvmDenom, evmAmount))
 	if err := ebk.bk.MintCoins(ctx, moduleName, evmCoins); err != nil {
 		return err
@@ -253,12 +255,21 @@ func (ebk EvmBankKeeper) ConvertCosmosCoinToEvmCoin(ctx context.Context, addr sd
 	if err := ebk.bk.SendCoinsFromModuleToAccount(ctx, moduleName, addr, evmCoins); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 // SpendableCoins implements types.BankKeeper.
 func (e EvmBankKeeper) SpendableCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins {
 	return e.bk.SpendableCoins(ctx, addr)
+}
+
+func (ebk EvmBankKeeper) GetModuleAddress(moduleName string) sdk.AccAddress {
+	addr := ebk.ak.GetModuleAddress(moduleName)
+	if addr == nil {
+		panic(errorsmod.Wrapf(errortypes.ErrUnknownAddress, "module account %s does not exist", moduleName))
+	}
+	return addr
 }
 
 // SplitAoraiCoins splits aorai coins to the equivalent orai coins and any remaining aorai balance.
