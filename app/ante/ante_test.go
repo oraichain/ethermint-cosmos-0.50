@@ -36,6 +36,7 @@ import (
 	"github.com/evmos/ethermint/app/ante"
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 	"github.com/evmos/ethermint/tests"
+	evmkeeper "github.com/evmos/ethermint/x/evm/keeper"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
@@ -1216,7 +1217,9 @@ func (suite AnteTestSuite) TestAnteHandlerWithDynamicTxFee() {
 			suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 
 			suite.ctx = suite.ctx.WithIsCheckTx(tc.checkTx).WithIsReCheckTx(tc.reCheckTx)
-			suite.app.EvmKeeper.SetBalance(suite.ctx, addr, big.NewInt((ethparams.InitialBaseFee+10)*100000))
+			newAddrBalance := big.NewInt(0)
+			newAddrBalance.Mul(big.NewInt((ethparams.InitialBaseFee+10)*100000), big.NewInt(int64(evmkeeper.ConversionMultiplier.Uint64())))
+			suite.app.EvmKeeper.SetBalance(suite.ctx, addr, newAddrBalance)
 			_, err := suite.anteHandler(suite.ctx, tc.txFn(), false)
 			if tc.expPass {
 				suite.Require().NoError(err)
@@ -1345,7 +1348,9 @@ func (suite AnteTestSuite) TestAnteHandlerWithParams() {
 			suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
 
 			suite.ctx = suite.ctx.WithIsCheckTx(true)
-			suite.app.EvmKeeper.SetBalance(suite.ctx, addr, big.NewInt((ethparams.InitialBaseFee+10)*100000))
+			newAddrBalance := big.NewInt(0)
+			newAddrBalance.Mul(big.NewInt((ethparams.InitialBaseFee+10)*100000), big.NewInt(int64(evmkeeper.ConversionMultiplier.Uint64())))
+			suite.app.EvmKeeper.SetBalance(suite.ctx, addr, newAddrBalance)
 			_, err := suite.anteHandler(suite.ctx, tc.txFn(), false)
 			if tc.expErr == nil {
 				suite.Require().NoError(err)

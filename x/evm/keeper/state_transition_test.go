@@ -17,6 +17,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/evmos/ethermint/tests"
+	"github.com/evmos/ethermint/testutil"
 	"github.com/evmos/ethermint/x/evm/keeper"
 	"github.com/evmos/ethermint/x/evm/statedb"
 	"github.com/evmos/ethermint/x/evm/types"
@@ -446,7 +447,12 @@ func (suite *KeeperTestSuite) TestRefundGas() {
 			refund := keeper.GasToRefund(vmdb.GetRefund(), gasUsed, tc.refundQuotient)
 			suite.Require().Equal(tc.expGasRefund, refund)
 
-			err = suite.app.EvmKeeper.RefundGas(suite.ctx, m, refund, "aphoton")
+			signerCosmosAddr := suite.app.EvmKeeper.GetCosmosAddressMapping(suite.ctx, m.From())
+			signerBalanceBeforeRefundGas := suite.app.BankKeeper.GetBalance(suite.ctx, signerCosmosAddr, testutil.BaseDenom)
+			err = suite.app.EvmKeeper.RefundGas(suite.ctx, m, refund, testutil.BaseDenom)
+			signerBalanceAfterRefundGas := suite.app.BankKeeper.GetBalance(suite.ctx, signerCosmosAddr, testutil.BaseDenom)
+			suite.Require().NotEqual(signerBalanceBeforeRefundGas.Amount, signerBalanceAfterRefundGas.Amount)
+
 			if tc.noError {
 				suite.Require().NoError(err)
 			} else {

@@ -17,7 +17,6 @@ package tx
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -100,17 +99,8 @@ func PrepareEIP712CosmosTx(
 	}
 	chainIDNum := pc.Uint64()
 
-	fmt.Println("args ", txArgs.Priv)
-	// from := sdk.AccAddress(txArgs.Priv.PubKey().Address().Bytes())
-	// from, err := evmtypes.PubkeyBytesToCosmosAddress(txArgs.Priv.PubKey().Bytes())
-	// if err != nil {
-	// 	return nil, err
-	// }
-	fmt.Println("from ", from)
-
 	acc := appEthermint.AccountKeeper.GetAccount(ctx, from)
 
-	fmt.Println("acc: ", acc)
 	accNumber := acc.GetAccountNumber()
 
 	nonce, err := appEthermint.AccountKeeper.GetSequence(ctx, from)
