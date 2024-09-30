@@ -16,7 +16,6 @@
 package keeper
 
 import (
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core"
@@ -67,7 +66,6 @@ func (k *Keeper) RefundGas(ctx sdk.Context, msg core.Message, leftoverGas uint64
 		if balance.Amount.GTE(refundedCoins.AmountOf(denom)) {
 			err = k.originalBankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, recipientCosmosAddr, refundedCoins)
 		} else {
-			fmt.Println("prepare to refund gas")
 			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, recipientCosmosAddr, refundedCoins)
 		}
 		if err != nil {

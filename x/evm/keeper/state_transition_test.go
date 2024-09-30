@@ -451,10 +451,12 @@ func (suite *KeeperTestSuite) TestRefundGas() {
 			signerBalanceBeforeRefundGas := suite.app.BankKeeper.GetBalance(suite.ctx, signerCosmosAddr, testutil.BaseDenom)
 			err = suite.app.EvmKeeper.RefundGas(suite.ctx, m, refund, testutil.BaseDenom)
 			signerBalanceAfterRefundGas := suite.app.BankKeeper.GetBalance(suite.ctx, signerCosmosAddr, testutil.BaseDenom)
-			suite.Require().NotEqual(signerBalanceBeforeRefundGas.Amount, signerBalanceAfterRefundGas.Amount)
 
 			if tc.noError {
 				suite.Require().NoError(err)
+				if tc.expGasRefund != 0 {
+					suite.Require().NotEqual(signerBalanceBeforeRefundGas.Amount, signerBalanceAfterRefundGas.Amount)
+				}
 			} else {
 				suite.Require().Error(err)
 			}
