@@ -25,6 +25,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethermint "github.com/evmos/ethermint/types"
 	"github.com/evmos/ethermint/x/evm/statedb"
@@ -134,10 +135,22 @@ func (k *Keeper) SetAccount(ctx sdk.Context, addr common.Address, account stated
 	}
 
 	codeHash := common.BytesToHash(account.CodeHash)
+	ethAcct, ok := acct.(ethermint.EthAccountI)
 
-	if ethAcct, ok := acct.(ethermint.EthAccountI); ok {
+	if ok {
 		if err := ethAcct.SetCodeHash(codeHash); err != nil {
 			return err
+		}
+	}
+
+	if !ok && account.IsContract() {
+		if baseAcct, isBaseAccount := acct.(*authtypes.BaseAccount); isBaseAccount {
+			acct = &ethermint.EthAccount{
+				BaseAccount: baseAcct,
+				CodeHash:    codeHash.Hex(),
+			}
+		} else {
+			return errorsmod.Wrapf(types.ErrInvalidAccount, "type %T, address %s", acct, addr)
 		}
 	}
 
