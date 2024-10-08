@@ -5,9 +5,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	v4types "github.com/evmos/ethermint/x/evm/migrations/v4/types"
+	v3types "github.com/evmos/ethermint/x/evm/migrations/v3/types"
 	"github.com/evmos/ethermint/x/evm/types"
 )
+
+const evmDenom = "aorai"
 
 // MigrateStore migrates the x/evm module state from the consensus version 3 to
 // version 4. Specifically, it takes the parameters that are currently stored
@@ -18,20 +20,16 @@ func MigrateStore(
 	legacySubspace types.Subspace,
 	cdc codec.BinaryCodec,
 ) error {
-	var params types.Params
 
-	legacySubspace.GetParamSetIfExists(ctx, &params)
-
-	if err := params.Validate(); err != nil {
-		return err
-	}
+	params := types.DefaultParams()
 
 	chainCfgBz := cdc.MustMarshal(&params.ChainConfig)
-	extraEIPsBz := cdc.MustMarshal(&v4types.ExtraEIPs{EIPs: params.ExtraEIPs})
+	extraEIPsBz := cdc.MustMarshal(&v3types.ExtraEIPs{EIPs: params.ExtraEIPs})
 
 	store := storeService.OpenKVStore(ctx)
 
-	if err := store.Set(types.ParamStoreKeyEVMDenom, []byte(params.EvmDenom)); err != nil {
+	// our evm denom is aorai
+	if err := store.Set(types.ParamStoreKeyEVMDenom, []byte(evmDenom)); err != nil {
 		return err
 	}
 

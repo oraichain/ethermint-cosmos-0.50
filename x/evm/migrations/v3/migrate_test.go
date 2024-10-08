@@ -12,8 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/evmos/ethermint/encoding"
-	v4 "github.com/evmos/ethermint/x/evm/migrations/v4"
-	v4types "github.com/evmos/ethermint/x/evm/migrations/v4/types"
+	v3 "github.com/evmos/ethermint/x/evm/migrations/v3"
+	v3types "github.com/evmos/ethermint/x/evm/migrations/v3/types"
 )
 
 type mockSubspace struct {
@@ -38,7 +38,7 @@ func TestMigrate(t *testing.T) {
 	storeService := runtime.NewKVStoreService(storeKey)
 
 	legacySubspace := newMockSubspace(types.DefaultParams())
-	require.NoError(t, v4.MigrateStore(ctx, storeService, legacySubspace, cdc))
+	require.NoError(t, v3.MigrateStore(ctx, storeService, legacySubspace, cdc))
 
 	kvStore := storeService.OpenKVStore(ctx)
 
@@ -55,18 +55,18 @@ func TestMigrate(t *testing.T) {
 	enableCall, err := kvStore.Has(types.ParamStoreKeyEnableCall)
 	require.NoError(t, err)
 
-	var chainCfg v4types.V4ChainConfig
+	var chainCfg v3types.V4ChainConfig
 	bz, err = kvStore.Get(types.ParamStoreKeyChainConfig)
 	require.NoError(t, err)
 	cdc.MustUnmarshal(bz, &chainCfg)
 
-	var extraEIPs v4types.ExtraEIPs
+	var extraEIPs v3types.ExtraEIPs
 	bz, err = kvStore.Get(types.ParamStoreKeyExtraEIPs)
 	require.NoError(t, err)
 	cdc.MustUnmarshal(bz, &extraEIPs)
 	require.Equal(t, []int64(nil), extraEIPs.EIPs)
 
-	params := v4types.V4Params{
+	params := v3types.V4Params{
 		EvmDenom:            evmDenom,
 		AllowUnprotectedTxs: allowUnprotectedTx,
 		EnableCreate:        enableCreate,

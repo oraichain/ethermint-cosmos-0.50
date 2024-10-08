@@ -38,11 +38,7 @@ func TestMigrate(t *testing.T) {
 	ctx := testutil.DefaultContext(storeKey, tKey)
 	storeService := runtime.NewKVStoreService(storeKey)
 
-	legacySubspaceEmpty := newMockSubspaceEmpty()
-	require.Error(t, v4.MigrateStore(ctx, storeService, legacySubspaceEmpty, cdc))
-
-	legacySubspace := newMockSubspace(types.DefaultParams())
-	require.NoError(t, v4.MigrateStore(ctx, storeService, legacySubspace, cdc))
+	require.NoError(t, v4.MigrateStore(ctx, storeService, cdc))
 
 	kvStore := storeService.OpenKVStore(ctx)
 	paramsBz, err := kvStore.Get(types.ParamsKey)
@@ -50,5 +46,5 @@ func TestMigrate(t *testing.T) {
 	var params types.Params
 	cdc.MustUnmarshal(paramsBz, &params)
 
-	require.Equal(t, params, legacySubspace.ps)
+	require.Equal(t, params, types.DefaultParams())
 }

@@ -13,19 +13,10 @@ import (
 func MigrateStore(
 	ctx sdk.Context,
 	storeService corestore.KVStoreService,
-	legacySubspace types.Subspace,
 	cdc codec.BinaryCodec,
 ) error {
-	var (
-		store  = storeService.OpenKVStore(ctx)
-		params types.Params
-	)
-
-	legacySubspace.GetParamSetIfExists(ctx, &params)
-
-	if err := params.Validate(); err != nil {
-		return err
-	}
+	store := storeService.OpenKVStore(ctx)
+	params := types.DefaultParams()
 
 	bz, err := cdc.Marshal(&params)
 	if err != nil {

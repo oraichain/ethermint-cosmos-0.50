@@ -16,6 +16,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,6 +38,7 @@ func (k Keeper) CalculateBaseFee(ctx sdk.Context) *big.Int {
 	}
 
 	consParams := ctx.ConsensusParams()
+	fmt.Println("consensus params: ", consParams)
 
 	// If the current block is the first EIP-1559 block, return the base fee
 	// defined in the parameters (DefaultBaseFee if it hasn't been changed by
