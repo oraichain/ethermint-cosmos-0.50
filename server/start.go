@@ -403,8 +403,9 @@ func startInProcess(
 		})
 	}
 
+	chainID := svrCtx.Viper.GetString(flags.FlagChainID)
+
 	if svrCfg.API.Enable || svrCfg.JSONRPC.Enable {
-		chainID := svrCtx.Viper.GetString(flags.FlagChainID)
 		if chainID == "" {
 			genDoc, err := getGenDocProvider(cmtCfg)()
 			if err != nil {
@@ -468,12 +469,15 @@ func startInProcess(
 	)
 
 	if svrCfg.JSONRPC.Enable {
-		genDoc, err := getGenDocProvider(cmtCfg)()
-		if err != nil {
-			return err
+		if chainID == "" {
+			genDoc, err := getGenDocProvider(cmtCfg)()
+			if err != nil {
+				return err
+			}
+			chainID = genDoc.ChainID
 		}
 
-		clientCtx := clientCtx.WithChainID(genDoc.ChainID)
+		clientCtx := clientCtx.WithChainID(chainID)
 
 		tmEndpoint := "/websocket"
 		tmRPCAddr := svrCtx.Config.RPC.ListenAddress
