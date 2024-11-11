@@ -80,15 +80,15 @@ type StartCmdOptions struct {
 	DBOpener func(opts types.AppOptions, rootDir string, backend dbm.BackendType) (dbm.DB, error)
 	// PostSetup can be used to setup extra services under the same cancellable context,
 	// it's not called in stand-alone mode, only for in-process mode.
-	PostSetup func(svrCtx *server.Context, clientCtx client.Context, ctx context.Context, g *errgroup.Group) error
+	PostSetup func(svrCtx *server.Context, clientCtx client.Context, ctx context.Context, g *errgroup.Group) (func(), error)
 	// AddFlags add custom flags to start cmd
 	AddFlags func(cmd *cobra.Command)
 }
 
 // StartCmd runs the service passed in, either stand-alone or in-process with
 // CometBFT.
-func StartCmd(appCreator types.AppCreator, defaultNodeHome string) *cobra.Command {
-	return StartCmdWithOptions(appCreator, defaultNodeHome, StartCmdOptions{})
+func StartCmd(appCreator types.AppCreator, defaultNodeHome string, startCmdOptions StartCmdOptions) *cobra.Command {
+	return StartCmdWithOptions(appCreator, defaultNodeHome, startCmdOptions)
 }
 
 // StartCmdWithOptions runs the service passed in, either stand-alone or in-process with
@@ -501,9 +501,11 @@ func startInProcess(
 	}
 
 	if opts.PostSetup != nil {
-		if err := opts.PostSetup(svrCtx, clientCtx, ctx, g); err != nil {
+		deferFunc, err := opts.PostSetup(svrCtx, clientCtx, ctx, g)
+		if err != nil {
 			return err
 		}
+		defer deferFunc()
 	}
 
 	// wait for signal capture and gracefully return

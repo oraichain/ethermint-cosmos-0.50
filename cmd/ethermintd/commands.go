@@ -98,7 +98,7 @@ func initRootCmd(
 		snapshot.Cmd(a.newApp),
 	)
 
-	server.AddCommands(rootCmd, ethermintapp.DefaultNodeHome, a.newApp, a.appExport, addModuleInitFlags)
+	server.AddCommands(rootCmd, ethermintapp.DefaultNodeHome, a.newApp, a.appExport, addModuleInitFlags, server.StartCmdOptions{})
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(

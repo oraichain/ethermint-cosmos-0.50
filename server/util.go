@@ -46,6 +46,7 @@ func AddCommands(
 	appCreator types.AppCreator,
 	appExport types.AppExporter,
 	addStartFlags types.ModuleInitFlags,
+	startCmdOptions StartCmdOptions,
 ) {
 	tendermintCmd := &cobra.Command{
 		Use:   "tendermint",
@@ -61,7 +62,7 @@ func AddCommands(
 		tmcmd.ResetStateCmd,
 	)
 
-	startCmd := StartCmd(appCreator, defaultNodeHome)
+	startCmd := StartCmd(appCreator, defaultNodeHome, startCmdOptions)
 	addStartFlags(startCmd)
 
 	rootCmd.AddCommand(
