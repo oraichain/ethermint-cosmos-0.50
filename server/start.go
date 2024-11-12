@@ -80,7 +80,7 @@ type StartCmdOptions struct {
 	DBOpener func(opts types.AppOptions, rootDir string, backend dbm.BackendType) (dbm.DB, error)
 	// PostSetup can be used to setup extra services under the same cancellable context,
 	// it's not called in stand-alone mode, only for in-process mode.
-	PostSetup func(svrCtx *server.Context, clientCtx client.Context, ctx context.Context, g *errgroup.Group) (func(), error)
+	PostSetup func(svrCtx *server.Context, clientCtx client.Context, ctx context.Context, g *errgroup.Group, node *node.Node) (func(), error)
 	// AddFlags add custom flags to start cmd
 	AddFlags func(cmd *cobra.Command)
 }
@@ -352,6 +352,7 @@ func startInProcess(
 	gRPCOnly := svrCtx.Viper.GetBool(srvflags.GRPCOnly)
 
 	g, ctx := getCtx(svrCtx, true)
+	var cmtNode *node.Node
 
 	if gRPCOnly {
 		svrCtx.Logger.Info("starting node in query only mode; Tendermint is disabled")
@@ -363,6 +364,7 @@ func startInProcess(
 		if err != nil {
 			return err
 		}
+		cmtNode = tmNode
 		defer cleanupFn()
 
 		// Add the tx service to the gRPC router. We only need to register this
@@ -501,7 +503,7 @@ func startInProcess(
 	}
 
 	if opts.PostSetup != nil {
-		deferFunc, err := opts.PostSetup(svrCtx, clientCtx, ctx, g)
+		deferFunc, err := opts.PostSetup(svrCtx, clientCtx, ctx, g, cmtNode)
 		if err != nil {
 			return err
 		}
