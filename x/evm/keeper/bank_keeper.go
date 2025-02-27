@@ -134,9 +134,9 @@ func (ebk EvmBankKeeper) SendCoinsFromAccountToModule(ctx context.Context, sende
 	}
 
 	if orai.IsPositive() {
-		if err := ebk.ConvertEvmCoinToCosmosCoin(ctx, senderAddr, recipientModule, orai); err != nil {
-			return err
-		}
+		// if err := ebk.ConvertEvmCoinToCosmosCoin(ctx, senderAddr, recipientModule, orai); err != nil {
+		// 	return err
+		// }
 		if err := ebk.bk.SendCoinsFromAccountToModule(ctx, senderAddr, recipientModule, sdk.NewCoins(orai)); err != nil {
 			return err
 		}
