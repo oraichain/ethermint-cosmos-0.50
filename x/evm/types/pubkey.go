@@ -4,12 +4,11 @@ import (
 	"encoding/base64"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 )
 
 // second half of go-ethereum/core/types/transaction_signing.go:recoverPlain
@@ -24,16 +23,9 @@ func PubkeyToEVMAddress(pub string) (*common.Address, error) {
 
 func PubkeyBytesToEVMAddress(pubKeyBytes []byte) (*common.Address, error) {
 	// Decompress the public key
-	pubKey, err := btcec.ParsePubKey(pubKeyBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert to uncompressed format
-	uncompressedPubKeyBytes := pubKey.SerializeUncompressed()
-	// Parse the public key
-	evmAddress := common.BytesToAddress(crypto.Keccak256(uncompressedPubKeyBytes[1:])[12:])
-	return &evmAddress, nil
+	pubKey := ethsecp256k1.PubKey{Key: pubKeyBytes}
+	address := common.Address(pubKey.Address().Bytes())
+	return &address, nil
 }
 
 func PubkeyToCosmosAddress(pub string) (sdk.AccAddress, error) {
