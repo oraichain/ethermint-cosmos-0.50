@@ -75,6 +75,26 @@ func (k MockKeeper) SetAccount(ctx sdk.Context, addr common.Address, account sta
 	return nil
 }
 
+func (k MockKeeper) SetBalance(ctx sdk.Context, addr common.Address, amount *big.Int) error {
+	if addr == errAddress {
+		return errors.New("mock db error")
+	}
+	acct, exists := k.accounts[addr]
+	if exists {
+		currentBalance := acct.account.Balance
+		delta := new(big.Int).Sub(amount, currentBalance)
+		if delta.Sign() > 0 {
+			acct.account.Balance = currentBalance.Add(delta, acct.account.Balance)
+		} else if delta.Sign() < 0 {
+			acct.account.Balance = currentBalance.Sub(delta, acct.account.Balance)
+		}
+		k.accounts[addr] = acct
+	} else {
+		k.accounts[addr] = MockAcount{account: statedb.Account{Balance: amount}, states: make(statedb.Storage)}
+	}
+	return nil
+}
+
 func (k MockKeeper) SetState(ctx sdk.Context, addr common.Address, key common.Hash, value []byte) {
 	if acct, ok := k.accounts[addr]; ok {
 		if len(value) == 0 {
