@@ -45,8 +45,8 @@ import (
 )
 
 var (
-	_ sdk.Msg    = &MsgEthereumTx{}
-	_ sdk.Msg    = &MsgSetMappingEvmAddress{}
+	_ sdk.Msg = &MsgEthereumTx{}
+	_ sdk.Msg = &MsgSetMappingEvmAddress{}
 	// _ sdk.Msg    = &MsgDeleteMappingEvmAddress{}
 	_ sdk.Tx     = &MsgEthereumTx{}
 	_ ante.GasTx = &MsgEthereumTx{}
@@ -522,16 +522,21 @@ func (msg MsgSetMappingEvmAddress) ValidateBasic() error {
 		return errorsmod.Wrap(errortypes.ErrInvalidAddress, "signer is not a valid bech32 address")
 	}
 
-	cosmosAddress, err := PubkeyToCosmosAddress(msg.Pubkey)
-	if err != nil {
-		return err
-	}
-	if msg.Signer != cosmosAddress.String() {
-		return errorsmod.Wrap(
-			errortypes.ErrInvalidAddress,
-			"Signer does not match the given pubkey",
-		)
-	}
+	/**
+	 * 	we don't check equal cosmos address and signer here
+	 *	because we want to map cosmos + evm address generated from pubkey with any signer
+	 */
+	// cosmosAddress, err := PubkeyToCosmosAddress(msg.Pubkey)
+	// if err != nil {
+	// 	return err
+	// }
+	// if msg.Signer != cosmosAddress.String() {
+	// 	return errorsmod.Wrap(
+	// 		errortypes.ErrInvalidAddress,
+	// 		"Signer does not match the given pubkey",
+	// 	)
+	// }
+
 	return nil
 }
 
