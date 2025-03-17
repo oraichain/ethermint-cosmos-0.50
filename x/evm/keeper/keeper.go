@@ -64,7 +64,6 @@ type Keeper struct {
 	accountKeeper types.AccountKeeper
 	// update balance and accounting operations with coins
 	bankKeeper         types.BankKeeper
-	originalBankKeeper types.BankKeeper
 	// access historical headers for EVM state transition execution
 	stakingKeeper types.StakingKeeper
 	// fetch EIP1559 base fee and parameters
@@ -96,7 +95,6 @@ func NewKeeper(
 	authority sdk.AccAddress,
 	ak types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	originalBankKeeper types.BankKeeper,
 	sk types.StakingKeeper,
 	fmk types.FeeMarketKeeper,
 	customPrecompiles evm.PrecompiledContracts,
@@ -120,7 +118,6 @@ func NewKeeper(
 		authority:          authority,
 		accountKeeper:      ak,
 		bankKeeper:         bankKeeper,
-		originalBankKeeper: originalBankKeeper,
 		stakingKeeper:      sk,
 		feeMarketKeeper:    fmk,
 		storeService:       storeService,
