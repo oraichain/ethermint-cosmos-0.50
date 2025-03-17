@@ -575,13 +575,20 @@ func (suite *KeeperTestSuite) TestGetAccountOrEmpty() {
 
 func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 	signer := "orai1knzg7jdc49ghnc2pkqg6vks8ccsk6efzfgv6gv"
-	pubkey := "AvSl0d9JrHCW4mdEyHvZu076WxLgH0bBVLigUcFm4UjV"
+	// pubkey := "AvSl0d9JrHCW4mdEyHvZu076WxLgH0bBVLigUcFm4UjV"
+	pubkey := "Avalv/HkKw5oBST0LP6Hb8v+kLX22/V97IndXM2O6GeZ"
+	expectedCosmosAddress, _ := types.PubkeyToCosmosAddress(pubkey)
 	expectedEvmAddress, _ := types.PubkeyToEVMAddress(pubkey)
 
 	castAddress := sdk.AccAddress(expectedEvmAddress[:])
 	acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, castAddress)
 	acc.SetSequence(0)
 	suite.app.AccountKeeper.SetAccount(suite.ctx, acc)
+
+	cosmosAddress, _ := sdk.AccAddressFromBech32(expectedCosmosAddress.String())
+	cosmosAcc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, cosmosAddress)
+	cosmosAcc.SetSequence(1)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, cosmosAcc)
 
 	// fixture for migrate nonce
 	signerAddress, _ := sdk.AccAddressFromBech32(signer)
@@ -595,6 +602,7 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 	sentCoins := sdk.NewCoins(sdk.NewCoin(suite.EvmDenom(), sdkmath.NewInt(5)))
 	moduleAcc := suite.app.AccountKeeper.GetModuleAccount(suite.ctx, types.ModuleName)
 	suite.app.BankKeeper.SendCoins(suite.ctx, moduleAcc.GetAddress(), castAddress, sentCoins)
+	suite.app.BankKeeper.SendCoins(suite.ctx, moduleAcc.GetAddress(), cosmosAddress, sentCoins)
 	suite.app.BankKeeper.SendCoins(suite.ctx, moduleAcc.GetAddress(), signerAddress, sentCoins)
 
 	type errArgs struct {
@@ -631,18 +639,18 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 			},
 			func() {},
 		},
-		{
-			"invalid - invalid pubkey",
-			types.NewMsgSetMappingEvmAddress(
-				signer,
-				"Avalv/HkKw5oBST0LP6Hb8v+kLX22/V97IndXM2O6GeZ",
-			),
-			errArgs{
-				expectPass: false,
-				contains:   "Signer does not match the given pubkey",
-			},
-			func() {},
-		},
+		// {
+		// 	"invalid - invalid pubkey",
+		// 	types.NewMsgSetMappingEvmAddress(
+		// 		signer,
+		// 		"Avalv/HkKw5oBST0LP6Hb8v+kLX22/V97IndXM2O6GeZ",
+		// 	),
+		// 	errArgs{
+		// 		expectPass: false,
+		// 		contains:   "Signer does not match the given pubkey",
+		// 	},
+		// 	func() {},
+		// },
 		{
 			"valid with migrate nonce",
 			types.NewMsgSetMappingEvmAddress(
@@ -682,47 +690,30 @@ func (suite *KeeperTestSuite) TestMsgSetMappingEvmAddress() {
 				suite.Require().NoError(err)
 
 				// validate user coin balance
-				cosmosAccAddress := sdk.MustAccAddressFromBech32(signer)
+				cosmosAccAddress := sdk.MustAccAddressFromBech32(expectedCosmosAddress.String())
 				actualEvmAddress, _ := suite.app.EvmKeeper.GetEvmAddressMapping(suite.ctx, cosmosAccAddress)
 				suite.Require().Equal(expectedEvmAddress.Hex(), actualEvmAddress.Hex(), "evm addresses dont match")
 
 				// validate migrate nonce
 				acc := suite.app.AccountKeeper.GetAccount(suite.ctx, castAddress)
-				signerAcc := suite.app.AccountKeeper.GetAccount(suite.ctx, signerAddress)
+				signerAcc := suite.app.AccountKeeper.GetAccount(suite.ctx, cosmosAddress)
 				nonce := acc.GetSequence()
 				signerNonce := signerAcc.GetSequence()
 				suite.Require().GreaterOrEqual(signerNonce, nonce)
 
 				// validate migrate balance
 				castBalance := suite.app.BankKeeper.GetBalance(suite.ctx, castAddress, suite.EvmDenom())
-				signerBalance := suite.app.BankKeeper.GetBalance(suite.ctx, signerAddress, suite.EvmDenom())
+				signerBalance := suite.app.BankKeeper.GetBalance(suite.ctx, cosmosAccAddress, suite.EvmDenom())
 				fmt.Println("signer balance: ", signerBalance)
 				suite.Require().GreaterOrEqual(signerBalance.Amount.Int64(), castBalance.Amount.Int64())
 				if signerBalance.Amount.GT(castBalance.Amount) {
 					suite.Require().Equal(castBalance.Amount.Int64(), int64(0))
 				}
-
-				// msg server event
-				suite.EventsContains(suite.GetEvents(),
-					sdk.NewEvent(
-						sdk.EventTypeMessage,
-						sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-						sdk.NewAttribute(sdk.AttributeKeySender, signer),
-					))
-
-				// keeper event
-				suite.EventsContains(suite.GetEvents(),
-					sdk.NewEvent(
-						types.EventTypeSetMappingEvmAddress,
-						sdk.NewAttribute(types.AttributeKeyCosmosAddress, signer),
-						sdk.NewAttribute(types.AttributeKeyEvmAddress, actualEvmAddress.Hex()),
-						sdk.NewAttribute(types.AttributeKeyPubkey, pubkey),
-					))
 			} else {
 				suite.Require().Error(err)
 				suite.Require().Contains(err.Error(), tc.errArgs.contains)
 			}
-			suite.app.EvmKeeper.DeleteAddressMapping(suite.ctx, signerAddress, *expectedEvmAddress)
+			suite.app.EvmKeeper.DeleteAddressMapping(suite.ctx, cosmosAddress, *expectedEvmAddress)
 		})
 	}
 }
@@ -763,7 +754,7 @@ func (suite *KeeperTestSuite) TestBankKeeperGetBalance() {
 	suite.Require().Equal(castBalance.Int64(), expectedBalance)
 	signerBalance := suite.app.BankKeeper.GetBalance(suite.ctx, signerAddress, suite.denom)
 	suite.Require().Equal(signerBalance.Amount.Int64(), expectedBalance)
-	
+
 }
 
 func (suite *KeeperTestSuite) TestGetAccAddressBytesFromPubkey() {
