@@ -156,10 +156,9 @@ func (k *Keeper) SetAccount(ctx sdk.Context, addr common.Address, account stated
 
 	k.accountKeeper.SetAccount(ctx, acct)
 
-	// Balance already updated when AddBalance() and SubBalance() are called
-	// if err := k.SetBalance(ctx, addr, account.Balance); err != nil {
-	// 	return err
-	// }
+	if err := k.SetBalance(ctx, addr, account.Balance); err != nil {
+		return err
+	}
 
 	k.Logger(ctx).Debug(
 		"account updated",
