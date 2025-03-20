@@ -310,19 +310,28 @@ func (s *StateDB) setStateObject(object *stateObject) {
  */
 
 // AddBalance adds amount to the account associated with addr.
-func (s *StateDB) AddBalance(addr common.Address, amount *big.Int) {
+func (s *StateDB) AddBalance(addr common.Address, amount *big.Int) error {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.AddBalance(amount)
+		// update native balance after updating evm balance so that in Commit() we don't need to update native balance again
+		// this allows us to call precompiled contracts with native balance updated
+		err := s.keeper.SetBalance(s.ctx, addr, stateObject.Balance())
+		return err
 	}
+	return nil
 }
 
 // SubBalance subtracts amount from the account associated with addr.
-func (s *StateDB) SubBalance(addr common.Address, amount *big.Int) {
+func (s *StateDB) SubBalance(addr common.Address, amount *big.Int) error {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SubBalance(amount)
+		// update native balance after updating evm balance so that in Commit() we don't need to update native balance again
+		err := s.keeper.SetBalance(s.ctx, addr, stateObject.Balance())
+		return err
 	}
+	return nil
 }
 
 // SetNonce sets the nonce of account.

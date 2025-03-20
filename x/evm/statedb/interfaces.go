@@ -16,6 +16,8 @@
 package statedb
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -42,6 +44,7 @@ type Keeper interface {
 
 	// Write methods, only called by `StateDB.Commit()`
 	SetAccount(ctx sdk.Context, addr common.Address, account Account) error
+	SetBalance(ctx sdk.Context, addr common.Address, amount *big.Int) error
 	SetState(ctx sdk.Context, addr common.Address, key common.Hash, value []byte)
 	SetCode(ctx sdk.Context, codeHash []byte, code []byte)
 	DeleteAccount(ctx sdk.Context, addr common.Address) error
