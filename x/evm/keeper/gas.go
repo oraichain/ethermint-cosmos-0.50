@@ -59,12 +59,12 @@ func (k *Keeper) RefundGas(ctx sdk.Context, msg core.Message, leftoverGas uint64
 		recipientCosmosAddr := k.GetCosmosAddressMapping(ctx, msg.From())
 		// FIXME: can simply use the original bank keeper to send coins
 		acc := k.accountKeeper.GetModuleAddress(authtypes.FeeCollectorName)
-		balance := k.originalBankKeeper.GetBalance(ctx, acc, denom)
+		balance := k.bankKeeper.GetBalance(ctx, acc, denom)
 		var err error
 		// if have enough evm coin to refund -> use it
 		// else, refund using cosmos coin + evm coin
 		if balance.Amount.GTE(refundedCoins.AmountOf(denom)) {
-			err = k.originalBankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, recipientCosmosAddr, refundedCoins)
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, recipientCosmosAddr, refundedCoins)
 		} else {
 			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, recipientCosmosAddr, refundedCoins)
 		}
